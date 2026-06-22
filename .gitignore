@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# エディタ / ローカル設定
+.claude/settings.local.json
+.claude/launch.json
+
+# ログ
+*.log
