@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>英熟語マスター | Idiom Master</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>英熟語マスター 🗣️</h1>
+      <p class="subtitle">イメージで覚えて、文章で使えるようになる</p>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab is-active" data-mode="flashcards">📇 フラッシュカード</button>
+      <button class="tab" data-mode="quiz">✍️ 穴埋め入力</button>
+    </nav>
+
+    <main>
+      <!-- フラッシュカード -->
+      <section id="flashcards" class="view">
+        <div class="progress" id="card-progress"></div>
+        <div class="card" id="card">
+          <div class="card-inner">
+            <div class="card-face card-front">
+              <div class="card-emoji" id="card-emoji"></div>
+              <div class="card-phrase" id="card-phrase"></div>
+              <p class="card-hint">カードをクリックで意味を表示</p>
+            </div>
+            <div class="card-face card-back">
+              <div class="card-meaning" id="card-meaning"></div>
+              <div class="card-example" id="card-example"></div>
+              <div class="card-example-ja" id="card-example-ja"></div>
+            </div>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="prev-card">← 前へ</button>
+          <button id="next-card">次へ →</button>
+        </div>
+      </section>
+
+      <!-- 穴埋め入力 -->
+      <section id="quiz" class="view is-hidden">
+        <div class="progress" id="quiz-progress"></div>
+        <div class="quiz-card">
+          <div class="quiz-emoji" id="quiz-emoji"></div>
+          <p class="quiz-meaning" id="quiz-meaning"></p>
+          <p class="quiz-sentence" id="quiz-sentence"></p>
+          <form id="quiz-form" autocomplete="off">
+            <input
+              type="text"
+              id="quiz-input"
+              placeholder="空欄に入る英熟語を入力"
+              aria-label="解答"
+            />
+            <button type="submit" id="quiz-submit">答え合わせ</button>
+          </form>
+          <p class="quiz-feedback" id="quiz-feedback"></p>
+          <button id="quiz-next" class="is-hidden">次の問題 →</button>
+        </div>
+        <div class="quiz-result is-hidden" id="quiz-result"></div>
+      </section>
+    </main>
+
+    <script src="idioms.js"></script>
+    <script src="lib.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

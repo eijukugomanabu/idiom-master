@@ -1,0 +1,9 @@
+{
+  "name": "idiom-master",
+  "version": "1.0.0",
+  "description": "英会話のための英熟語学習アプリ（フラッシュカード＋穴埋め入力）",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
