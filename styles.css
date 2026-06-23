@@ -1,0 +1,259 @@
+:root {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --accent: #38bdf8;
+  --accent-2: #a78bfa;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --ok: #4ade80;
+  --ng: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  background: radial-gradient(circle at top, #1e293b, var(--bg));
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 3rem;
+}
+
+header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin: 0.5rem 0 0;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem auto;
+}
+
+.tab {
+  background: var(--card-bg);
+  color: var(--muted);
+  border: 1px solid transparent;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab.is-active {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.view.is-hidden,
+.is-hidden {
+  display: none;
+}
+
+.progress {
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- フラッシュカード ---------- */
+.card {
+  perspective: 1000px;
+  cursor: pointer;
+  height: 340px;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s;
+  transform-style: preserve-3d;
+}
+
+.card.is-flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  background: var(--card-bg);
+  border-radius: 20px;
+  border: 1px solid #334155;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
+
+.card-emoji {
+  font-size: 5rem;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+
+.card-phrase {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.card-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.card-meaning {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.card-example {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.card-example-ja {
+  color: var(--muted);
+  margin-top: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.2rem;
+  gap: 1rem;
+}
+
+button {
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 12px;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid #334155;
+  transition: all 0.2s;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+.controls button {
+  flex: 1;
+}
+
+/* ---------- 穴埋め入力 ---------- */
+.quiz-card {
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.quiz-emoji {
+  font-size: 3.5rem;
+}
+
+.quiz-meaning {
+  color: var(--muted);
+  margin: 0.3rem 0 1rem;
+}
+
+.quiz-sentence {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 1.2rem;
+}
+
+#quiz-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+#quiz-input {
+  flex: 1;
+  min-width: 160px;
+  font-size: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#quiz-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+#quiz-submit {
+  background: var(--accent);
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.quiz-feedback {
+  min-height: 1.4rem;
+  margin: 1rem 0 0.5rem;
+  font-weight: 700;
+}
+
+.quiz-feedback.ok {
+  color: var(--ok);
+}
+
+.quiz-feedback.ng {
+  color: var(--ng);
+}
+
+.quiz-result {
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-top: 1rem;
+  font-size: 1.3rem;
+}

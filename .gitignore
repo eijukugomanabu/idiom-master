@@ -5,5 +5,8 @@
 .claude/settings.local.json
 .claude/launch.json
 
+# 依存パッケージ
+node_modules/
+
 # ログ
 *.log

@@ -29,14 +29,13 @@ python3 -m http.server 8000
 
 ## テスト
 
-依存ライブラリ不要。`test.html` をブラウザで開くだけでテストが実行され、結果が画面に表示されます。
+外部ライブラリ不要。Node 標準のテストランナーで動きます。
 
 ```bash
-python3 -m http.server 8000
-# → http://localhost:8000/test.html を開く（✅ N件すべて成功 と出れば成功）
+npm test   # 内部的には node --test
 ```
 
-テスト内容（[test.html](test.html)）:
+テスト内容（[test/app.test.js](test/app.test.js)）:
 - 熟語データの件数・必須フィールド・重複チェック
 - 例文に熟語が含まれているか（穴埋め問題が生成できるか）
 - ロジック（`chunk` / `makeBlank` / `isCorrect` / `normalize`）の検証
@@ -50,7 +49,7 @@ python3 -m http.server 8000
 | [idioms.js](idioms.js) | 英熟語データ（意味・例文・絵文字） |
 | [lib.js](lib.js) | UIに依存しないロジック（分割・穴埋め・採点） |
 | [app.js](app.js) | 画面の操作ロジック |
-| [test.html](test.html) | ブラウザで動くテスト |
+| [test/app.test.js](test/app.test.js) | テスト（`npm test` で実行） |
 
 ## 英熟語を追加するには
 
