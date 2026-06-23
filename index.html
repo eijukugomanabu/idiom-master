@@ -13,9 +13,16 @@
     </header>
 
     <main>
-      <!-- モード選択（最初の画面） -->
-      <section id="home" class="view">
-        <p class="home-lead">今日は何をしますか？</p>
+      <!-- ① レベル選択（最初の画面） -->
+      <section id="level-select" class="view">
+        <p class="home-lead">レベルを選ぼう</p>
+        <div class="mode-grid" id="level-grid"><!-- JSで生成 --></div>
+      </section>
+
+      <!-- ② モード選択 -->
+      <section id="home" class="view is-hidden">
+        <button class="back-btn" data-back="level-select">← レベル選択にもどる</button>
+        <p class="home-lead"><span id="home-level-label"></span></p>
         <div class="mode-grid">
           <button class="mode-card" data-go="flashcards">
             <span class="mode-icon">📇</span>
@@ -27,17 +34,22 @@
             <span class="mode-title">文章に当てはめる</span>
             <span class="mode-desc">学んだ熟語を例文の空欄に入力する</span>
           </button>
+          <button class="mode-card" data-go="battle">
+            <span class="mode-icon">⚔️</span>
+            <span class="mode-title">英熟語バトル</span>
+            <span class="mode-desc">クイズに正解して敵を倒すローグライク</span>
+          </button>
         </div>
       </section>
 
       <!-- フラッシュカード -->
       <section id="flashcards" class="view is-hidden">
-        <button class="back-btn" data-back>← モード選択にもどる</button>
+        <button class="back-btn" data-back="home">← モード選択にもどる</button>
         <div class="progress" id="card-progress"></div>
         <div class="card" id="card">
           <div class="card-inner">
             <div class="card-face card-front">
-              <img class="card-image" id="card-image" alt="" />
+              <div class="card-image" id="card-image"></div>
               <div class="card-phrase" id="card-phrase"></div>
               <p class="card-hint">カードをクリックで意味を表示</p>
             </div>
@@ -52,14 +64,15 @@
           <button id="prev-card">← 前へ</button>
           <button id="next-card">次へ →</button>
         </div>
+        <button id="card-next-set" class="next-set-btn is-hidden">次の10問へ →</button>
       </section>
 
       <!-- 穴埋め入力 -->
       <section id="quiz" class="view is-hidden">
-        <button class="back-btn" data-back>← モード選択にもどる</button>
+        <button class="back-btn" data-back="home">← モード選択にもどる</button>
         <div class="progress" id="quiz-progress"></div>
         <div class="quiz-card">
-          <img class="quiz-image" id="quiz-image" alt="" />
+          <div class="quiz-image" id="quiz-image"></div>
           <p class="quiz-meaning" id="quiz-meaning"></p>
           <p class="quiz-sentence" id="quiz-sentence"></p>
           <form id="quiz-form" autocomplete="off">
@@ -75,6 +88,46 @@
           <button id="quiz-next" class="is-hidden">次の問題 →</button>
         </div>
         <div class="quiz-result is-hidden" id="quiz-result"></div>
+      </section>
+
+      <!-- 英熟語バトル（ローグライク） -->
+      <section id="battle" class="view is-hidden">
+        <button class="back-btn" data-back="home">← モード選択にもどる</button>
+        <div class="battle-stage">
+          <div class="floor-label" id="floor-label"></div>
+          <div class="enemy-emoji" id="enemy-emoji"></div>
+          <div class="enemy-name" id="enemy-name"></div>
+          <div class="hp-row">
+            <div class="hp-bar"><div class="hp-fill enemy" id="enemy-hp-fill"></div></div>
+            <span class="hp-text" id="enemy-hp-text"></span>
+          </div>
+        </div>
+
+        <div class="battle-message" id="battle-message">クイズに正解して攻撃しよう！</div>
+
+        <div class="player-status">
+          <span class="player-label">あなた ❤️</span>
+          <div class="hp-row">
+            <div class="hp-bar"><div class="hp-fill player" id="player-hp-fill"></div></div>
+            <span class="hp-text" id="player-hp-text"></span>
+          </div>
+        </div>
+
+        <div class="battle-card">
+          <p class="quiz-meaning" id="battle-hint"></p>
+          <p class="quiz-sentence" id="battle-sentence"></p>
+          <form id="battle-form" autocomplete="off">
+            <input
+              type="text"
+              id="battle-input"
+              placeholder="空欄の英熟語を入力して攻撃！"
+              aria-label="解答"
+            />
+            <button type="submit" id="battle-attack">⚔️ 攻撃</button>
+          </form>
+        </div>
+
+        <div class="battle-over is-hidden" id="battle-over"></div>
       </section>
     </main>
 

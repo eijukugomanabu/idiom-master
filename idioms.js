@@ -1,8 +1,9 @@
 /**
  * 英熟語データ
  * 各熟語は以下のフィールドを持つ:
+ *   level     ... 難易度 "junior"（中学）/ "high12"（高校1・2年）/ "high3"（高校3年・大学1年）
  *   phrase    ... 英熟語（穴埋め問題の正解にもなる）
- *   image     ... 意味をイメージしたイラスト（SVG）のパス
+ *   image     ... 意味をイメージしたイラスト（SVG）のパス。無ければ emoji を表示
  *   emoji     ... 画像が無い場合のフォールバック表示
  *   meaning   ... 日本語の意味
  *   example   ... phrase を必ず含む英語の例文
@@ -12,7 +13,9 @@
  * （穴埋め問題はこの example から phrase を空欄に置き換えて生成される）
  */
 const IDIOMS = [
+  // ============ 中学レベル (junior) ============
   {
+    level: "junior",
     phrase: "break the ice",
     image: "images/break-the-ice.svg",
     emoji: "🧊",
@@ -21,6 +24,7 @@ const IDIOMS = [
     exampleJa: "彼は会議で打ち解けるために冗談を言った。",
   },
   {
+    level: "junior",
     phrase: "a piece of cake",
     image: "images/a-piece-of-cake.svg",
     emoji: "🍰",
@@ -29,14 +33,7 @@ const IDIOMS = [
     exampleJa: "そのテストは彼女にとって朝飯前だった。",
   },
   {
-    phrase: "hit the books",
-    image: "images/hit-the-books.svg",
-    emoji: "📚",
-    meaning: "（猛）勉強する",
-    example: "I need to hit the books before the exam.",
-    exampleJa: "試験前にしっかり勉強しないといけない。",
-  },
-  {
+    level: "junior",
     phrase: "under the weather",
     image: "images/under-the-weather.svg",
     emoji: "🤒",
@@ -45,6 +42,107 @@ const IDIOMS = [
     exampleJa: "今日は体調がよくない。",
   },
   {
+    level: "junior",
+    phrase: "call it a day",
+    image: "images/call-it-a-day.svg",
+    emoji: "🌇",
+    meaning: "その日の作業を切り上げる、終わりにする",
+    example: "We worked hard, so let's call it a day.",
+    exampleJa: "よく働いたから、今日はもう終わりにしよう。",
+  },
+  {
+    level: "junior",
+    phrase: "get up",
+    emoji: "🌅",
+    meaning: "起きる、起床する",
+    example: "I get up at seven every morning.",
+    exampleJa: "私は毎朝7時に起きる。",
+  },
+  {
+    level: "junior",
+    phrase: "give up",
+    emoji: "🏳️",
+    meaning: "あきらめる",
+    example: "Never give up on your dreams.",
+    exampleJa: "夢を決してあきらめないで。",
+  },
+  {
+    level: "junior",
+    phrase: "look for",
+    emoji: "🔍",
+    meaning: "〜を探す",
+    example: "I always look for the cheapest ticket.",
+    exampleJa: "私はいつも一番安い切符を探す。",
+  },
+  {
+    level: "junior",
+    phrase: "look forward to",
+    emoji: "🤗",
+    meaning: "〜を楽しみに待つ",
+    example: "I look forward to seeing you again.",
+    exampleJa: "またお会いできるのを楽しみにしています。",
+  },
+  {
+    level: "junior",
+    phrase: "take care of",
+    emoji: "🩺",
+    meaning: "〜の世話をする",
+    example: "Please take care of my dog while I am away.",
+    exampleJa: "留守の間、犬の世話をしてください。",
+  },
+  {
+    level: "junior",
+    phrase: "for example",
+    emoji: "💡",
+    meaning: "たとえば",
+    example: "I like sports, for example soccer and tennis.",
+    exampleJa: "私はスポーツ、たとえばサッカーやテニスが好きだ。",
+  },
+  {
+    level: "junior",
+    phrase: "a lot of",
+    emoji: "🗂️",
+    meaning: "たくさんの",
+    example: "She has a lot of friends at school.",
+    exampleJa: "彼女は学校にたくさんの友達がいる。",
+  },
+  {
+    level: "junior",
+    phrase: "get on",
+    emoji: "🚌",
+    meaning: "（乗り物に）乗る",
+    example: "We get on the bus at this stop.",
+    exampleJa: "私たちはこの停留所でバスに乗る。",
+  },
+  {
+    level: "junior",
+    phrase: "wake up",
+    emoji: "⏰",
+    meaning: "目を覚ます",
+    example: "I wake up early every day.",
+    exampleJa: "私は毎日早く目を覚ます。",
+  },
+  {
+    level: "junior",
+    phrase: "good at",
+    emoji: "🎯",
+    meaning: "〜が得意だ",
+    example: "He is good at math.",
+    exampleJa: "彼は数学が得意だ。",
+  },
+
+  // ============ 高校1・2年 (high12) ============
+  {
+    level: "high12",
+    phrase: "hit the books",
+    image: "images/hit-the-books.svg",
+    emoji: "📚",
+    meaning: "（猛）勉強する",
+    example: "I need to hit the books before the exam.",
+    exampleJa: "試験前にしっかり勉強しないといけない。",
+  },
+  {
+    level: "high12",
     phrase: "once in a blue moon",
     image: "images/once-in-a-blue-moon.svg",
     emoji: "🌙",
@@ -53,6 +151,7 @@ const IDIOMS = [
     exampleJa: "私たちはごくまれにしか映画館に行かない。",
   },
   {
+    level: "high12",
     phrase: "cost an arm and a leg",
     image: "images/cost-an-arm-and-a-leg.svg",
     emoji: "💸",
@@ -61,14 +160,7 @@ const IDIOMS = [
     exampleJa: "あの新しいスマホはとても高くつくだろう。",
   },
   {
-    phrase: "let the cat out of the bag",
-    image: "images/let-the-cat-out-of-the-bag.svg",
-    emoji: "🐱",
-    meaning: "うっかり秘密を漏らす",
-    example: "Don't let the cat out of the bag about the party.",
-    exampleJa: "パーティーのことをうっかり漏らさないでね。",
-  },
-  {
+    level: "high12",
     phrase: "on the same page",
     image: "images/on-the-same-page.svg",
     emoji: "📄",
@@ -77,6 +169,98 @@ const IDIOMS = [
     exampleJa: "認識が一致しているか確認しよう。",
   },
   {
+    level: "high12",
+    phrase: "put off",
+    emoji: "⏭️",
+    meaning: "延期する、先延ばしにする",
+    example: "Let's not put off the meeting again.",
+    exampleJa: "会議をまた延期するのはやめよう。",
+  },
+  {
+    level: "high12",
+    phrase: "come up with",
+    emoji: "💭",
+    meaning: "（考えなどを）思いつく",
+    example: "I need to come up with a new idea.",
+    exampleJa: "新しいアイデアを思いつく必要がある。",
+  },
+  {
+    level: "high12",
+    phrase: "look up to",
+    emoji: "🙌",
+    meaning: "〜を尊敬する",
+    example: "I look up to my older brother.",
+    exampleJa: "私は兄を尊敬している。",
+  },
+  {
+    level: "high12",
+    phrase: "run out of",
+    emoji: "🪫",
+    meaning: "〜を使い果たす、切らす",
+    example: "We always run out of milk.",
+    exampleJa: "うちはいつも牛乳を切らしてしまう。",
+  },
+  {
+    level: "high12",
+    phrase: "make up your mind",
+    emoji: "🤔",
+    meaning: "決心する",
+    example: "Please make up your mind quickly.",
+    exampleJa: "早く決心してください。",
+  },
+  {
+    level: "high12",
+    phrase: "get along with",
+    emoji: "🤝",
+    meaning: "〜と仲良くやる",
+    example: "I get along with my classmates.",
+    exampleJa: "私はクラスメートと仲良くやっている。",
+  },
+  {
+    level: "high12",
+    phrase: "in charge of",
+    emoji: "👔",
+    meaning: "〜を担当して、〜の責任者で",
+    example: "She is in charge of the team.",
+    exampleJa: "彼女はそのチームを担当している。",
+  },
+  {
+    level: "high12",
+    phrase: "take part in",
+    emoji: "🎪",
+    meaning: "〜に参加する",
+    example: "I take part in the school festival every year.",
+    exampleJa: "私は毎年学園祭に参加する。",
+  },
+  {
+    level: "high12",
+    phrase: "as soon as possible",
+    emoji: "⚡",
+    meaning: "できるだけ早く",
+    example: "Please call me as soon as possible.",
+    exampleJa: "できるだけ早く電話してください。",
+  },
+  {
+    level: "high12",
+    phrase: "by the way",
+    emoji: "💬",
+    meaning: "ところで",
+    example: "By the way, where is the station?",
+    exampleJa: "ところで、駅はどこですか。",
+  },
+
+  // ============ 高校3年・大学1年 (high3) ============
+  {
+    level: "high3",
+    phrase: "let the cat out of the bag",
+    image: "images/let-the-cat-out-of-the-bag.svg",
+    emoji: "🐱",
+    meaning: "うっかり秘密を漏らす",
+    example: "Don't let the cat out of the bag about the party.",
+    exampleJa: "パーティーのことをうっかり漏らさないでね。",
+  },
+  {
+    level: "high3",
     phrase: "bite the bullet",
     image: "images/bite-the-bullet.svg",
     emoji: "😬",
@@ -85,16 +269,95 @@ const IDIOMS = [
     exampleJa: "覚悟を決めて歯医者に行くことにした。",
   },
   {
-    phrase: "call it a day",
-    image: "images/call-it-a-day.svg",
-    emoji: "🌇",
-    meaning: "その日の作業を切り上げる、終わりにする",
-    example: "We worked hard, so let's call it a day.",
-    exampleJa: "よく働いたから、今日はもう終わりにしよう。",
+    level: "high3",
+    phrase: "on the other hand",
+    emoji: "⚖️",
+    meaning: "一方で、他方では",
+    example: "On the other hand, it is too expensive.",
+    exampleJa: "一方で、それは値段が高すぎる。",
+  },
+  {
+    level: "high3",
+    phrase: "in terms of",
+    emoji: "📊",
+    meaning: "〜の観点から、〜に関して",
+    example: "In terms of cost, this plan is better.",
+    exampleJa: "コストの観点では、この案の方が良い。",
+  },
+  {
+    level: "high3",
+    phrase: "take it for granted",
+    emoji: "🙏",
+    meaning: "それを当然のことと思う",
+    example: "We often take it for granted.",
+    exampleJa: "私たちはそれをよく当然のことと思ってしまう。",
+  },
+  {
+    level: "high3",
+    phrase: "make a difference",
+    emoji: "✨",
+    meaning: "違いを生む、効果がある",
+    example: "Your small help can make a difference.",
+    exampleJa: "あなたの小さな手助けが大きな違いを生む。",
+  },
+  {
+    level: "high3",
+    phrase: "keep in touch",
+    emoji: "📱",
+    meaning: "連絡を取り合う",
+    example: "Let's keep in touch after graduation.",
+    exampleJa: "卒業後も連絡を取り合おう。",
+  },
+  {
+    level: "high3",
+    phrase: "look down on",
+    emoji: "👎",
+    meaning: "〜を見下す",
+    example: "You should never look down on others.",
+    exampleJa: "決して他人を見下してはいけない。",
+  },
+  {
+    level: "high3",
+    phrase: "stand out",
+    emoji: "🌟",
+    meaning: "目立つ、際立つ",
+    example: "You really stand out in a crowd.",
+    exampleJa: "あなたは人混みの中でとても目立つ。",
+  },
+  {
+    level: "high3",
+    phrase: "cut corners",
+    emoji: "✂️",
+    meaning: "手を抜く、（質を落として）近道をする",
+    example: "Don't cut corners on safety.",
+    exampleJa: "安全面で手を抜いてはいけない。",
+  },
+  {
+    level: "high3",
+    phrase: "get over",
+    emoji: "💪",
+    meaning: "（困難・病気などを）乗り越える、立ち直る",
+    example: "It took months to get over the loss.",
+    exampleJa: "その喪失を乗り越えるのに数か月かかった。",
+  },
+  {
+    level: "high3",
+    phrase: "rule of thumb",
+    emoji: "📏",
+    meaning: "経験則、大まかな目安",
+    example: "As a rule of thumb, save ten percent of your income.",
+    exampleJa: "経験則として、収入の10%を貯金しなさい。",
   },
 ];
 
-// ブラウザでは window.IDIOMS、Node（テスト）では module.exports として使える
+// レベルの定義（表示名・順序）
+const LEVELS = [
+  { id: "junior", name: "中学レベル", desc: "基礎・よく使う表現", emoji: "🌱" },
+  { id: "high12", name: "高校1・2年", desc: "標準的な英熟語", emoji: "🌿" },
+  { id: "high3", name: "高校3年・大学1年", desc: "入試・応用レベル", emoji: "🌳" },
+];
+
+// ブラウザでは window のグローバル、Node（テスト）では module.exports として使える
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { IDIOMS };
+  module.exports = { IDIOMS, LEVELS };
 }
