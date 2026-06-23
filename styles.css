@@ -89,6 +89,16 @@ header h1 {
   color: var(--muted);
 }
 
+.level-count {
+  font-size: 0.85rem;
+  color: var(--text);
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+  margin-top: 0.3rem;
+}
+
 .back-btn {
   display: inline-block;
   margin-bottom: 1rem;
@@ -97,6 +107,15 @@ header h1 {
   border: 1px solid #334155;
   padding: 0.4rem 0.9rem;
   font-size: 0.9rem;
+}
+
+.next-set-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  background: var(--accent-2);
+  color: #0f172a;
+  font-weight: 700;
 }
 
 main {
@@ -156,23 +175,21 @@ main {
 }
 
 .card-image {
-  width: 150px;
   height: 150px;
-  margin-bottom: 1rem;
-}
-
-.emoji-fallback {
-  font-size: 5rem;
-  line-height: 1;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.card-image.emoji-fallback {
-  width: auto;
-  height: auto;
+.card-image img {
+  width: 150px;
+  height: 150px;
+}
+
+.card-image.as-emoji {
+  font-size: 5rem;
+  line-height: 1;
 }
 
 .card-phrase {
@@ -241,14 +258,20 @@ button:hover {
 }
 
 .quiz-image {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quiz-image img {
   width: 110px;
   height: 110px;
 }
 
-.quiz-image.emoji-fallback {
-  width: auto;
-  height: auto;
+.quiz-image.as-emoji {
   font-size: 3.5rem;
+  line-height: 1;
 }
 
 .quiz-meaning {
@@ -311,5 +334,140 @@ button:hover {
   border-radius: 20px;
   padding: 2rem;
   margin-top: 1rem;
+  font-size: 1.3rem;
+}
+
+/* ---------- 英熟語バトル ---------- */
+.battle-stage {
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 1.2rem;
+}
+
+.floor-label {
+  display: inline-block;
+  font-weight: 700;
+  color: var(--accent-2);
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  padding: 0.15rem 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.enemy-emoji {
+  font-size: 4.5rem;
+  line-height: 1;
+}
+
+.enemy-name {
+  font-weight: 700;
+  margin: 0.3rem 0 0.6rem;
+}
+
+.hp-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.hp-bar {
+  flex: 1;
+  height: 14px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.hp-fill.enemy {
+  background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+.hp-fill.player {
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+}
+
+.hp-text {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 64px;
+  text-align: right;
+}
+
+.battle-message {
+  text-align: center;
+  font-weight: 700;
+  min-height: 2.6rem;
+  margin: 0.9rem 0;
+}
+
+.player-status {
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.player-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.battle-card {
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+#battle-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+#battle-input {
+  flex: 1;
+  min-width: 160px;
+  font-size: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#battle-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+#battle-attack {
+  background: #f87171;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.battle-over {
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--ng);
+  border-radius: 20px;
+  padding: 2rem;
   font-size: 1.3rem;
 }

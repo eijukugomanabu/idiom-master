@@ -13,6 +13,11 @@ function chunk(array, size) {
   return result;
 }
 
+/** 指定したレベルの熟語だけを取り出す */
+function filterByLevel(idioms, level) {
+  return idioms.filter((item) => item.level === level);
+}
+
 /** 例文の中の phrase を空欄（____）に置き換えて、穴埋め問題文を作る */
 function makeBlank(example, phrase) {
   const re = new RegExp(escapeRegExp(phrase), "i");
@@ -35,5 +40,5 @@ function escapeRegExp(text) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { chunk, makeBlank, isCorrect, normalize };
+  module.exports = { chunk, filterByLevel, makeBlank, isCorrect, normalize };
 }
