@@ -264,15 +264,66 @@
   const battleInput = document.getElementById("battle-input");
   const battleCard = battleForm.parentElement;
   const battleOver = document.getElementById("battle-over");
+  const battleReward = document.getElementById("battle-reward");
+  const rewardGrid = document.getElementById("reward-grid");
 
   let pool = [];
   let playerHp = PLAYER_MAX_HP;
+  let playerMaxHp = PLAYER_MAX_HP;
   let floor = 1;
   let defeated = 0;
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
   let battleIdiom = null;
+
+  // 撃破ごとに選べる効果（ごほうび）。apply() でプレイヤーを強化する。
+  let attackBonus = 0; // 攻撃ダメージに加算
+  let critChance = 0; // 会心（2倍）の確率
+  let damageReduction = 0; // 被ダメージの軽減
+  let lifesteal = 0; // 攻撃成功時の回復量
+
+  const PERKS = [
+    {
+      icon: "⚔️",
+      name: "攻撃アップ",
+      desc: "攻撃ダメージ +6",
+      apply: () => (attackBonus += 6),
+    },
+    {
+      icon: "💥",
+      name: "会心の一撃",
+      desc: "25%の確率でダメージ2倍",
+      apply: () => (critChance += 0.25),
+    },
+    {
+      icon: "🛡️",
+      name: "防御",
+      desc: "受けるダメージ -4",
+      apply: () => (damageReduction += 4),
+    },
+    {
+      icon: "❤️",
+      name: "最大HP+25",
+      desc: "最大HPが25増えて回復",
+      apply: () => {
+        playerMaxHp += 25;
+        playerHp = Math.min(playerMaxHp, playerHp + 25);
+      },
+    },
+    {
+      icon: "✨",
+      name: "回復",
+      desc: "HPを40回復",
+      apply: () => (playerHp = Math.min(playerMaxHp, playerHp + 40)),
+    },
+    {
+      icon: "🩸",
+      name: "吸収",
+      desc: "攻撃するたびHP+4",
+      apply: () => (lifesteal += 4),
+    },
+  ];
 
   function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -283,10 +334,16 @@
 
   function startBattle() {
     pool = filterByLevel(IDIOMS, currentLevel);
+    playerMaxHp = PLAYER_MAX_HP;
     playerHp = PLAYER_MAX_HP;
     floor = 1;
     defeated = 0;
+    attackBonus = 0;
+    critChance = 0;
+    damageReduction = 0;
+    lifesteal = 0;
     battleOver.classList.add("is-hidden");
+    battleReward.classList.add("is-hidden");
     battleCard.classList.remove("is-hidden");
     battleMessage.textContent = "クイズに正解して攻撃しよう！";
     spawnEnemy();
@@ -316,17 +373,21 @@
   function updateBars() {
     enemyHpFill.style.width = Math.max(0, (enemyHp / enemyMaxHp) * 100) + "%";
     enemyHpText.textContent = `${Math.max(0, enemyHp)} / ${enemyMaxHp}`;
-    playerHpFill.style.width = Math.max(0, (playerHp / PLAYER_MAX_HP) * 100) + "%";
-    playerHpText.textContent = `${Math.max(0, playerHp)} / ${PLAYER_MAX_HP}`;
+    playerHpFill.style.width = Math.max(0, (playerHp / playerMaxHp) * 100) + "%";
+    playerHpText.textContent = `${Math.max(0, playerHp)} / ${playerMaxHp}`;
   }
 
   battleForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (battleInput.disabled) return;
     if (isCorrect(battleInput.value, battleIdiom.phrase)) {
-      const dmg = randInt(18, 26);
+      let dmg = randInt(18, 26) + attackBonus;
+      const crit = Math.random() < critChance;
+      if (crit) dmg *= 2;
       enemyHp -= dmg;
-      battleMessage.textContent = `⚔️ 正解！「${battleIdiom.phrase}」で ${dmg} のダメージ！`;
+      if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
+      const critText = crit ? "💥会心の一撃！ " : "";
+      battleMessage.textContent = `⚔️ ${critText}正解！「${battleIdiom.phrase}」で ${dmg} のダメージ！`;
       updateBars();
       if (enemyHp <= 0) {
         onEnemyDefeated();
@@ -334,7 +395,7 @@
         nextBattleQuestion();
       }
     } else {
-      const dmg = 10 + floor * 2;
+      const dmg = Math.max(1, 10 + floor * 2 - damageReduction);
       playerHp -= dmg;
       battleMessage.textContent = `❌ 正解は「${battleIdiom.phrase}」。${currentEnemy.name}の反撃で ${dmg} のダメージ！`;
       updateBars();
@@ -349,12 +410,44 @@
   function onEnemyDefeated() {
     defeated++;
     const beatenName = currentEnemy.name;
-    const heal = 15;
-    playerHp = Math.min(PLAYER_MAX_HP, playerHp + heal);
+    battleInput.disabled = true;
+    showRewards(beatenName);
+  }
+
+  // 撃破後：3つの効果からランダムに提示し、1つ選ばせる
+  function showRewards(beatenName) {
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    battleMessage.textContent = `🎉 ${beatenName}を倒した！ごほうびを選ぼう`;
+
+    const choices = pickThreePerks();
+    rewardGrid.innerHTML = "";
+    choices.forEach((perk) => {
+      const btn = document.createElement("button");
+      btn.className = "reward-card";
+      btn.innerHTML =
+        `<span class="reward-icon">${perk.icon}</span>` +
+        `<span class="reward-name">${perk.name}</span>` +
+        `<span class="reward-desc">${perk.desc}</span>`;
+      btn.addEventListener("click", () => choosePerk(perk));
+      rewardGrid.appendChild(btn);
+    });
+    updateBars();
+  }
+
+  function pickThreePerks() {
+    const shuffled = PERKS.slice().sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  }
+
+  function choosePerk(perk) {
+    perk.apply();
+    battleReward.classList.add("is-hidden");
+    battleCard.classList.remove("is-hidden");
     floor++;
     spawnEnemy();
     nextBattleQuestion();
-    battleMessage.textContent = `🎉 ${beatenName}を倒した！HP+${heal}回復。次は${floor}階（${currentEnemy.name}）！`;
+    battleMessage.textContent = `${perk.icon} ${perk.name}を獲得！次は${floor}階（${currentEnemy.name}）！`;
     updateBars();
   }
 

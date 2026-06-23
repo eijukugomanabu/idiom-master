@@ -471,3 +471,57 @@ button:hover {
   padding: 2rem;
   font-size: 1.3rem;
 }
+
+/* バトルのごほうび（3択） */
+.battle-reward {
+  background: var(--card-bg);
+  border: 1px solid var(--accent-2);
+  border-radius: 20px;
+  padding: 1.2rem;
+}
+
+.reward-title {
+  text-align: center;
+  font-weight: 700;
+  margin: 0 0 0.9rem;
+}
+
+.reward-grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.reward-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-align: left;
+  padding: 0.9rem 1rem;
+  background: var(--bg);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reward-card:hover {
+  border-color: var(--accent-2);
+  transform: translateY(-2px);
+}
+
+.reward-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.reward-name {
+  font-weight: 700;
+  color: var(--accent-2);
+}
+
+.reward-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-left: auto;
+  text-align: right;
+}
