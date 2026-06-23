@@ -2,7 +2,8 @@
  * 英熟語データ
  * 各熟語は以下のフィールドを持つ:
  *   phrase    ... 英熟語（穴埋め問題の正解にもなる）
- *   emoji     ... 意味をイメージしたビジュアル（後でAI生成画像に差し替え可能）
+ *   image     ... 意味をイメージしたイラスト（SVG）のパス
+ *   emoji     ... 画像が無い場合のフォールバック表示
  *   meaning   ... 日本語の意味
  *   example   ... phrase を必ず含む英語の例文
  *   exampleJa ... 例文の日本語訳
@@ -13,6 +14,7 @@
 const IDIOMS = [
   {
     phrase: "break the ice",
+    image: "images/break-the-ice.svg",
     emoji: "🧊",
     meaning: "（初対面などで）緊張をほぐす、打ち解ける",
     example: "He told a joke to break the ice at the meeting.",
@@ -20,6 +22,7 @@ const IDIOMS = [
   },
   {
     phrase: "a piece of cake",
+    image: "images/a-piece-of-cake.svg",
     emoji: "🍰",
     meaning: "とても簡単なこと、朝飯前",
     example: "The test was a piece of cake for her.",
@@ -27,6 +30,7 @@ const IDIOMS = [
   },
   {
     phrase: "hit the books",
+    image: "images/hit-the-books.svg",
     emoji: "📚",
     meaning: "（猛）勉強する",
     example: "I need to hit the books before the exam.",
@@ -34,6 +38,7 @@ const IDIOMS = [
   },
   {
     phrase: "under the weather",
+    image: "images/under-the-weather.svg",
     emoji: "🤒",
     meaning: "体調が悪い、気分がすぐれない",
     example: "I am feeling under the weather today.",
@@ -41,6 +46,7 @@ const IDIOMS = [
   },
   {
     phrase: "once in a blue moon",
+    image: "images/once-in-a-blue-moon.svg",
     emoji: "🌙",
     meaning: "ごくまれに、めったに〜ない",
     example: "We go to the cinema once in a blue moon.",
@@ -48,6 +54,7 @@ const IDIOMS = [
   },
   {
     phrase: "cost an arm and a leg",
+    image: "images/cost-an-arm-and-a-leg.svg",
     emoji: "💸",
     meaning: "大金がかかる、非常に高価である",
     example: "That new phone will cost an arm and a leg.",
@@ -55,6 +62,7 @@ const IDIOMS = [
   },
   {
     phrase: "let the cat out of the bag",
+    image: "images/let-the-cat-out-of-the-bag.svg",
     emoji: "🐱",
     meaning: "うっかり秘密を漏らす",
     example: "Don't let the cat out of the bag about the party.",
@@ -62,6 +70,7 @@ const IDIOMS = [
   },
   {
     phrase: "on the same page",
+    image: "images/on-the-same-page.svg",
     emoji: "📄",
     meaning: "認識が一致している、考えが同じ",
     example: "Let's make sure we are on the same page.",
@@ -69,6 +78,7 @@ const IDIOMS = [
   },
   {
     phrase: "bite the bullet",
+    image: "images/bite-the-bullet.svg",
     emoji: "😬",
     meaning: "嫌なことを覚悟してやる、ぐっとこらえる",
     example: "I decided to bite the bullet and see the dentist.",
@@ -76,6 +86,7 @@ const IDIOMS = [
   },
   {
     phrase: "call it a day",
+    image: "images/call-it-a-day.svg",
     emoji: "🌇",
     meaning: "その日の作業を切り上げる、終わりにする",
     example: "We worked hard, so let's call it a day.",

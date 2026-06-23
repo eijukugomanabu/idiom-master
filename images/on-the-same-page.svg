@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="on the same page">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- back page -->
+  <rect x="58" y="52" width="74" height="96" rx="8" fill="#cbd5e1"/>
+  <!-- front page -->
+  <rect x="78" y="64" width="74" height="96" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+  <!-- text lines (identical) -->
+  <g stroke="#94a3b8" stroke-width="4" stroke-linecap="round">
+    <path d="M90 84 h50"/>
+    <path d="M90 98 h50"/>
+    <path d="M90 112 h36"/>
+  </g>
+  <!-- check badge -->
+  <circle cx="138" cy="146" r="20" fill="#4ade80"/>
+  <path d="M129 146 l6 7 l13 -14" fill="none" stroke="#0f172a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

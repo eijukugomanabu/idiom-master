@@ -4,9 +4,11 @@
 
 ## 機能
 
+最初に **モード選択画面** が表示され、「英熟語を学ぶ」か「文章に当てはめる」かを選んでから始めます。
+
 ### 📇 フラッシュカード（十問ずつ）
 - よく使う英熟語を **10問ずつ** のセットで学習
-- 各カードに意味をイメージしたビジュアル（絵文字イラスト）を表示
+- 各カードに意味を表したオリジナルの**イラスト（SVG画像）**を表示
 - カードをクリックすると裏返り、意味・例文・日本語訳が見られる
 
 ### ✍️ 穴埋め入力
@@ -46,9 +48,10 @@ npm test   # 内部的には node --test
 |----------|------|
 | [index.html](index.html) | 画面の構造 |
 | [styles.css](styles.css) | 見た目 |
-| [idioms.js](idioms.js) | 英熟語データ（意味・例文・絵文字） |
+| [idioms.js](idioms.js) | 英熟語データ（意味・例文・画像パス） |
 | [lib.js](lib.js) | UIに依存しないロジック（分割・穴埋め・採点） |
-| [app.js](app.js) | 画面の操作ロジック |
+| [app.js](app.js) | 画面の操作ロジック（モード切り替え含む） |
+| [images/](images/) | 各熟語のイラスト（SVG画像） |
 | [test/app.test.js](test/app.test.js) | テスト（`npm test` で実行） |
 
 ## 英熟語を追加するには
@@ -58,6 +61,7 @@ npm test   # 内部的には node --test
 ```js
 {
   phrase: "break a leg",
+  image: "images/break-a-leg.svg", // 無い場合は emoji で表示される
   emoji: "🎭",
   meaning: "頑張って、成功を祈る",
   example: "Break a leg in your performance tonight!",
@@ -65,8 +69,10 @@ npm test   # 内部的には node --test
 }
 ```
 
+`images/` に対応する SVG を置くとイラストで表示され、無ければ `emoji` が代わりに表示されます。
+
 ## 今後のアイデア
 
-- 絵文字を AI 生成画像に差し替え
 - 学習の進捗・正答率の保存
 - 音声読み上げ（発音練習）
+- 熟語セットを増やして「次の10問」へ進めるように
