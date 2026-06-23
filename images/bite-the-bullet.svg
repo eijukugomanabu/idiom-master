@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="bite the bullet">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- gritted mouth -->
+  <rect x="52" y="92" width="96" height="44" rx="12" fill="#7f1d1d"/>
+  <rect x="58" y="98" width="84" height="14" rx="4" fill="#f8fafc"/>
+  <rect x="58" y="116" width="84" height="14" rx="4" fill="#f8fafc"/>
+  <g stroke="#cbd5e1" stroke-width="2">
+    <path d="M72 98 v14 M86 98 v14 M100 98 v14 M114 98 v14 M128 98 v14"/>
+    <path d="M72 116 v14 M86 116 v14 M100 116 v14 M114 116 v14 M128 116 v14"/>
+  </g>
+  <!-- bullet held in teeth -->
+  <g transform="rotate(-12 100 114)">
+    <rect x="84" y="106" width="46" height="18" rx="3" fill="#f59e0b"/>
+    <path d="M130 106 q16 9 0 18 Z" fill="#fbbf24"/>
+    <rect x="84" y="106" width="8" height="18" fill="#d97706"/>
+  </g>
+  <!-- effort sweat -->
+  <path d="M150 70 q6 8 0 14 q-6 -6 0 -14 Z" fill="#38bdf8"/>
+</svg>

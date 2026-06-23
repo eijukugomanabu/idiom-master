@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="let the cat out of the bag">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- bag/sack -->
+  <path d="M60 96 q-6 70 40 70 q46 0 40 -70 Z" fill="#b45309" stroke="#92400e" stroke-width="3"/>
+  <!-- bag opening -->
+  <ellipse cx="100" cy="96" rx="40" ry="12" fill="#d97706"/>
+  <path d="M62 96 q38 -18 76 0" fill="none" stroke="#92400e" stroke-width="3"/>
+  <!-- cat popping out -->
+  <g>
+    <path d="M82 70 l8 18 l-18 -6 Z" fill="#64748b"/>      <!-- ear L -->
+    <path d="M118 70 l-8 18 l18 -6 Z" fill="#64748b"/>     <!-- ear R -->
+    <circle cx="100" cy="78" r="22" fill="#94a3b8"/>        <!-- head -->
+    <circle cx="92" cy="76" r="3.5" fill="#0f172a"/>
+    <circle cx="108" cy="76" r="3.5" fill="#0f172a"/>
+    <path d="M97 84 l3 3 l3 -3" fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M82 84 h-12 M82 88 h-10 M118 84 h12 M118 88 h10" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <!-- surprise marks -->
+  <path d="M150 60 v10 M150 76 v2" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
+</svg>

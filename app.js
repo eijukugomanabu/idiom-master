@@ -6,26 +6,55 @@
   const sets = chunk(IDIOMS, CARDS_PER_SET);
   const cards = sets[0] || []; // 今は1セット（10問）。データが増えてもchunkで分割される。
 
-  /* ---------- タブ切り替え ---------- */
-  const tabs = document.querySelectorAll(".tab");
+  /* ---------- 画面（モード）切り替え ---------- */
   const views = {
+    home: document.getElementById("home"),
     flashcards: document.getElementById("flashcards"),
     quiz: document.getElementById("quiz"),
   };
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("is-active"));
-      tab.classList.add("is-active");
-      const mode = tab.dataset.mode;
-      Object.entries(views).forEach(([name, el]) => {
-        el.classList.toggle("is-hidden", name !== mode);
-      });
+
+  function showView(name) {
+    Object.entries(views).forEach(([key, el]) => {
+      el.classList.toggle("is-hidden", key !== name);
+    });
+  }
+
+  // モード選択カード
+  document.querySelectorAll(".mode-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.go;
+      if (target === "flashcards") {
+        renderCard();
+      } else if (target === "quiz") {
+        startQuiz();
+      }
+      showView(target);
     });
   });
 
+  // 「モード選択にもどる」ボタン
+  document.querySelectorAll("[data-back]").forEach((btn) => {
+    btn.addEventListener("click", () => showView("home"));
+  });
+
+  /* ---------- 画像表示（無ければ絵文字でフォールバック） ---------- */
+  function setImage(imgEl, card) {
+    imgEl.src = card.image;
+    imgEl.alt = card.phrase;
+    imgEl.onerror = () => {
+      // SVGが読めない環境では絵文字に切り替える
+      imgEl.replaceWith(
+        Object.assign(document.createElement("div"), {
+          className: imgEl.className + " emoji-fallback",
+          textContent: card.emoji,
+        }),
+      );
+    };
+  }
+
   /* ---------- フラッシュカード ---------- */
   const cardEl = document.getElementById("card");
-  const emojiEl = document.getElementById("card-emoji");
+  const imageEl = document.getElementById("card-image");
   const phraseEl = document.getElementById("card-phrase");
   const meaningEl = document.getElementById("card-meaning");
   const exampleEl = document.getElementById("card-example");
@@ -36,7 +65,7 @@
   function renderCard() {
     const card = cards[index];
     cardEl.classList.remove("is-flipped");
-    emojiEl.textContent = card.emoji;
+    setImage(imageEl, card);
     phraseEl.textContent = card.phrase;
     meaningEl.textContent = card.meaning;
     exampleEl.textContent = card.example;
@@ -55,7 +84,7 @@
   });
 
   /* ---------- 穴埋め入力 ---------- */
-  const quizEmoji = document.getElementById("quiz-emoji");
+  const quizImage = document.getElementById("quiz-image");
   const quizMeaning = document.getElementById("quiz-meaning");
   const quizSentence = document.getElementById("quiz-sentence");
   const quizForm = document.getElementById("quiz-form");
@@ -64,14 +93,25 @@
   const quizNext = document.getElementById("quiz-next");
   const quizProgress = document.getElementById("quiz-progress");
   const quizResult = document.getElementById("quiz-result");
+  const quizCard = quizForm.parentElement;
   let qIndex = 0;
   let score = 0;
   let answered = false;
 
+  // クイズを最初から始める（モード選択から入ったときに呼ぶ）
+  function startQuiz() {
+    qIndex = 0;
+    score = 0;
+    quizCard.classList.remove("is-hidden");
+    quizProgress.classList.remove("is-hidden");
+    quizResult.classList.add("is-hidden");
+    renderQuiz();
+  }
+
   function renderQuiz() {
     const card = cards[qIndex];
     answered = false;
-    quizEmoji.textContent = card.emoji;
+    setImage(quizImage, card);
     quizMeaning.textContent = `ヒント: ${card.meaning}`;
     quizSentence.textContent = makeBlank(card.example, card.phrase);
     quizInput.value = "";
@@ -112,23 +152,15 @@
   });
 
   function showResult() {
-    quizForm.parentElement.classList.add("is-hidden");
+    quizCard.classList.add("is-hidden");
     quizProgress.classList.add("is-hidden");
     quizResult.classList.remove("is-hidden");
     quizResult.innerHTML =
       `🎉 全${cards.length}問終了！<br>スコア: <strong>${score} / ${cards.length}</strong>` +
       `<br><br><button id="quiz-restart">もう一度</button>`;
-    document.getElementById("quiz-restart").addEventListener("click", () => {
-      qIndex = 0;
-      score = 0;
-      quizForm.parentElement.classList.remove("is-hidden");
-      quizProgress.classList.remove("is-hidden");
-      quizResult.classList.add("is-hidden");
-      renderQuiz();
-    });
+    document.getElementById("quiz-restart").addEventListener("click", startQuiz);
   }
 
-  /* ---------- 初期化 ---------- */
-  renderCard();
-  renderQuiz();
+  /* ---------- 初期化：最初はモード選択画面 ---------- */
+  showView("home");
 })();

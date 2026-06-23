@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="hit the books">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- book 1 -->
+  <rect x="48" y="128" width="104" height="22" rx="4" fill="#38bdf8"/>
+  <rect x="48" y="128" width="14" height="22" fill="#0ea5e9"/>
+  <!-- book 2 -->
+  <rect x="56" y="104" width="96" height="22" rx="4" fill="#a78bfa"/>
+  <rect x="56" y="104" width="14" height="22" fill="#7c3aed"/>
+  <!-- book 3 -->
+  <rect x="50" y="80" width="92" height="22" rx="4" fill="#4ade80"/>
+  <rect x="50" y="80" width="14" height="22" fill="#22c55e"/>
+  <!-- top open book -->
+  <path d="M58 78 q42 -18 84 0 l0 -6 q-42 -16 -84 0 Z" fill="#e2e8f0"/>
+  <path d="M100 72 v6" stroke="#94a3b8" stroke-width="2"/>
+  <!-- pencil -->
+  <rect x="120" y="40" width="10" height="40" rx="3" fill="#fbbf24" transform="rotate(20 125 60)"/>
+  <path d="M133 38 l8 6 l-10 6 Z" fill="#f59e0b" transform="rotate(20 134 44)"/>
+</svg>

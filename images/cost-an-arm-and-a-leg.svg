@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="cost an arm and a leg">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- price tag -->
+  <path d="M60 60 L120 60 L150 110 L120 160 L60 160 Z" fill="#f472b6" stroke="#db2777" stroke-width="3"/>
+  <circle cx="78" cy="78" r="9" fill="#0f172a"/>
+  <!-- dollar sign -->
+  <text x="95" y="128" font-family="Arial, sans-serif" font-size="58" font-weight="bold" fill="#fff">$</text>
+  <!-- coins -->
+  <g>
+    <ellipse cx="150" cy="150" rx="22" ry="9" fill="#f59e0b"/>
+    <ellipse cx="150" cy="142" rx="22" ry="9" fill="#fbbf24" stroke="#d97706" stroke-width="2"/>
+    <ellipse cx="150" cy="134" rx="22" ry="9" fill="#fcd34d" stroke="#d97706" stroke-width="2"/>
+  </g>
+  <!-- shine -->
+  <path d="M44 50 l8 -8 M40 70 l-10 -4" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
+</svg>

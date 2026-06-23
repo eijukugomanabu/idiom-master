@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="break the ice">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- ice cube -->
+  <rect x="52" y="72" width="96" height="86" rx="14" fill="#7dd3fc" stroke="#38bdf8" stroke-width="4"/>
+  <rect x="64" y="84" width="16" height="40" rx="8" fill="#e0f2fe" opacity="0.75"/>
+  <!-- crack -->
+  <polyline points="100,72 88,102 106,118 94,158" fill="none" stroke="#0f172a" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- mallet head -->
+  <rect x="120" y="34" width="46" height="18" rx="5" fill="#a78bfa" transform="rotate(35 143 43)"/>
+  <!-- mallet handle -->
+  <rect x="150" y="44" width="11" height="50" rx="5" fill="#7c3aed" transform="rotate(35 155 69)"/>
+  <!-- impact sparks -->
+  <path d="M70 60 l6 -10 M86 56 l2 -12 M104 58 l9 -9" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
+</svg>

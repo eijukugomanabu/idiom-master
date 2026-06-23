@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="under the weather">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- rain cloud -->
+  <g fill="#94a3b8">
+    <circle cx="78" cy="58" r="22"/>
+    <circle cx="108" cy="50" r="26"/>
+    <circle cx="132" cy="62" r="20"/>
+    <rect x="74" y="60" width="64" height="22" rx="11"/>
+  </g>
+  <!-- rain -->
+  <path d="M80 88 l-6 16 M104 90 l-6 16 M128 88 l-6 16" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+  <!-- sick person face -->
+  <circle cx="104" cy="140" r="30" fill="#fcd34d"/>
+  <path d="M92 134 q4 4 8 0 M112 134 q4 4 8 0" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M94 154 q10 -8 20 0" stroke="#0f172a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- thermometer -->
+  <rect x="120" y="146" width="26" height="7" rx="3.5" fill="#e2e8f0" transform="rotate(-20 133 149)"/>
+  <circle cx="121" cy="156" r="6" fill="#ef4444"/>
+</svg>

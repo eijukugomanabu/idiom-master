@@ -12,19 +12,32 @@
       <p class="subtitle">イメージで覚えて、文章で使えるようになる</p>
     </header>
 
-    <nav class="tabs">
-      <button class="tab is-active" data-mode="flashcards">📇 フラッシュカード</button>
-      <button class="tab" data-mode="quiz">✍️ 穴埋め入力</button>
-    </nav>
-
     <main>
+      <!-- モード選択（最初の画面） -->
+      <section id="home" class="view">
+        <p class="home-lead">今日は何をしますか？</p>
+        <div class="mode-grid">
+          <button class="mode-card" data-go="flashcards">
+            <span class="mode-icon">📇</span>
+            <span class="mode-title">英熟語を学ぶ</span>
+            <span class="mode-desc">フラッシュカードでイメージと一緒に覚える</span>
+          </button>
+          <button class="mode-card" data-go="quiz">
+            <span class="mode-icon">✍️</span>
+            <span class="mode-title">文章に当てはめる</span>
+            <span class="mode-desc">学んだ熟語を例文の空欄に入力する</span>
+          </button>
+        </div>
+      </section>
+
       <!-- フラッシュカード -->
-      <section id="flashcards" class="view">
+      <section id="flashcards" class="view is-hidden">
+        <button class="back-btn" data-back>← モード選択にもどる</button>
         <div class="progress" id="card-progress"></div>
         <div class="card" id="card">
           <div class="card-inner">
             <div class="card-face card-front">
-              <div class="card-emoji" id="card-emoji"></div>
+              <img class="card-image" id="card-image" alt="" />
               <div class="card-phrase" id="card-phrase"></div>
               <p class="card-hint">カードをクリックで意味を表示</p>
             </div>
@@ -43,9 +56,10 @@
 
       <!-- 穴埋め入力 -->
       <section id="quiz" class="view is-hidden">
+        <button class="back-btn" data-back>← モード選択にもどる</button>
         <div class="progress" id="quiz-progress"></div>
         <div class="quiz-card">
-          <div class="quiz-emoji" id="quiz-emoji"></div>
+          <img class="quiz-image" id="quiz-image" alt="" />
           <p class="quiz-meaning" id="quiz-meaning"></p>
           <p class="quiz-sentence" id="quiz-sentence"></p>
           <form id="quiz-form" autocomplete="off">

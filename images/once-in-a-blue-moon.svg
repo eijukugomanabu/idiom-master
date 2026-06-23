@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="once in a blue moon">
+  <rect width="200" height="200" rx="24" fill="#0f172a"/>
+  <!-- night sky glow -->
+  <circle cx="100" cy="100" r="80" fill="#1e293b"/>
+  <!-- blue crescent moon -->
+  <path d="M120 40 a60 60 0 1 0 0 120 a46 46 0 0 1 0 -120 Z" fill="#60a5fa"/>
+  <!-- craters -->
+  <circle cx="96" cy="74" r="8" fill="#3b82f6" opacity="0.6"/>
+  <circle cx="86" cy="110" r="11" fill="#3b82f6" opacity="0.6"/>
+  <circle cx="104" cy="128" r="6" fill="#3b82f6" opacity="0.6"/>
+  <!-- stars -->
+  <g fill="#fde68a">
+    <path d="M150 70 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 Z"/>
+    <path d="M48 120 l2.5 6 l6 2.5 l-6 2.5 l-2.5 6 l-2.5 -6 l-6 -2.5 l6 -2.5 Z"/>
+    <circle cx="58" cy="62" r="3"/>
+    <circle cx="142" cy="138" r="3"/>
+  </g>
+</svg>
