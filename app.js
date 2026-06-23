@@ -236,7 +236,8 @@
   }
 
   /* ---------- 英熟語バトル（ローグライク） ---------- */
-  const PLAYER_MAX_HP = 100;
+  const BASE_MAX_HP = 100;
+  const MAX_FLOOR = 100;
   const ENEMIES = [
     { emoji: "🐀", name: "ねずみ" },
     { emoji: "🦇", name: "こうもり" },
@@ -247,8 +248,30 @@
     { emoji: "👻", name: "ゆうれい" },
     { emoji: "🧟", name: "ゾンビ" },
     { emoji: "👹", name: "おに" },
+    { emoji: "👺", name: "てんぐ" },
+    { emoji: "🦈", name: "サメ" },
   ];
   const BOSS = { emoji: "🐉", name: "ドラゴン" };
+  const FINAL_BOSS = { emoji: "🐲", name: "魔王" };
+
+  // 装備スロット（各スロットは1つのステータスを強化する）
+  const SLOTS = [
+    { id: "weapon", icon: "⚔️", name: "剣", stat: "attack" },
+    { id: "head", icon: "🪖", name: "兜", stat: "defense" },
+    { id: "body", icon: "👕", name: "鎧", stat: "maxHp" },
+    { id: "legs", icon: "👖", name: "ズボン", stat: "maxHp" },
+    { id: "shoes", icon: "👟", name: "靴", stat: "crit" },
+  ];
+  // スロットごとの基準値（レア度倍率を掛けて最終値にする）
+  const SLOT_BASE = { weapon: 4, head: 2, body: 12, legs: 8, shoes: 0.03 };
+  // レア度（5段階。高いほど効果が大きい）
+  const RARITIES = [
+    { id: "common", name: "コモン", color: "#94a3b8", mult: 1 },
+    { id: "uncommon", name: "アンコモン", color: "#4ade80", mult: 1.7 },
+    { id: "rare", name: "レア", color: "#38bdf8", mult: 2.5 },
+    { id: "epic", name: "エピック", color: "#a78bfa", mult: 3.5 },
+    { id: "legendary", name: "レジェンダリー", color: "#fbbf24", mult: 5 },
+  ];
 
   const floorLabel = document.getElementById("floor-label");
   const enemyEmoji = document.getElementById("enemy-emoji");
@@ -265,11 +288,13 @@
   const battleCard = battleForm.parentElement;
   const battleOver = document.getElementById("battle-over");
   const battleReward = document.getElementById("battle-reward");
+  const rewardTitle = document.getElementById("reward-title");
   const rewardGrid = document.getElementById("reward-grid");
+  const equipPanel = document.getElementById("equip-panel");
 
   let pool = [];
-  let playerHp = PLAYER_MAX_HP;
-  let playerMaxHp = PLAYER_MAX_HP;
+  let playerHp = BASE_MAX_HP;
+  let playerMaxHp = BASE_MAX_HP;
   let floor = 1;
   let defeated = 0;
   let enemyHp = 0;
@@ -277,52 +302,23 @@
   let currentEnemy = null;
   let battleIdiom = null;
 
-  // 撃破ごとに選べる効果（ごほうび）。apply() でプレイヤーを強化する。
+  // パーク（敵撃破ごとの3択強化）
   let attackBonus = 0; // 攻撃ダメージに加算
   let critChance = 0; // 会心（2倍）の確率
   let damageReduction = 0; // 被ダメージの軽減
   let lifesteal = 0; // 攻撃成功時の回復量
+  let perkMaxHpBonus = 0; // 最大HP加算（パーク由来）
+
+  // 装備（各スロットにアイテム or null。5階ごとの宝箱で入手）
+  const equipment = { weapon: null, head: null, body: null, legs: null, shoes: null };
 
   const PERKS = [
-    {
-      icon: "⚔️",
-      name: "攻撃アップ",
-      desc: "攻撃ダメージ +6",
-      apply: () => (attackBonus += 6),
-    },
-    {
-      icon: "💥",
-      name: "会心の一撃",
-      desc: "25%の確率でダメージ2倍",
-      apply: () => (critChance += 0.25),
-    },
-    {
-      icon: "🛡️",
-      name: "防御",
-      desc: "受けるダメージ -4",
-      apply: () => (damageReduction += 4),
-    },
-    {
-      icon: "❤️",
-      name: "最大HP+25",
-      desc: "最大HPが25増えて回復",
-      apply: () => {
-        playerMaxHp += 25;
-        playerHp = Math.min(playerMaxHp, playerHp + 25);
-      },
-    },
-    {
-      icon: "✨",
-      name: "回復",
-      desc: "HPを40回復",
-      apply: () => (playerHp = Math.min(playerMaxHp, playerHp + 40)),
-    },
-    {
-      icon: "🩸",
-      name: "吸収",
-      desc: "攻撃するたびHP+4",
-      apply: () => (lifesteal += 4),
-    },
+    { icon: "⚔️", name: "攻撃アップ", desc: "攻撃ダメージ +6", apply: () => (attackBonus += 6) },
+    { icon: "💥", name: "会心の一撃", desc: "25%の確率でダメージ2倍", apply: () => (critChance += 0.25) },
+    { icon: "🛡️", name: "防御", desc: "受けるダメージ -4", apply: () => (damageReduction += 4) },
+    { icon: "❤️", name: "最大HP+25", desc: "最大HPが25増えて回復", apply: () => (perkMaxHpBonus += 25) },
+    { icon: "✨", name: "回復", desc: "HPを40回復", apply: () => (playerHp = Math.min(playerMaxHp, playerHp + 40)) },
+    { icon: "🩸", name: "吸収", desc: "攻撃するたびHP+4", apply: () => (lifesteal += 4) },
   ];
 
   function randInt(min, max) {
@@ -332,31 +328,64 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
+  // 装備の合計ステータス
+  function sumEquip(stat) {
+    let total = 0;
+    for (const id in equipment) {
+      const it = equipment[id];
+      if (it && it.stat === stat) total += it.value;
+    }
+    return total;
+  }
+  function effAttack() {
+    return attackBonus + sumEquip("attack");
+  }
+  function effDefense() {
+    return damageReduction + sumEquip("defense");
+  }
+  function effCrit() {
+    return critChance + sumEquip("crit");
+  }
+  // 最大HP（基本＋パーク＋装備）を再計算し、増えた分は回復する
+  function recomputeMaxHp() {
+    const newMax = BASE_MAX_HP + perkMaxHpBonus + sumEquip("maxHp");
+    const delta = newMax - playerMaxHp;
+    playerMaxHp = newMax;
+    if (delta > 0) playerHp = Math.min(playerMaxHp, playerHp + delta);
+    else playerHp = Math.min(playerHp, playerMaxHp);
+  }
+
   function startBattle() {
     pool = filterByLevel(IDIOMS, currentLevel);
-    playerMaxHp = PLAYER_MAX_HP;
-    playerHp = PLAYER_MAX_HP;
     floor = 1;
     defeated = 0;
     attackBonus = 0;
     critChance = 0;
     damageReduction = 0;
     lifesteal = 0;
+    perkMaxHpBonus = 0;
+    for (const id in equipment) equipment[id] = null;
+    playerMaxHp = BASE_MAX_HP;
+    playerHp = BASE_MAX_HP;
     battleOver.classList.add("is-hidden");
     battleReward.classList.add("is-hidden");
     battleCard.classList.remove("is-hidden");
     battleMessage.textContent = "クイズに正解して攻撃しよう！";
+    renderEquipPanel();
     spawnEnemy();
     nextBattleQuestion();
     updateBars();
   }
 
   function spawnEnemy() {
-    const isBoss = floor % 5 === 0;
-    currentEnemy = isBoss ? BOSS : randomOf(ENEMIES);
-    enemyMaxHp = (isBoss ? 60 : 28) + floor * 10;
+    const isFinal = floor >= MAX_FLOOR;
+    const isBoss = floor % 10 === 0;
+    currentEnemy = isFinal ? FINAL_BOSS : isBoss ? BOSS : randomOf(ENEMIES);
+    const base = isFinal ? 140 : isBoss ? 70 : 22;
+    enemyMaxHp = Math.round((base + floor * 6) * (isBoss || isFinal ? 1.4 : 1));
     enemyHp = enemyMaxHp;
-    floorLabel.textContent = `${floor}階` + (isBoss ? "（ボス）" : "");
+    floorLabel.textContent =
+      `${floor}/${MAX_FLOOR}階` + (isFinal ? "（最終ボス）" : isBoss ? "（ボス）" : "");
     enemyEmoji.textContent = currentEnemy.emoji;
     enemyName.textContent = currentEnemy.name;
   }
@@ -381,8 +410,8 @@
     e.preventDefault();
     if (battleInput.disabled) return;
     if (isCorrect(battleInput.value, battleIdiom.phrase)) {
-      let dmg = randInt(18, 26) + attackBonus;
-      const crit = Math.random() < critChance;
+      let dmg = randInt(16, 24) + effAttack();
+      const crit = Math.random() < effCrit();
       if (crit) dmg *= 2;
       enemyHp -= dmg;
       if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
@@ -395,7 +424,7 @@
         nextBattleQuestion();
       }
     } else {
-      const dmg = Math.max(1, 10 + floor * 2 - damageReduction);
+      const dmg = Math.max(1, 8 + floor - effDefense());
       playerHp -= dmg;
       battleMessage.textContent = `❌ 正解は「${battleIdiom.phrase}」。${currentEnemy.name}の反撃で ${dmg} のダメージ！`;
       updateBars();
@@ -411,16 +440,22 @@
     defeated++;
     const beatenName = currentEnemy.name;
     battleInput.disabled = true;
-    showRewards(beatenName);
+    if (floor >= MAX_FLOOR) {
+      onGameClear();
+    } else if (floor % 5 === 0) {
+      showTreasure(beatenName); // 5階ごとは宝箱（装備）
+    } else {
+      showPerks(beatenName); // それ以外はパーク
+    }
   }
 
-  // 撃破後：3つの効果からランダムに提示し、1つ選ばせる
-  function showRewards(beatenName) {
+  /* --- 撃破後その1：パーク3択 --- */
+  function showPerks(beatenName) {
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
     battleMessage.textContent = `🎉 ${beatenName}を倒した！ごほうびを選ぼう`;
-
-    const choices = pickThreePerks();
+    rewardTitle.textContent = "🎁 ごほうびを1つ選ぼう";
+    const choices = PERKS.slice().sort(() => Math.random() - 0.5).slice(0, 3);
     rewardGrid.innerHTML = "";
     choices.forEach((perk) => {
       const btn = document.createElement("button");
@@ -435,28 +470,137 @@
     updateBars();
   }
 
-  function pickThreePerks() {
-    const shuffled = PERKS.slice().sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
-  }
-
   function choosePerk(perk) {
     perk.apply();
+    recomputeMaxHp();
+    advanceFloor(`${perk.icon} ${perk.name}を獲得！`);
+  }
+
+  /* --- 撃破後その2：宝箱（装備3択） --- */
+  function rollRarityIndex() {
+    const f = floor;
+    const weights = [
+      Math.max(1, 60 - f), // コモン
+      35, // アンコモン
+      8 + f * 0.5, // レア
+      2 + f * 0.4, // エピック
+      Math.max(0, f * 0.2 - 1), // レジェンダリー
+    ];
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < weights.length; i++) {
+      r -= weights[i];
+      if (r < 0) return i;
+    }
+    return 0;
+  }
+
+  function makeItem() {
+    const slot = randomOf(SLOTS);
+    const rarity = RARITIES[rollRarityIndex()];
+    const base = SLOT_BASE[slot.id];
+    const value =
+      slot.stat === "crit"
+        ? Math.round(base * rarity.mult * 100) / 100
+        : Math.round(base * rarity.mult);
+    return {
+      slot: slot.id,
+      slotIcon: slot.icon,
+      slotName: slot.name,
+      stat: slot.stat,
+      value,
+      rarityName: rarity.name,
+      color: rarity.color,
+    };
+  }
+
+  function statLabel(item) {
+    if (item.stat === "attack") return `攻撃 +${item.value}`;
+    if (item.stat === "defense") return `防御 +${item.value}`;
+    if (item.stat === "maxHp") return `最大HP +${item.value}`;
+    if (item.stat === "crit") return `会心 +${Math.round(item.value * 100)}%`;
+    return "";
+  }
+
+  function showTreasure(beatenName) {
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    battleMessage.textContent = `🎁 ${beatenName}を倒した！宝箱を発見！`;
+    rewardTitle.textContent = "🎁 宝箱！装備を1つ選ぼう";
+    const items = [makeItem(), makeItem(), makeItem()];
+    rewardGrid.innerHTML = "";
+    items.forEach((item) => {
+      const btn = document.createElement("button");
+      btn.className = "reward-card";
+      btn.style.borderColor = item.color;
+      btn.innerHTML =
+        `<span class="reward-icon">${item.slotIcon}</span>` +
+        `<span class="reward-name" style="color:${item.color}">${item.rarityName}の${item.slotName}</span>` +
+        `<span class="reward-desc">${statLabel(item)}</span>`;
+      btn.addEventListener("click", () => chooseEquip(item));
+      rewardGrid.appendChild(btn);
+    });
+    updateBars();
+  }
+
+  function chooseEquip(item) {
+    equipment[item.slot] = item; // 同じスロットは新しい装備に置き換わる
+    recomputeMaxHp();
+    renderEquipPanel();
+    advanceFloor(`${item.rarityName}の${item.slotName}を装備！`);
+  }
+
+  function renderEquipPanel() {
+    equipPanel.innerHTML = "";
+    SLOTS.forEach((slot) => {
+      const item = equipment[slot.id];
+      const cell = document.createElement("div");
+      cell.className = "equip-slot";
+      if (item) {
+        cell.style.borderColor = item.color;
+        const v = item.stat === "crit" ? `${Math.round(item.value * 100)}%` : `${item.value}`;
+        cell.innerHTML =
+          `<span class="equip-icon">${slot.icon}</span>` +
+          `<span class="equip-val" style="color:${item.color}">+${v}</span>`;
+      } else {
+        cell.innerHTML =
+          `<span class="equip-icon dim">${slot.icon}</span>` +
+          `<span class="equip-val dim">—</span>`;
+      }
+      equipPanel.appendChild(cell);
+    });
+  }
+
+  /* --- 階を進める（パーク／宝箱のあと共通） --- */
+  function advanceFloor(prefix) {
     battleReward.classList.add("is-hidden");
     battleCard.classList.remove("is-hidden");
     floor++;
     spawnEnemy();
     nextBattleQuestion();
-    battleMessage.textContent = `${perk.icon} ${perk.name}を獲得！次は${floor}階（${currentEnemy.name}）！`;
+    battleMessage.textContent = `${prefix} 次は${floor}階（${currentEnemy.name}）！`;
     updateBars();
   }
 
   function onGameOver() {
     battleInput.disabled = true;
     battleCard.classList.add("is-hidden");
+    battleReward.classList.add("is-hidden");
     battleOver.classList.remove("is-hidden");
     battleOver.innerHTML =
-      `💀 ゲームオーバー<br>到達: <strong>${floor}階</strong>　撃破: <strong>${defeated}体</strong>` +
+      `💀 ゲームオーバー<br>到達: <strong>${floor}/${MAX_FLOOR}階</strong>　撃破: <strong>${defeated}体</strong>` +
+      `<br><br><button id="battle-restart">もう一度挑戦</button>`;
+    document.getElementById("battle-restart").addEventListener("click", startBattle);
+    updateBars();
+  }
+
+  function onGameClear() {
+    battleInput.disabled = true;
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.add("is-hidden");
+    battleOver.classList.remove("is-hidden");
+    battleOver.innerHTML =
+      `👑 全${MAX_FLOOR}階クリア！おめでとう！<br>魔王を倒した！　撃破: <strong>${defeated}体</strong>` +
       `<br><br><button id="battle-restart">もう一度挑戦</button>`;
     document.getElementById("battle-restart").addEventListener("click", startBattle);
     updateBars();
