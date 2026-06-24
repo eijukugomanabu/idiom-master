@@ -5,6 +5,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert");
 const { IDIOMS, LEVELS } = require("../idioms.js");
+const { EQUIPMENT } = require("../equipment.js");
 const { chunk, filterByLevel, makeBlank, isCorrect, normalize } = require("../lib.js");
 
 test("十分な数の熟語がある（土台）", () => {
@@ -51,6 +52,29 @@ test("filterByLevel は指定レベルの熟語だけを返す", () => {
   const junior = filterByLevel(IDIOMS, "junior");
   assert.ok(junior.length > 0);
   assert.ok(junior.every((i) => i.level === "junior"));
+});
+
+test("装備カタログ：各装備が正しいスロット・レア度・効果を持つ", () => {
+  const slots = new Set(["weapon", "head", "body", "legs", "shoes"]);
+  const rarities = new Set(["common", "uncommon", "rare", "epic", "legendary"]);
+  assert.ok(EQUIPMENT.length >= 30, `装備数=${EQUIPMENT.length}`);
+  for (const item of EQUIPMENT) {
+    assert.ok(slots.has(item.slot), `不明なスロット: ${item.slot}（${item.name}）`);
+    assert.ok(rarities.has(item.rarity), `不明なレア度: ${item.rarity}（${item.name}）`);
+    assert.ok(item.name && item.desc, `名前/説明が無い装備があります`);
+    assert.ok(item.fx && typeof item.fx === "object", `${item.name} に fx がありません`);
+  }
+});
+
+test("装備カタログ：各レア度に最低1つ装備がある", () => {
+  for (const r of ["common", "uncommon", "rare", "epic", "legendary"]) {
+    assert.ok(EQUIPMENT.some((e) => e.rarity === r), `${r} の装備が無い`);
+  }
+});
+
+test("装備カタログ：装備名に重複がない", () => {
+  const names = EQUIPMENT.map((e) => e.name);
+  assert.strictEqual(new Set(names).size, names.length);
 });
 
 test("chunk は配列を指定サイズずつに分割する", () => {
