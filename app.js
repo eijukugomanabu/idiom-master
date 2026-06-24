@@ -254,23 +254,23 @@
   const BOSS = { emoji: "🐉", name: "ドラゴン" };
   const FINAL_BOSS = { emoji: "🐲", name: "魔王" };
 
-  // 装備スロット（各スロットは1つのステータスを強化する）
+  // 装備スロット
   const SLOTS = [
-    { id: "weapon", icon: "⚔️", name: "剣", stat: "attack" },
-    { id: "head", icon: "🪖", name: "兜", stat: "defense" },
-    { id: "body", icon: "👕", name: "鎧", stat: "maxHp" },
-    { id: "legs", icon: "👖", name: "ズボン", stat: "maxHp" },
-    { id: "shoes", icon: "👟", name: "靴", stat: "crit" },
+    { id: "weapon", icon: "⚔️", name: "剣" },
+    { id: "head", icon: "🪖", name: "兜" },
+    { id: "body", icon: "👕", name: "鎧" },
+    { id: "legs", icon: "👖", name: "ズボン" },
+    { id: "shoes", icon: "👟", name: "靴" },
   ];
-  // スロットごとの基準値（レア度倍率を掛けて最終値にする）
-  const SLOT_BASE = { weapon: 4, head: 2, body: 12, legs: 8, shoes: 0.03 };
-  // レア度（5段階。高いほど効果が大きい）
+  const SLOT_META = {};
+  SLOTS.forEach((s) => (SLOT_META[s.id] = s));
+  // レア度（5段階。深い階ほど高レアが出やすい）
   const RARITIES = [
-    { id: "common", name: "コモン", color: "#94a3b8", mult: 1 },
-    { id: "uncommon", name: "アンコモン", color: "#4ade80", mult: 1.7 },
-    { id: "rare", name: "レア", color: "#38bdf8", mult: 2.5 },
-    { id: "epic", name: "エピック", color: "#a78bfa", mult: 3.5 },
-    { id: "legendary", name: "レジェンダリー", color: "#fbbf24", mult: 5 },
+    { id: "common", name: "コモン", color: "#94a3b8" },
+    { id: "uncommon", name: "アンコモン", color: "#4ade80" },
+    { id: "rare", name: "レア", color: "#38bdf8" },
+    { id: "epic", name: "エピック", color: "#a78bfa" },
+    { id: "legendary", name: "レジェンダリー", color: "#fbbf24" },
   ];
 
   const floorLabel = document.getElementById("floor-label");
@@ -309,6 +309,14 @@
   let lifesteal = 0; // 攻撃成功時の回復量
   let perkMaxHpBonus = 0; // 最大HP加算（パーク由来）
 
+  // 撃破・階・与ダメによる累積ボーナスと一時フラグ
+  let bonusAtk = 0;
+  let bonusDef = 0;
+  let bonusMaxHp = 0;
+  let bonusCrit = 0;
+  let reviveUsed = false;
+  let enemyIsBoss = false;
+
   // 装備（各スロットにアイテム or null。5階ごとの宝箱で入手）
   const equipment = { weapon: null, head: null, body: null, legs: null, shoes: null };
 
@@ -328,29 +336,68 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  // 装備の合計ステータス
-  function sumEquip(stat) {
-    let total = 0;
-    for (const id in equipment) {
-      const it = equipment[id];
-      if (it && it.stat === stat) total += it.value;
-    }
-    return total;
+  // ===== 効果エンジン（装備の fx を解釈） =====
+  function equippedItems() {
+    return Object.values(equipment).filter(Boolean);
+  }
+  function sumFx(key) {
+    let t = 0;
+    for (const it of equippedItems()) if (typeof it.fx[key] === "number") t += it.fx[key];
+    return t;
+  }
+  function maxFx(key) {
+    let m = 0;
+    for (const it of equippedItems()) if (typeof it.fx[key] === "number") m = Math.max(m, it.fx[key]);
+    return m;
+  }
+  function hasFx(key) {
+    return equippedItems().some((it) => it.fx[key]);
+  }
+  function condList(key) {
+    const arr = [];
+    for (const it of equippedItems()) if (it.fx[key]) arr.push(it.fx[key]);
+    return arr;
+  }
+
+  function baseAtk() {
+    return attackBonus + sumFx("atk") + bonusAtk;
+  }
+  function baseDef() {
+    return damageReduction + sumFx("def") + bonusDef;
+  }
+  function critTotal() {
+    return critChance + sumFx("crit") + bonusCrit;
   }
   function effAttack() {
-    return attackBonus + sumEquip("attack");
+    let a = baseAtk();
+    a += baseDef() * sumFx("convDefToAtk");
+    a += playerHp * sumFx("convCurHpToAtk");
+    return Math.max(0, Math.round(a));
   }
   function effDefense() {
-    return damageReduction + sumEquip("defense");
+    let d = baseDef();
+    d += baseAtk() * sumFx("convAtkToDef");
+    return Math.max(0, Math.round(d));
   }
-  function effCrit() {
-    return critChance + sumEquip("crit");
+  // 攻撃の倍率（HP割合・ボス・敵HPなどの条件）
+  function attackMultiplier() {
+    let mult = 1;
+    const hpRatio = playerMaxHp > 0 ? playerHp / playerMaxHp : 1;
+    for (const c of condList("lowHpAtk")) if (hpRatio <= c.th) mult += c.pct;
+    const scaleMax = maxFx("scalingLowHpAtk");
+    if (scaleMax > 0) mult += (1 - hpRatio) * scaleMax;
+    if (enemyIsBoss) mult += sumFx("bossAtk");
+    const enemyRatio = enemyMaxHp > 0 ? enemyHp / enemyMaxHp : 1;
+    for (const c of condList("lowEnemyAtk")) if (enemyRatio <= c.th) mult += c.pct;
+    return mult;
   }
-  // 最大HP（基本＋パーク＋装備）を再計算し、増えた分は回復する
+  // 最大HPを再計算（基本＋パーク＋装備＋累積＋変換）。増えた分は回復する。
   function recomputeMaxHp() {
-    const newMax = BASE_MAX_HP + perkMaxHpBonus + sumEquip("maxHp");
-    const delta = newMax - playerMaxHp;
-    playerMaxHp = newMax;
+    let m = BASE_MAX_HP + perkMaxHpBonus + sumFx("maxHp") + bonusMaxHp;
+    m += baseDef() * sumFx("convDefToHp");
+    m = Math.max(1, Math.round(m));
+    const delta = m - playerMaxHp;
+    playerMaxHp = m;
     if (delta > 0) playerHp = Math.min(playerMaxHp, playerHp + delta);
     else playerHp = Math.min(playerHp, playerMaxHp);
   }
@@ -364,6 +411,11 @@
     damageReduction = 0;
     lifesteal = 0;
     perkMaxHpBonus = 0;
+    bonusAtk = 0;
+    bonusDef = 0;
+    bonusMaxHp = 0;
+    bonusCrit = 0;
+    reviveUsed = false;
     for (const id in equipment) equipment[id] = null;
     playerMaxHp = BASE_MAX_HP;
     playerHp = BASE_MAX_HP;
@@ -380,6 +432,7 @@
   function spawnEnemy() {
     const isFinal = floor >= MAX_FLOOR;
     const isBoss = floor % 10 === 0;
+    enemyIsBoss = isFinal || isBoss;
     currentEnemy = isFinal ? FINAL_BOSS : isBoss ? BOSS : randomOf(ENEMIES);
     const base = isFinal ? 140 : isBoss ? 70 : 22;
     enemyMaxHp = Math.round((base + floor * 6) * (isBoss || isFinal ? 1.4 : 1));
@@ -409,35 +462,111 @@
   battleForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (battleInput.disabled) return;
-    if (isCorrect(battleInput.value, battleIdiom.phrase)) {
-      let dmg = randInt(16, 24) + effAttack();
-      const crit = Math.random() < effCrit();
-      if (crit) dmg *= 2;
-      enemyHp -= dmg;
-      if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
-      const critText = crit ? "💥会心の一撃！ " : "";
-      battleMessage.textContent = `⚔️ ${critText}正解！「${battleIdiom.phrase}」で ${dmg} のダメージ！`;
-      updateBars();
-      if (enemyHp <= 0) {
-        onEnemyDefeated();
-      } else {
-        nextBattleQuestion();
-      }
+    const phrase = battleIdiom.phrase;
+    if (isCorrect(battleInput.value, phrase)) {
+      attackEnemy(phrase);
     } else {
-      const dmg = Math.max(1, 8 + floor - effDefense());
-      playerHp -= dmg;
-      battleMessage.textContent = `❌ 正解は「${battleIdiom.phrase}」。${currentEnemy.name}の反撃で ${dmg} のダメージ！`;
-      updateBars();
-      if (playerHp <= 0) {
-        onGameOver();
-      } else {
-        nextBattleQuestion();
-      }
+      enemyAttack(phrase);
     }
   });
 
+  // 正解 → 敵を攻撃
+  function attackEnemy(phrase) {
+    let hit = Math.round((randInt(16, 24) + effAttack()) * attackMultiplier());
+    const crit = Math.random() < critTotal();
+    if (crit) hit *= 2;
+    const hits = hasFx("extraHit") ? 2 : 1;
+    let dealt = 0;
+    let note = "";
+    if (hasFx("instakill") && Math.random() < sumFx("instakill")) {
+      enemyHp = 0;
+      note = "⚡即死！ ";
+    } else {
+      for (let h = 0; h < hits; h++) {
+        enemyHp -= hit;
+        dealt += hit;
+      }
+      const execTh = maxFx("execute");
+      if (execTh > 0 && enemyHp > 0 && enemyHp <= enemyMaxHp * execTh) {
+        enemyHp = 0;
+        note = "☠️処刑！ ";
+      }
+    }
+    const dToAtk = sumFx("damageToAtkPct");
+    if (dToAtk > 0) bonusAtk += Math.floor(dealt * dToAtk);
+    if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
+    const flair = (crit ? "💥会心！ " : "") + (hits > 1 ? "2回攻撃！ " : "");
+    battleMessage.textContent = note
+      ? `${note}「${phrase}」で敵を倒した！`
+      : `⚔️ ${flair}「${phrase}」で ${dealt} のダメージ！`;
+    updateBars();
+    if (enemyHp <= 0) onEnemyDefeated();
+    else nextBattleQuestion();
+  }
+
+  // 不正解 → 敵の反撃
+  function enemyAttack(phrase) {
+    let incoming = Math.max(1, 8 + floor - effDefense());
+    const dodgeP = Math.min(0.9, sumFx("dodge"));
+    if (dodgeP > 0 && Math.random() < dodgeP) {
+      battleMessage.textContent = `❌ 正解は「${phrase}」。でも回避！ ダメージ0`;
+      updateBars();
+      nextBattleQuestion();
+      return;
+    }
+    let reduce = sumFx("damageReducePct");
+    for (const c of condList("damageReduceLowHp")) {
+      if (playerHp / playerMaxHp <= c.th) reduce += c.pct;
+    }
+    reduce = Math.min(0.95, reduce);
+    const reflectDmg = Math.round(incoming * sumFx("reflect"));
+    incoming = Math.max(0, Math.round(incoming * (1 - reduce)));
+    playerHp -= incoming;
+    if (reflectDmg > 0) enemyHp -= reflectDmg;
+    battleMessage.textContent =
+      `❌ 正解は「${phrase}」。${currentEnemy.name}の反撃で ${incoming} のダメージ！` +
+      (reflectDmg > 0 ? `（${reflectDmg} 反射）` : "");
+    updateBars();
+    if (enemyHp <= 0) {
+      onEnemyDefeated();
+      return;
+    }
+    if (playerHp <= 0) {
+      const revivePct = maxFx("revive");
+      if (revivePct > 0 && !reviveUsed) {
+        reviveUsed = true;
+        playerHp = Math.max(1, Math.round(playerMaxHp * revivePct));
+        battleMessage.textContent = `💫 復活！ HP ${playerHp} で立ち上がった！`;
+        updateBars();
+        nextBattleQuestion();
+      } else {
+        onGameOver();
+      }
+    } else {
+      nextBattleQuestion();
+    }
+  }
+
   function onEnemyDefeated() {
     defeated++;
+    // 撃破時の効果
+    bonusAtk += sumFx("killAtk");
+    bonusDef += sumFx("killDef");
+    bonusMaxHp += sumFx("killMaxHp");
+    const killAll = sumFx("killAll");
+    if (killAll) {
+      bonusAtk += killAll;
+      bonusDef += killAll;
+      bonusMaxHp += killAll;
+    }
+    const killMaxHpPct = sumFx("killMaxHpPct");
+    if (killMaxHpPct) bonusMaxHp += Math.round(playerMaxHp * killMaxHpPct);
+    recomputeMaxHp();
+    let heal = sumFx("killHeal");
+    const healPct = sumFx("killHealPct");
+    if (healPct) heal += Math.round(playerMaxHp * healPct);
+    if (heal) playerHp = Math.min(playerMaxHp, playerHp + heal);
+
     const beatenName = currentEnemy.name;
     battleInput.disabled = true;
     if (floor >= MAX_FLOOR) {
@@ -496,30 +625,17 @@
   }
 
   function makeItem() {
-    const slot = randomOf(SLOTS);
     const rarity = RARITIES[rollRarityIndex()];
-    const base = SLOT_BASE[slot.id];
-    const value =
-      slot.stat === "crit"
-        ? Math.round(base * rarity.mult * 100) / 100
-        : Math.round(base * rarity.mult);
+    const candidates = EQUIPMENT.filter((e) => e.rarity === rarity.id);
+    const tmpl = randomOf(candidates);
     return {
-      slot: slot.id,
-      slotIcon: slot.icon,
-      slotName: slot.name,
-      stat: slot.stat,
-      value,
+      slot: tmpl.slot,
+      name: tmpl.name,
+      desc: tmpl.desc,
+      fx: tmpl.fx,
       rarityName: rarity.name,
       color: rarity.color,
     };
-  }
-
-  function statLabel(item) {
-    if (item.stat === "attack") return `攻撃 +${item.value}`;
-    if (item.stat === "defense") return `防御 +${item.value}`;
-    if (item.stat === "maxHp") return `最大HP +${item.value}`;
-    if (item.stat === "crit") return `会心 +${Math.round(item.value * 100)}%`;
-    return "";
   }
 
   function showTreasure(beatenName) {
@@ -534,9 +650,9 @@
       btn.className = "reward-card";
       btn.style.borderColor = item.color;
       btn.innerHTML =
-        `<span class="reward-icon">${item.slotIcon}</span>` +
-        `<span class="reward-name" style="color:${item.color}">${item.rarityName}の${item.slotName}</span>` +
-        `<span class="reward-desc">${statLabel(item)}</span>`;
+        `<span class="reward-icon">${SLOT_META[item.slot].icon}</span>` +
+        `<span class="reward-name" style="color:${item.color}">${item.name}</span>` +
+        `<span class="reward-desc">【${item.rarityName}】${item.desc}</span>`;
       btn.addEventListener("click", () => chooseEquip(item));
       rewardGrid.appendChild(btn);
     });
@@ -547,7 +663,16 @@
     equipment[item.slot] = item; // 同じスロットは新しい装備に置き換わる
     recomputeMaxHp();
     renderEquipPanel();
-    advanceFloor(`${item.rarityName}の${item.slotName}を装備！`);
+    advanceFloor(`${item.name}を装備！`);
+  }
+
+  // 装備パネル用の短い表示（基本ステータスがあれば数値、特殊効果は★）
+  function shortTag(item) {
+    const f = item.fx;
+    if (f.atk) return `⚔${f.atk}`;
+    if (f.def) return `🛡${f.def}`;
+    if (f.maxHp) return `❤${f.maxHp}`;
+    return "★";
   }
 
   function renderEquipPanel() {
@@ -558,10 +683,10 @@
       cell.className = "equip-slot";
       if (item) {
         cell.style.borderColor = item.color;
-        const v = item.stat === "crit" ? `${Math.round(item.value * 100)}%` : `${item.value}`;
+        cell.title = `${item.name}：${item.desc}`;
         cell.innerHTML =
           `<span class="equip-icon">${slot.icon}</span>` +
-          `<span class="equip-val" style="color:${item.color}">+${v}</span>`;
+          `<span class="equip-val" style="color:${item.color}">${shortTag(item)}</span>`;
       } else {
         cell.innerHTML =
           `<span class="equip-icon dim">${slot.icon}</span>` +
@@ -576,6 +701,17 @@
     battleReward.classList.add("is-hidden");
     battleCard.classList.remove("is-hidden");
     floor++;
+    // 階を進む（＝レベルアップ）効果
+    bonusAtk += sumFx("floorAtk");
+    bonusDef += sumFx("floorDef");
+    bonusMaxHp += sumFx("floorMaxHp");
+    const floorAll = sumFx("floorAll");
+    if (floorAll) {
+      bonusAtk += floorAll;
+      bonusDef += floorAll;
+      bonusMaxHp += floorAll;
+    }
+    recomputeMaxHp();
     spawnEnemy();
     nextBattleQuestion();
     battleMessage.textContent = `${prefix} 次は${floor}階（${currentEnemy.name}）！`;
