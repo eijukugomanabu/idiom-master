@@ -559,3 +559,136 @@ button:hover {
   margin-left: auto;
   text-align: right;
 }
+
+/* ===================================================== */
+/* UI 洗練（おしゃれ強化）— 既存スタイルに上乗せ */
+/* ===================================================== */
+:root {
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.28);
+  --glow-accent: 0 0 0 1px rgba(56, 189, 248, 0.25), 0 0 22px rgba(56, 189, 248, 0.22);
+  --ring: #3b4a63;
+}
+
+body {
+  background:
+    radial-gradient(1100px 520px at 50% -8%, rgba(56, 189, 248, 0.13), transparent 60%),
+    radial-gradient(820px 460px at 100% 4%, rgba(167, 139, 250, 0.12), transparent 55%),
+    radial-gradient(circle at top, #1e293b, var(--bg));
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+header {
+  padding-top: 2.4rem;
+}
+header h1 {
+  letter-spacing: 0.015em;
+  filter: drop-shadow(0 3px 20px rgba(56, 189, 248, 0.28));
+}
+
+/* カード類に奥行きと締まった枠線 */
+.card-face,
+.quiz-card,
+.battle-stage,
+.player-status,
+.battle-card,
+.battle-reward,
+.quiz-result,
+.battle-over,
+.mode-card {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--ring);
+}
+
+.mode-card {
+  position: relative;
+  overflow: hidden;
+}
+.mode-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(167, 139, 250, 0.08));
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.mode-card:hover {
+  box-shadow: var(--shadow), var(--glow-accent);
+  transform: translateY(-4px);
+}
+.mode-card:hover::before {
+  opacity: 1;
+}
+
+/* ボタンの押し心地 */
+button {
+  transition: transform 0.12s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+button:hover {
+  box-shadow: var(--shadow-sm);
+}
+button:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* 主要ボタンはグラデーションで強調 */
+#quiz-submit,
+#battle-attack {
+  background-image: linear-gradient(135deg, #38bdf8, #6366f1);
+  border: none;
+  color: #f8fafc;
+}
+.next-set-btn {
+  background-image: linear-gradient(135deg, #a78bfa, #6366f1);
+  border: none;
+  color: #f8fafc;
+}
+
+/* 入力欄フォーカスを光らせる */
+#quiz-input:focus,
+#battle-input:focus {
+  box-shadow: var(--glow-accent);
+}
+
+/* 見出し・カードの文字に軽い発光 */
+.card-phrase {
+  text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+}
+.mode-title,
+.reward-name {
+  letter-spacing: 0.01em;
+}
+
+/* HPバーに内側の影とツヤ */
+.hp-bar {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+.hp-fill {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12) inset;
+}
+
+/* 敵の絵文字をふわっと上下に */
+.enemy-emoji {
+  animation: floaty 3s ease-in-out infinite;
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* 進捗ラベル・チップを少し上品に */
+.level-count,
+.floor-label {
+  box-shadow: var(--shadow-sm);
+}
+
+/* ビューの切り替えをふわっと */
+.view:not(.is-hidden) {
+  animation: fadeIn 0.28s ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
