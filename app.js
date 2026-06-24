@@ -297,6 +297,7 @@
   let playerMaxHp = BASE_MAX_HP;
   let floor = 1;
   let defeated = 0;
+  let wrongCount = 0; // 間違えた回数（バトル中）
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -406,6 +407,7 @@
     pool = filterByLevel(IDIOMS, currentLevel);
     floor = 1;
     defeated = 0;
+    wrongCount = 0;
     attackBonus = 0;
     critChance = 0;
     damageReduction = 0;
@@ -506,6 +508,7 @@
 
   // 不正解 → 敵の反撃
   function enemyAttack(phrase) {
+    wrongCount++;
     let incoming = Math.max(1, 8 + floor - effDefense());
     const dodgeP = Math.min(0.9, sumFx("dodge"));
     if (dodgeP > 0 && Math.random() < dodgeP) {
@@ -725,6 +728,7 @@
     battleOver.classList.remove("is-hidden");
     battleOver.innerHTML =
       `💀 ゲームオーバー<br>到達: <strong>${floor}/${MAX_FLOOR}階</strong>　撃破: <strong>${defeated}体</strong>` +
+      `<br>間違えた回数: <strong>${wrongCount}回</strong>` +
       `<br><br><button id="battle-restart">もう一度挑戦</button>`;
     document.getElementById("battle-restart").addEventListener("click", startBattle);
     updateBars();
@@ -737,6 +741,7 @@
     battleOver.classList.remove("is-hidden");
     battleOver.innerHTML =
       `👑 全${MAX_FLOOR}階クリア！おめでとう！<br>魔王を倒した！　撃破: <strong>${defeated}体</strong>` +
+      `<br>間違えた回数: <strong>${wrongCount}回</strong>` +
       `<br><br><button id="battle-restart">もう一度挑戦</button>`;
     document.getElementById("battle-restart").addEventListener("click", startBattle);
     updateBars();
