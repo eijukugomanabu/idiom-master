@@ -309,6 +309,7 @@
   const rewardTitle = document.getElementById("reward-title");
   const rewardGrid = document.getElementById("reward-grid");
   const equipPanel = document.getElementById("equip-panel");
+  const comboBadge = document.getElementById("combo-badge");
 
   let pool = [];
   let playerHp = BASE_MAX_HP;
@@ -316,6 +317,7 @@
   let floor = 1;
   let defeated = 0;
   let wrongCount = 0; // 間違えた回数（バトル中）
+  let combo = 0; // 連続正解数（コンボ。1問でも間違えると0に戻る）
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -426,6 +428,7 @@
     floor = 1;
     defeated = 0;
     wrongCount = 0;
+    combo = 0;
     attackBonus = 0;
     critChance = 0;
     damageReduction = 0;
@@ -444,6 +447,7 @@
     battleCard.classList.remove("is-hidden");
     battleMessage.textContent = "クイズに正解して攻撃しよう！";
     renderEquipPanel();
+    updateComboDisplay();
     spawnEnemy();
     nextBattleQuestion();
     updateBars();
@@ -479,6 +483,16 @@
     playerHpText.textContent = `${Math.max(0, playerHp)} / ${playerMaxHp}`;
   }
 
+  // コンボ（連続正解数）の表示。1以上で敵の右上に出す。
+  function updateComboDisplay() {
+    if (combo >= 1) {
+      comboBadge.classList.remove("is-hidden");
+      comboBadge.textContent = `🔥 ${combo} コンボ`;
+    } else {
+      comboBadge.classList.add("is-hidden");
+    }
+  }
+
   battleForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (battleInput.disabled) return;
@@ -492,7 +506,11 @@
 
   // 正解 → 敵を攻撃
   function attackEnemy(phrase) {
-    let hit = Math.round((randInt(16, 24) + effAttack()) * attackMultiplier());
+    combo++; // 連続正解でコンボが伸びる
+    updateComboDisplay();
+    // 1コンボごとに攻撃力 ×1.1（コンボ数の累乗）
+    const comboMult = Math.pow(1.1, combo);
+    let hit = Math.round((randInt(16, 24) + effAttack()) * attackMultiplier() * comboMult);
     const crit = Math.random() < critTotal();
     if (crit) hit *= 2;
     const hits = hasFx("extraHit") ? 2 : 1;
@@ -515,7 +533,8 @@
     const dToAtk = sumFx("damageToAtkPct");
     if (dToAtk > 0) bonusAtk += Math.floor(dealt * dToAtk);
     if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
-    const flair = (crit ? "💥会心！ " : "") + (hits > 1 ? "2回攻撃！ " : "");
+    const flair =
+      (combo >= 2 ? `🔥${combo}コンボ ` : "") + (crit ? "💥会心！ " : "") + (hits > 1 ? "2回攻撃！ " : "");
     battleMessage.textContent = note
       ? `${note}「${phrase}」で敵を倒した！`
       : `⚔️ ${flair}「${phrase}」で ${dealt} のダメージ！`;
@@ -527,6 +546,8 @@
   // 不正解 → 敵の反撃
   function enemyAttack(phrase) {
     wrongCount++;
+    combo = 0; // 間違えるとコンボはリセット
+    updateComboDisplay();
     let incoming = Math.max(1, 8 + floor - effDefense());
     const dodgeP = Math.min(0.9, sumFx("dodge"));
     if (dodgeP > 0 && Math.random() < dodgeP) {
