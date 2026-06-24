@@ -716,3 +716,26 @@ header {
 .music-toggle:hover {
   border-color: var(--accent);
 }
+
+/* コンボ（連続正解数）バッジ — 敵ステージの右上 */
+.battle-stage {
+  position: relative;
+}
+.combo-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fb923c;
+  background: #0f172a;
+  border: 1px solid #f59e0b;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  box-shadow: 0 0 14px rgba(251, 146, 60, 0.35);
+  animation: comboPop 0.25s ease;
+}
+@keyframes comboPop {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
