@@ -24,6 +24,24 @@
     Object.entries(views).forEach(([key, el]) => {
       el.classList.toggle("is-hidden", key !== name);
     });
+    // バトル画面のときだけBGMを鳴らす
+    if (typeof Music !== "undefined") {
+      if (name === "battle") Music.start();
+      else Music.stop();
+    }
+  }
+
+  // BGMのオン/オフボタン
+  const musicToggle = document.getElementById("music-toggle");
+  if (musicToggle && typeof Music !== "undefined") {
+    const updateMusicIcon = () => {
+      musicToggle.textContent = Music.isMuted() ? "🔇" : "🔊";
+    };
+    updateMusicIcon();
+    musicToggle.addEventListener("click", () => {
+      Music.toggle();
+      updateMusicIcon();
+    });
   }
 
   /* ---------- ① レベル選択 ---------- */
