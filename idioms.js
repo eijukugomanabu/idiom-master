@@ -765,6 +765,82 @@ const LEVELS = [
   { id: "high3", name: "高校3年・大学1年", desc: "入試・応用レベル", emoji: "🌳" },
 ];
 
+// ===== 似た意味の別解（ニュアンスが近い言い換えも正解にする）=====
+// 同じグループ内の語は、互いに「別解」として受け入れられる。
+// （グループ内の語のうち、実際の熟語(phrase)に一致するものへ accept が付く。
+//   熟語でない語＝単なる受け入れワードとして使える）
+const SYNONYM_GROUPS = [
+  ["for example", "for instance"],
+  ["look for", "search for"],
+  ["a lot of", "lots of", "plenty of", "many", "much", "a number of"],
+  ["give up", "give in", "quit"],
+  ["in spite of", "regardless of", "despite"],
+  ["as a result", "therefore", "consequently", "as a consequence"],
+  ["take care of", "look after", "care for"],
+  ["throw away", "get rid of", "discard", "dispose of"],
+  ["show up", "turn up", "appear"],
+  ["come across", "run into", "bump into"],
+  ["put off", "postpone", "delay"],
+  ["deal with", "cope with", "handle"],
+  ["take place", "happen", "occur"],
+  ["by the way", "incidentally"],
+  ["of course", "certainly", "sure", "naturally"],
+  ["in fact", "as a matter of fact", "actually", "in reality"],
+  ["for good", "forever", "permanently"],
+  ["once in a while", "sometimes", "occasionally", "now and then", "from time to time"],
+  ["once in a blue moon", "rarely", "seldom", "hardly ever"],
+  ["calm down", "relax", "settle down"],
+  ["figure out", "work out", "make out"],
+  ["look up to", "respect", "admire"],
+  ["look down on", "despise", "scorn"],
+  ["make up your mind", "make a decision", "decide"],
+  ["get along with", "get on with"],
+  ["in addition to", "as well as", "besides"],
+  ["instead of", "rather than", "in place of"],
+  ["according to", "based on"],
+  ["bring up", "raise", "mention"],
+  ["call off", "cancel"],
+  ["carry on", "keep on", "go on", "continue"],
+  ["catch up", "keep up"],
+  ["cut down", "reduce", "cut back"],
+  ["depend on", "count on", "rely on"],
+  ["focus on", "concentrate on"],
+  ["hand in", "submit", "turn in"],
+  ["hang out", "spend time"],
+  ["hold on", "hang on", "wait"],
+  ["look into", "investigate", "examine"],
+  ["move on", "proceed"],
+  ["pass away", "die", "pass on"],
+  ["pay attention", "concentrate"],
+  ["put up with", "tolerate", "stand", "endure", "bear"],
+  ["take after", "resemble"],
+  ["take over", "take control"],
+  ["turn down", "reject", "refuse", "decline"],
+  ["all of a sudden", "suddenly", "all at once"],
+  ["on purpose", "deliberately", "intentionally"],
+  ["take part in", "participate in", "join"],
+  ["as soon as possible", "right away", "asap", "immediately", "at once"],
+  ["make up for", "compensate for"],
+  ["take advantage of", "exploit", "make use of"],
+  ["come up with", "think of", "devise"],
+  ["point out", "indicate"],
+  ["turn out", "end up", "wind up", "prove to be"],
+  ["find out", "discover", "learn"],
+  ["look like", "resemble", "seem like"],
+];
+
+const ACCEPTED_ALTERNATIVES = {};
+SYNONYM_GROUPS.forEach((group) => {
+  group.forEach((phrase) => {
+    ACCEPTED_ALTERNATIVES[phrase] = group.filter((other) => other !== phrase);
+  });
+});
+IDIOMS.forEach((idiom) => {
+  if (ACCEPTED_ALTERNATIVES[idiom.phrase]) {
+    idiom.accept = ACCEPTED_ALTERNATIVES[idiom.phrase];
+  }
+});
+
 // ブラウザでは window のグローバル、Node（テスト）では module.exports として使える
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { IDIOMS, LEVELS };

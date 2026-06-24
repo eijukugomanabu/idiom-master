@@ -29,6 +29,21 @@ function isCorrect(input, phrase) {
   return normalize(input) === normalize(phrase);
 }
 
+/**
+ * 入力が熟語の正解、または「似た意味の別解（idiom.accept）」に一致するか。
+ * ニュアンスが近い言い換えも正解として受け入れる。
+ */
+function matchesIdiom(input, idiom) {
+  const n = normalize(input);
+  if (n === normalize(idiom.phrase)) return true;
+  if (Array.isArray(idiom.accept)) {
+    for (const alt of idiom.accept) {
+      if (n === normalize(alt)) return true;
+    }
+  }
+  return false;
+}
+
 /** 比較用に文字列を正規化する */
 function normalize(text) {
   return String(text).trim().toLowerCase().replace(/\s+/g, " ");
@@ -40,5 +55,5 @@ function escapeRegExp(text) {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { chunk, filterByLevel, makeBlank, isCorrect, normalize };
+  module.exports = { chunk, filterByLevel, makeBlank, isCorrect, matchesIdiom, normalize };
 }
