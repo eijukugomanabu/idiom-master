@@ -216,7 +216,7 @@
     const card = cards[qIndex];
     answered = true;
     quizInput.disabled = true;
-    if (isCorrect(quizInput.value, card.phrase)) {
+    if (matchesIdiom(quizInput.value, card)) {
       score++;
       quizFeedback.textContent = "⭕️ 正解！";
       quizFeedback.className = "quiz-feedback ok";
@@ -483,7 +483,7 @@
     e.preventDefault();
     if (battleInput.disabled) return;
     const phrase = battleIdiom.phrase;
-    if (isCorrect(battleInput.value, phrase)) {
+    if (matchesIdiom(battleInput.value, battleIdiom)) {
       attackEnemy(phrase);
     } else {
       enemyAttack(phrase);
