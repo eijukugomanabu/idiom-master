@@ -310,6 +310,7 @@
   const rewardGrid = document.getElementById("reward-grid");
   const equipPanel = document.getElementById("equip-panel");
   const comboBadge = document.getElementById("combo-badge");
+  const battleStage = document.querySelector("#battle .battle-stage");
 
   let pool = [];
   let playerHp = BASE_MAX_HP;
@@ -485,6 +486,26 @@
     playerHpText.textContent = `${Math.max(0, playerHp)} / ${playerMaxHp}`;
   }
 
+  // 与えたダメージ数を敵の上にポップ表示する
+  function showDamage(amount, crit) {
+    if (!battleStage) return;
+    const el = document.createElement("div");
+    el.className = "dmg-float" + (crit ? " crit" : "");
+    el.textContent = typeof amount === "number" ? amount.toLocaleString("en-US") : amount;
+    battleStage.appendChild(el);
+    setTimeout(() => el.remove(), 850);
+  }
+
+  // 攻撃時に敵を揺らす
+  function shakeEnemy() {
+    enemyEmoji.classList.remove("shake");
+    void enemyEmoji.offsetWidth; // リフローしてアニメを再起動
+    enemyEmoji.classList.add("shake");
+    enemyEmoji.addEventListener("animationend", () => enemyEmoji.classList.remove("shake"), {
+      once: true,
+    });
+  }
+
   // コンボ（連続正解数）の表示。1以上で敵の右上に出す。
   function updateComboDisplay() {
     if (combo >= 1) {
@@ -541,6 +562,8 @@
       ? `${note}「${phrase}」で敵を倒した！`
       : `⚔️ ${flair}「${phrase}」で ${dealt} のダメージ！`;
     updateBars();
+    shakeEnemy();
+    showDamage(dealt > 0 ? dealt : "⚡", crit);
     if (enemyHp <= 0) onEnemyDefeated();
     else nextBattleQuestion();
   }

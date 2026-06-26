@@ -739,3 +739,39 @@ header {
   from { transform: scale(0.7); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* 攻撃演出：ダメージ数のポップ＆敵の揺れ */
+.dmg-float {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  transform: translateX(-50%);
+  font-weight: 800;
+  font-size: 1.7rem;
+  color: #fbbf24;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 5;
+  animation: dmgFloat 0.85s ease-out forwards;
+}
+.dmg-float.crit {
+  font-size: 2.2rem;
+  color: #f87171;
+}
+@keyframes dmgFloat {
+  0% { opacity: 0; transform: translate(-50%, 6px) scale(0.6); }
+  20% { opacity: 1; transform: translate(-50%, -6px) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -52px) scale(1); }
+}
+
+.enemy-emoji.shake {
+  animation: enemyShake 0.4s ease;
+}
+@keyframes enemyShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  15% { transform: translateX(-9px) rotate(-5deg); }
+  30% { transform: translateX(8px) rotate(5deg); }
+  45% { transform: translateX(-7px) rotate(-4deg); }
+  60% { transform: translateX(6px) rotate(3deg); }
+  75% { transform: translateX(-3px) rotate(-1deg); }
+}
