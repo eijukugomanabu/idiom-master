@@ -459,7 +459,9 @@
     enemyIsBoss = isFinal || isBoss;
     currentEnemy = isFinal ? FINAL_BOSS : isBoss ? BOSS : randomOf(ENEMIES);
     const base = isFinal ? 140 : isBoss ? 70 : 22;
-    enemyMaxHp = Math.round((base + floor * 6) * (isBoss || isFinal ? 1.4 : 1));
+    // 10階上がるごとに敵HPを10倍にする（1〜10階は×1、11〜20階は×10、…91〜100階は×10^9）
+    const hpScale = Math.pow(10, Math.floor((floor - 1) / 10));
+    enemyMaxHp = Math.round((base + floor * 6) * (isBoss || isFinal ? 1.4 : 1) * hpScale);
     enemyHp = enemyMaxHp;
     floorLabel.textContent =
       `${floor}/${MAX_FLOOR}階` + (isFinal ? "（最終ボス）" : isBoss ? "（ボス）" : "");
