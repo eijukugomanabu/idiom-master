@@ -803,3 +803,28 @@ header {
   0% { opacity: 0; transform: scale(1.14); filter: blur(7px); }
   100% { opacity: 1; transform: scale(1); filter: blur(0); }
 }
+
+/* 所持コイン（敵ステージ左上） */
+.coin-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fcd34d;
+  background: #0f172a;
+  border: 1px solid #d97706;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  box-shadow: 0 0 12px rgba(252, 211, 77, 0.25);
+}
+
+/* ショップ等で買えない選択肢は淡くする */
+.reward-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.reward-card:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
