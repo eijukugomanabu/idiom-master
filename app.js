@@ -799,46 +799,84 @@
     renderShop();
   }
 
+  // ショップ用の共通ヘルパー
+  function shopSection(label) {
+    const d = document.createElement("div");
+    d.className = "shop-section";
+    d.textContent = label;
+    rewardGrid.appendChild(d);
+  }
+  function shopButton(icon, name, desc, disabled, onClick, color) {
+    const btn = document.createElement("button");
+    btn.className = "reward-card";
+    if (color) btn.style.borderColor = color;
+    btn.disabled = !!disabled;
+    btn.innerHTML =
+      `<span class="reward-icon">${icon}</span>` +
+      `<span class="reward-name"${color ? ` style="color:${color}"` : ""}>${name}</span>` +
+      `<span class="reward-desc">${desc}</span>`;
+    if (!disabled && onClick) btn.addEventListener("click", onClick);
+    rewardGrid.appendChild(btn);
+  }
+
+  const REROLL_COST = 10;
+  const STAT_UPGRADES = [
+    { icon: "⚔️", name: "攻撃 +10", price: 30, apply: () => (bonusAtk += 10) },
+    { icon: "❤️", name: "最大HP +50", price: 30, apply: () => (perkMaxHpBonus += 50) },
+    { icon: "🛡️", name: "防御 +5", price: 30, apply: () => (bonusDef += 5) },
+    { icon: "💥", name: "会心 +5%", price: 40, apply: () => (bonusCrit += 0.05) },
+  ];
+
+  function sellValue(item) {
+    return Math.max(5, Math.floor((SHOP_PRICE[item.rarity] || 30) * 0.5));
+  }
+
   function renderShop() {
-    battleMessage.textContent = "🏪 ショップ：買い物をして次の階へ";
     rewardTitle.textContent = `🏪 ショップ　🪙 ${coins}`;
     rewardGrid.innerHTML = "";
 
+    // 装備を買う＋リロール
+    shopSection("🛒 装備を買う");
     shopStock.forEach((stock, i) => {
       const { item, price, bought } = stock;
-      const btn = document.createElement("button");
-      btn.className = "reward-card";
-      btn.style.borderColor = item.color;
-      btn.disabled = bought || coins < price;
-      btn.innerHTML =
-        `<span class="reward-icon">${SLOT_META[item.slot].icon}</span>` +
-        `<span class="reward-name" style="color:${item.color}">${item.name}</span>` +
-        `<span class="reward-desc">${bought ? "✅購入済み" : "🪙" + price + "・" + item.desc}</span>`;
-      if (!btn.disabled) btn.addEventListener("click", () => buyEquip(i));
-      rewardGrid.appendChild(btn);
+      shopButton(
+        SLOT_META[item.slot].icon,
+        item.name,
+        bought ? "✅購入済み" : `🪙${price}・${item.desc}`,
+        bought || coins < price,
+        () => buyEquip(i),
+        item.color,
+      );
+    });
+    shopButton("🔄", "在庫を引き直す", `🪙${REROLL_COST}`, coins < REROLL_COST, () => reroll());
+
+    // ステータス強化（永続）
+    shopSection("💪 ステータス強化（このプレイ中ずっと有効）");
+    STAT_UPGRADES.forEach((u) => {
+      shopButton(u.icon, u.name, `🪙${u.price}`, coins < u.price, () => buyUpgrade(u));
     });
 
-    // HP全回復
-    const healPrice = Math.max(20, floor * 4);
-    const healBtn = document.createElement("button");
-    healBtn.className = "reward-card";
-    healBtn.disabled = coins < healPrice || playerHp >= playerMaxHp;
-    healBtn.innerHTML =
-      `<span class="reward-icon">🍖</span>` +
-      `<span class="reward-name">HP全回復</span>` +
-      `<span class="reward-desc">🪙${healPrice}</span>`;
-    if (!healBtn.disabled) healBtn.addEventListener("click", () => buyHeal(healPrice));
-    rewardGrid.appendChild(healBtn);
+    // 装備を売る
+    const equipped = SLOTS.filter((s) => equipment[s.id]);
+    if (equipped.length) {
+      shopSection("💰 装備を売る");
+      equipped.forEach((s) => {
+        const it = equipment[s.id];
+        shopButton(s.icon, it.name, `売る 🪙+${sellValue(it)}`, false, () => sellEquip(s.id), it.color);
+      });
+    }
 
-    // 退店
-    const leave = document.createElement("button");
-    leave.className = "reward-card";
-    leave.innerHTML =
-      `<span class="reward-icon">➡️</span>` +
-      `<span class="reward-name">次の階へ進む</span>` +
-      `<span class="reward-desc">ショップを出る</span>`;
-    leave.addEventListener("click", () => advanceFloor("ショップを出た！"));
-    rewardGrid.appendChild(leave);
+    // その他（回復・退店）
+    shopSection("🛟 その他");
+    const healPrice = Math.max(20, floor * 4);
+    shopButton(
+      "🍖",
+      "HP全回復",
+      `🪙${healPrice}`,
+      coins < healPrice || playerHp >= playerMaxHp,
+      () => buyHeal(healPrice),
+    );
+    shopButton("➡️", "次の階へ進む", "ショップを出る", false, () => advanceFloor("ショップを出た！"));
     updateBars();
   }
 
@@ -860,6 +898,41 @@
     playerHp = playerMaxHp;
     updateCoinDisplay();
     updateBars();
+    renderShop();
+  }
+
+  // 在庫を引き直す（手数料）
+  function reroll() {
+    if (coins < REROLL_COST) return;
+    coins -= REROLL_COST;
+    shopStock = [makeItem(), makeItem(), makeItem()].map((it) => ({
+      item: it,
+      price: SHOP_PRICE[it.rarity] || 30,
+      bought: false,
+    }));
+    updateCoinDisplay();
+    renderShop();
+  }
+
+  // コインでステータスを永続強化
+  function buyUpgrade(u) {
+    if (coins < u.price) return;
+    coins -= u.price;
+    u.apply();
+    recomputeMaxHp();
+    updateCoinDisplay();
+    renderShop();
+  }
+
+  // 装備を売ってコインにする
+  function sellEquip(slotId) {
+    const it = equipment[slotId];
+    if (!it) return;
+    coins += sellValue(it);
+    equipment[slotId] = null;
+    recomputeMaxHp();
+    renderEquipPanel();
+    updateCoinDisplay();
     renderShop();
   }
 
