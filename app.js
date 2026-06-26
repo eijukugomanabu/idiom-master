@@ -324,6 +324,7 @@
   const equipPanel = document.getElementById("equip-panel");
   const comboBadge = document.getElementById("combo-badge");
   const battleStage = document.querySelector("#battle .battle-stage");
+  const coinBadge = document.getElementById("coin-badge");
 
   let pool = [];
   let playerHp = BASE_MAX_HP;
@@ -332,6 +333,7 @@
   let defeated = 0;
   let wrongCount = 0; // 間違えた回数（バトル中）
   let combo = 0; // 連続正解数（コンボ。1問でも間違えると0に戻る）
+  let coins = 0; // 所持コイン（敵撃破でランダム入手、ショップで使う）
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -443,6 +445,7 @@
     defeated = 0;
     wrongCount = 0;
     combo = 0;
+    coins = 0;
     attackBonus = 0;
     critChance = 0;
     damageReduction = 0;
@@ -462,6 +465,7 @@
     battleMessage.textContent = "クイズに正解して攻撃しよう！";
     renderEquipPanel();
     updateComboDisplay();
+    updateCoinDisplay();
     spawnEnemy();
     nextBattleQuestion();
     updateBars();
@@ -517,6 +521,11 @@
     enemyEmoji.addEventListener("animationend", () => enemyEmoji.classList.remove("shake"), {
       once: true,
     });
+  }
+
+  // 所持コインの表示（敵ステージ左上）
+  function updateCoinDisplay() {
+    if (coinBadge) coinBadge.textContent = `🪙 ${coins.toLocaleString("en-US")}`;
   }
 
   // コンボ（連続正解数）の表示。1以上で敵の右上に出す。
@@ -647,12 +656,17 @@
     if (healPct) heal += Math.round(playerMaxHp * healPct);
     if (heal) playerHp = Math.min(playerMaxHp, playerHp + heal);
 
+    // コインをランダム入手（階が上がるほど増える）
+    const coinGain = randInt(3, 7) + Math.floor(floor * 1.5);
+    coins += coinGain;
+    updateCoinDisplay();
+
     const beatenName = currentEnemy.name;
     battleInput.disabled = true;
     if (floor >= MAX_FLOOR) {
       onGameClear();
     } else if (floor % 5 === 0) {
-      showTreasure(beatenName); // 5階ごとは宝箱（装備）
+      showCheckpoint(beatenName, coinGain); // 5階ごとは「武器 or ショップ」
     } else {
       showPerks(beatenName); // それ以外はパーク
     }
@@ -713,6 +727,7 @@
       name: tmpl.name,
       desc: tmpl.desc,
       fx: tmpl.fx,
+      rarity: rarity.id,
       rarityName: rarity.name,
       color: rarity.color,
     };
@@ -744,6 +759,108 @@
     recomputeMaxHp();
     renderEquipPanel();
     advanceFloor(`${item.name}を装備！`);
+  }
+
+  /* --- 5階チェックポイント：武器（装備）かショップを選ぶ --- */
+  function showCheckpoint(beatenName, coinGain) {
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    battleMessage.textContent = `🏁 ${beatenName}を倒した！ 🪙+${coinGain}`;
+    rewardTitle.textContent = `🏁 どちらにする？（🪙 ${coins}）`;
+    rewardGrid.innerHTML = "";
+    const opt = (icon, name, desc, onClick) => {
+      const btn = document.createElement("button");
+      btn.className = "reward-card";
+      btn.innerHTML =
+        `<span class="reward-icon">${icon}</span>` +
+        `<span class="reward-name">${name}</span>` +
+        `<span class="reward-desc">${desc}</span>`;
+      btn.addEventListener("click", onClick);
+      rewardGrid.appendChild(btn);
+    };
+    opt("🎁", "武器を得る", "装備を3択から1つ無料でゲット", () => showTreasure(beatenName));
+    opt("🏪", "ショップ", `コインで装備や回復を買う（🪙 ${coins}）`, () => showShop());
+    updateBars();
+  }
+
+  /* --- ショップ（コインで購入） --- */
+  const SHOP_PRICE = { common: 15, uncommon: 35, rare: 80, epic: 180, legendary: 450 };
+  let shopStock = [];
+
+  function showShop() {
+    // 在庫を3つ生成（ショップにいる間は固定）
+    shopStock = [makeItem(), makeItem(), makeItem()].map((it) => ({
+      item: it,
+      price: SHOP_PRICE[it.rarity] || 30,
+      bought: false,
+    }));
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    renderShop();
+  }
+
+  function renderShop() {
+    battleMessage.textContent = "🏪 ショップ：買い物をして次の階へ";
+    rewardTitle.textContent = `🏪 ショップ　🪙 ${coins}`;
+    rewardGrid.innerHTML = "";
+
+    shopStock.forEach((stock, i) => {
+      const { item, price, bought } = stock;
+      const btn = document.createElement("button");
+      btn.className = "reward-card";
+      btn.style.borderColor = item.color;
+      btn.disabled = bought || coins < price;
+      btn.innerHTML =
+        `<span class="reward-icon">${SLOT_META[item.slot].icon}</span>` +
+        `<span class="reward-name" style="color:${item.color}">${item.name}</span>` +
+        `<span class="reward-desc">${bought ? "✅購入済み" : "🪙" + price + "・" + item.desc}</span>`;
+      if (!btn.disabled) btn.addEventListener("click", () => buyEquip(i));
+      rewardGrid.appendChild(btn);
+    });
+
+    // HP全回復
+    const healPrice = Math.max(20, floor * 4);
+    const healBtn = document.createElement("button");
+    healBtn.className = "reward-card";
+    healBtn.disabled = coins < healPrice || playerHp >= playerMaxHp;
+    healBtn.innerHTML =
+      `<span class="reward-icon">🍖</span>` +
+      `<span class="reward-name">HP全回復</span>` +
+      `<span class="reward-desc">🪙${healPrice}</span>`;
+    if (!healBtn.disabled) healBtn.addEventListener("click", () => buyHeal(healPrice));
+    rewardGrid.appendChild(healBtn);
+
+    // 退店
+    const leave = document.createElement("button");
+    leave.className = "reward-card";
+    leave.innerHTML =
+      `<span class="reward-icon">➡️</span>` +
+      `<span class="reward-name">次の階へ進む</span>` +
+      `<span class="reward-desc">ショップを出る</span>`;
+    leave.addEventListener("click", () => advanceFloor("ショップを出た！"));
+    rewardGrid.appendChild(leave);
+    updateBars();
+  }
+
+  function buyEquip(i) {
+    const stock = shopStock[i];
+    if (!stock || stock.bought || coins < stock.price) return;
+    coins -= stock.price;
+    stock.bought = true;
+    equipment[stock.item.slot] = stock.item;
+    recomputeMaxHp();
+    renderEquipPanel();
+    updateCoinDisplay();
+    renderShop();
+  }
+
+  function buyHeal(price) {
+    if (coins < price) return;
+    coins -= price;
+    playerHp = playerMaxHp;
+    updateCoinDisplay();
+    updateBars();
+    renderShop();
   }
 
   // 装備パネル用の短い表示（基本ステータスがあれば数値、特殊効果は★）
