@@ -97,6 +97,20 @@ const EQUIPMENT = [
   { slot: "shoes", name: "神速の軍靴", rarity: "legendary", desc: "攻撃+150 / 防御+150", fx: { atk: 150, def: 150 } },
   { slot: "shoes", name: "源義経の草履", rarity: "legendary", desc: "50%で敵の反撃を回避", fx: { dodge: 0.5 } },
   { slot: "shoes", name: "チンギス・ハンの騎馬靴", rarity: "legendary", desc: "25%で相手を即死", fx: { instakill: 0.25 } },
+
+  // ===== 高HP対策の強力な武器（割合ダメージ・処刑・即死・ボス特効）=====
+  { slot: "weapon", name: "削岩の刃", rarity: "epic", desc: "敵の最大HPの3%を追加ダメージ", fx: { enemyMaxHpPct: 0.03, atk: 60 } },
+  { slot: "weapon", name: "山割りの大剣", rarity: "epic", desc: "敵の最大HPの5%を追加ダメージ", fx: { enemyMaxHpPct: 0.05 } },
+  { slot: "weapon", name: "竜殺しの剣", rarity: "epic", desc: "ボスへの攻撃力+5000%", fx: { bossAtk: 50 } },
+  { slot: "weapon", name: "終滅の大鎌", rarity: "legendary", desc: "敵の最大HPの10%を追加ダメージ", fx: { enemyMaxHpPct: 0.1 } },
+  { slot: "weapon", name: "天穿つ一閃", rarity: "legendary", desc: "敵の最大HPの15%を追加ダメージ", fx: { enemyMaxHpPct: 0.15 } },
+  { slot: "weapon", name: "神殺しの槍", rarity: "legendary", desc: "ボスへの攻撃力+20000%", fx: { bossAtk: 200 } },
+  { slot: "weapon", name: "処刑人の斧", rarity: "legendary", desc: "HP50%以下の敵を即死", fx: { execute: 0.5 } },
+  { slot: "weapon", name: "断罪の処刑剣", rarity: "legendary", desc: "HP60%以下の敵を即死", fx: { execute: 0.6 } },
+  { slot: "weapon", name: "運命の天秤", rarity: "legendary", desc: "40%で相手を即死", fx: { instakill: 0.4 } },
+  { slot: "weapon", name: "終焉の宣告", rarity: "legendary", desc: "敵の最大HPの8%＋HP40%以下で即死", fx: { enemyMaxHpPct: 0.08, execute: 0.4 } },
+  { slot: "weapon", name: "真・因果律の剣", rarity: "legendary", desc: "与ダメージの5%を永続的に攻撃へ", fx: { damageToAtkPct: 0.05 } },
+  { slot: "weapon", name: "世界喰らいの剣", rarity: "legendary", desc: "敵の最大HPの6%＋撃破で攻撃+50", fx: { enemyMaxHpPct: 0.06, killAtk: 50 } },
 ];
 
 if (typeof module !== "undefined" && module.exports) {
