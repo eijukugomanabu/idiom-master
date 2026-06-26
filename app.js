@@ -371,9 +371,9 @@
   const equipment = { weapon: null, head: null, body: null, legs: null, shoes: null };
 
   const PERKS = [
-    { icon: "⚔️", name: "攻撃アップ", desc: "攻撃ダメージ +6", apply: () => (attackBonus += 6) },
+    { icon: "⚔️", name: "攻撃アップ", desc: "攻撃ダメージ +8", apply: () => (attackBonus += 8) },
+    { icon: "🔥", name: "渾身の一撃", desc: "攻撃ダメージ +15", apply: () => (attackBonus += 15) },
     { icon: "💥", name: "会心の一撃", desc: "25%の確率でダメージ2倍", apply: () => (critChance += 0.25) },
-    { icon: "🛡️", name: "防御", desc: "受けるダメージ -4", apply: () => (damageReduction += 4) },
     { icon: "❤️", name: "最大HP+25", desc: "最大HPが25増えて回復", apply: () => (perkMaxHpBonus += 25) },
     { icon: "✨", name: "回復", desc: "HPを40回復", apply: () => (playerHp = Math.min(playerMaxHp, playerHp + 40)) },
     { icon: "🩸", name: "吸収", desc: "攻撃するたびHP+4", apply: () => (lifesteal += 4) },
@@ -580,6 +580,8 @@
     // 1コンボごとに攻撃力 ×1.1（コンボ数の累乗）
     const comboMult = Math.pow(1.1, combo);
     let hit = Math.round((randInt(16, 24) + effAttack()) * attackMultiplier() * comboMult);
+    // 敵の最大HPの割合ダメージ（HPが高いほど効く＝ラスボス対策）
+    hit += Math.round(enemyMaxHp * sumFx("enemyMaxHpPct"));
     const crit = Math.random() < critTotal();
     if (crit) hit *= 2;
     const hits = hasFx("extraHit") ? 2 : 1;
@@ -888,10 +890,11 @@
 
   const REROLL_COST = 10;
   const STAT_UPGRADES = [
-    { icon: "⚔️", name: "攻撃 +10", price: 30, apply: () => (bonusAtk += 10) },
+    { icon: "⚔️", name: "攻撃 +15", price: 30, apply: () => (bonusAtk += 15) },
+    { icon: "🔥", name: "攻撃 +40", price: 70, apply: () => (bonusAtk += 40) },
     { icon: "❤️", name: "最大HP +50", price: 30, apply: () => (perkMaxHpBonus += 50) },
-    { icon: "🛡️", name: "防御 +5", price: 30, apply: () => (bonusDef += 5) },
     { icon: "💥", name: "会心 +5%", price: 40, apply: () => (bonusCrit += 0.05) },
+    { icon: "🩸", name: "吸収 +3", price: 35, apply: () => (lifesteal += 3) },
   ];
 
   function sellValue(item) {
