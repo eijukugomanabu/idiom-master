@@ -334,6 +334,9 @@
   let wrongCount = 0; // 間違えた回数（バトル中）
   let combo = 0; // 連続正解数（コンボ。1問でも間違えると0に戻る）
   let coins = 0; // 所持コイン（敵撃破でランダム入手、ショップで使う）
+  let enemiesRemaining = 1; // この階に残っている敵の数
+  let perkPicksLeft = 0; // 残りのパーク選択回数（妖精で2回になる）
+  let bonusActive = false; // ステータスの妖精による2回選択中か
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -466,7 +469,9 @@
     renderEquipPanel();
     updateComboDisplay();
     updateCoinDisplay();
-    spawnEnemy();
+    perkPicksLeft = 0;
+    bonusActive = false;
+    beginFloorEnemies();
     nextBattleQuestion();
     updateBars();
   }
@@ -483,8 +488,17 @@
     enemyHp = enemyMaxHp;
     floorLabel.textContent =
       `${floor}/${MAX_FLOOR}階` + (isFinal ? "（最終ボス）" : isBoss ? "（ボス）" : "");
+    enemyEmoji.classList.remove("defeated", "shake");
     enemyEmoji.textContent = currentEnemy.emoji;
-    enemyName.textContent = currentEnemy.name;
+    enemyName.textContent =
+      currentEnemy.name + (enemiesRemaining > 1 ? `（この階 残り${enemiesRemaining}体）` : "");
+  }
+
+  // 1つの階の敵をまとめてセットアップ（通常は複数体、ボス階は1体）
+  function beginFloorEnemies() {
+    const isBossFloor = floor % 10 === 0 || floor >= MAX_FLOOR;
+    enemiesRemaining = isBossFloor ? 1 : randInt(1, 3);
+    spawnEnemy();
   }
 
   function nextBattleQuestion() {
@@ -663,21 +677,58 @@
 
     const beatenName = currentEnemy.name;
     battleInput.disabled = true;
-    if (floor >= MAX_FLOOR) {
-      onGameClear();
-    } else if (floor % 5 === 0) {
-      showCheckpoint(beatenName, coinGain); // 5階ごとは「武器 or ショップ」
-    } else {
-      showPerks(beatenName); // それ以外はパーク
+    playDefeatAnim(); // 撃破演出
+    enemiesRemaining--;
+
+    // 演出を見せてから次へ
+    setTimeout(() => {
+      if (enemiesRemaining > 0) {
+        // 同じ階にまだ敵がいる
+        spawnEnemy();
+        battleMessage.textContent = `🗡️ ${beatenName}を倒した！次の敵が現れた（残り${enemiesRemaining}体）`;
+        updateBars();
+        nextBattleQuestion();
+        return;
+      }
+      // 階クリア → ごほうび
+      if (floor >= MAX_FLOOR) {
+        onGameClear();
+      } else if (floor % 5 === 0) {
+        showCheckpoint(beatenName, coinGain); // 5階ごとは「武器 or ショップ」
+      } else {
+        // ランダムで「ステータスの妖精」が出ると2回選べる
+        bonusActive = Math.random() < 0.18;
+        perkPicksLeft = bonusActive ? 2 : 1;
+        showPerks(beatenName);
+      }
+    }, 480);
+  }
+
+  // 撃破演出：敵がはじけて消える＋💥
+  function playDefeatAnim() {
+    enemyEmoji.classList.remove("shake");
+    void enemyEmoji.offsetWidth; // リフローでアニメ再起動
+    enemyEmoji.classList.add("defeated");
+    if (battleStage) {
+      const burst = document.createElement("div");
+      burst.className = "defeat-burst";
+      burst.textContent = "💥";
+      battleStage.appendChild(burst);
+      setTimeout(() => burst.remove(), 600);
     }
   }
 
-  /* --- 撃破後その1：パーク3択 --- */
+  /* --- 撃破後その1：パーク3択（妖精が出ると2回選べる）--- */
   function showPerks(beatenName) {
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    battleMessage.textContent = `🎉 ${beatenName}を倒した！ごほうびを選ぼう`;
-    rewardTitle.textContent = "🎁 ごほうびを1つ選ぼう";
+    if (bonusActive) {
+      battleMessage.textContent = `🧚 ステータスの妖精が現れた！ ${perkPicksLeft}回も選べる！`;
+      rewardTitle.textContent = `🧚 妖精のごほうび（あと${perkPicksLeft}回）`;
+    } else {
+      battleMessage.textContent = `🎉 ${beatenName ? beatenName + "を倒した！" : ""}ごほうびを選ぼう`;
+      rewardTitle.textContent = "🎁 ごほうびを1つ選ぼう";
+    }
     const choices = PERKS.slice().sort(() => Math.random() - 0.5).slice(0, 3);
     rewardGrid.innerHTML = "";
     choices.forEach((perk) => {
@@ -696,7 +747,13 @@
   function choosePerk(perk) {
     perk.apply();
     recomputeMaxHp();
-    advanceFloor(`${perk.icon} ${perk.name}を獲得！`);
+    perkPicksLeft--;
+    if (perkPicksLeft > 0) {
+      showPerks(); // 妖精のおかげでもう一度選べる
+    } else {
+      bonusActive = false;
+      advanceFloor(`${perk.icon} ${perk.name}を獲得！`);
+    }
   }
 
   /* --- 撃破後その2：宝箱（装備3択） --- */
@@ -982,7 +1039,7 @@
       bonusMaxHp += floorAll;
     }
     recomputeMaxHp();
-    spawnEnemy();
+    beginFloorEnemies();
     nextBattleQuestion();
     battleMessage.textContent = `${prefix} 次は${floor}階（${currentEnemy.name}）！`;
     updateBars();
