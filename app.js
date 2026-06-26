@@ -20,15 +20,28 @@
     battle: document.getElementById("battle"),
   };
 
+  const headerEl = document.getElementById("app-header");
+
   function showView(name) {
     Object.entries(views).forEach(([key, el]) => {
       el.classList.toggle("is-hidden", key !== name);
     });
+    // ヘッダー（英熟語マスター）は最初のレベル選択画面だけ表示
+    if (headerEl) headerEl.classList.toggle("is-hidden", name !== "level-select");
     // バトル画面のときだけBGMを鳴らす
     if (typeof Music !== "undefined") {
       if (name === "battle") Music.start();
       else Music.stop();
     }
+  }
+
+  // 選択肢を選んだとき、そのカードにズーム演出をかけてから画面を切り替える
+  function zoomSelect(el, then) {
+    el.classList.add("card-zooming");
+    setTimeout(() => {
+      el.classList.remove("card-zooming");
+      then();
+    }, 180);
   }
 
   // BGMのオン/オフボタン
@@ -55,7 +68,7 @@
       `<span class="mode-title">${level.name}</span>` +
       `<span class="mode-desc">${level.desc}</span>` +
       `<span class="level-count">${count}語</span>`;
-    btn.addEventListener("click", () => selectLevel(level));
+    btn.addEventListener("click", () => zoomSelect(btn, () => selectLevel(level)));
     levelGrid.appendChild(btn);
   });
 
@@ -69,7 +82,7 @@
 
   /* ---------- ② モード選択 ---------- */
   document.querySelectorAll(".mode-card[data-go]").forEach((btn) => {
-    btn.addEventListener("click", () => enterMode(btn.dataset.go));
+    btn.addEventListener("click", () => zoomSelect(btn, () => enterMode(btn.dataset.go)));
   });
 
   function enterMode(mode) {

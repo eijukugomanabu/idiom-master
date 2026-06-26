@@ -775,3 +775,31 @@ header {
   60% { transform: translateX(6px) rotate(3deg); }
   75% { transform: translateX(-3px) rotate(-1deg); }
 }
+
+/* 音楽ボタンはヘッダー外なので画面に固定（ヘッダー非表示でも残る） */
+.music-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+}
+
+/* 選択肢を選んだ瞬間：カードに吸い込まれる演出 */
+.card-zooming {
+  position: relative;
+  z-index: 10;
+  animation: cardZoomInto 0.2s ease-in forwards;
+}
+@keyframes cardZoomInto {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* 画面が切り替わるとき：ぐっと引き込まれるズームイン */
+.view:not(.is-hidden) {
+  animation: viewDiveIn 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes viewDiveIn {
+  0% { opacity: 0; transform: scale(1.14); filter: blur(7px); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
