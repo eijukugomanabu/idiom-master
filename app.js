@@ -59,7 +59,17 @@
 
   /* ---------- ① レベル選択 ---------- */
   const levelGrid = document.getElementById("level-grid");
+  const GENRE_LABEL = { idiom: "📘 英熟語", toeic: "💼 TOEIC単語" };
+  let lastGenre = null;
   LEVELS.forEach((level) => {
+    // ジャンルが変わったら見出しを入れる
+    if (level.genre && level.genre !== lastGenre) {
+      const h = document.createElement("div");
+      h.className = "level-genre";
+      h.textContent = GENRE_LABEL[level.genre] || "";
+      levelGrid.appendChild(h);
+      lastGenre = level.genre;
+    }
     const count = filterByLevel(IDIOMS, level.id).length;
     const btn = document.createElement("button");
     btn.className = "mode-card";
