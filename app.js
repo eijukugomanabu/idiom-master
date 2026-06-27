@@ -335,6 +335,7 @@
   const comboBadge = document.getElementById("combo-badge");
   const battleStage = document.querySelector("#battle .battle-stage");
   const coinBadge = document.getElementById("coin-badge");
+  const playerStats = document.getElementById("player-stats");
 
   let pool = [];
   let playerHp = BASE_MAX_HP;
@@ -345,6 +346,8 @@
   let combo = 0; // 連続正解数（コンボ。1問でも間違えると0に戻る）
   let coins = 0; // 所持コイン（敵撃破でランダム入手、ショップで使う）
   let enemiesRemaining = 1; // この階に残っている敵の数
+  let splashDamage = 0; // 後ろの敵に蓄積する範囲ダメージ
+  const backpack = []; // 外した装備を保管するリュック
   let perkPicksLeft = 0; // 残りのパーク選択回数（妖精で2回になる）
   let bonusActive = false; // ステータスの妖精による2回選択中か
   let atkStackMult = 1; // 攻撃ごとに乗算で増える倍率（一部装備）
@@ -519,6 +522,9 @@
     bonusCrit = 0;
     reviveUsed = false;
     for (const id in equipment) equipment[id] = null;
+    backpack.length = 0;
+    shopStock = [];
+    splashDamage = 0;
     playerMaxHp = BASE_MAX_HP;
     playerHp = BASE_MAX_HP;
     battleOver.classList.add("is-hidden");
@@ -564,6 +570,7 @@
   function beginFloorEnemies() {
     const isBossFloor = floor % 10 === 0 || floor >= MAX_FLOOR;
     enemiesRemaining = isBossFloor ? 1 : randInt(1, 3);
+    splashDamage = 0; // 階が変わったら範囲ダメージはリセット
     spawnEnemy();
   }
 
@@ -580,7 +587,18 @@
     enemyHpFill.style.width = Math.max(0, (enemyHp / enemyMaxHp) * 100) + "%";
     enemyHpText.textContent = `${Math.max(0, enemyHp)} / ${enemyMaxHp}`;
     playerHpFill.style.width = Math.max(0, (playerHp / playerMaxHp) * 100) + "%";
-    playerHpText.textContent = `${Math.max(0, playerHp)} / ${playerMaxHp}`;
+    playerHpText.textContent = `${formatNum(Math.max(0, playerHp))} / ${formatNum(playerMaxHp)}`;
+    renderStats();
+  }
+
+  // 今の自分のステータス（攻撃/防御/最大HP/会心）を表示
+  function renderStats() {
+    if (!playerStats) return;
+    playerStats.innerHTML =
+      `<span title="攻撃力">⚔️ ${formatNum(effAttack())}</span>` +
+      `<span title="防御力">🛡️ ${formatNum(effDefense())}</span>` +
+      `<span title="最大HP">❤️ ${formatNum(playerMaxHp)}</span>` +
+      `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>`;
   }
 
   // 与えたダメージ数を敵の上にポップ表示する
@@ -691,6 +709,10 @@
     noHitStreak++;
     tempAtkBuffPct = 0; // 一時バフを消費
     if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
+    // この階に後ろの敵がいれば、与ダメージの30%を範囲ダメージとして蓄積
+    if (enemiesRemaining > 1 && dealt > 0) {
+      splashDamage = clampNum(splashDamage + Math.round(dealt * 0.3));
+    }
 
     const flair =
       (combo >= 2 ? `🔥${combo}コンボ ` : "") + (crit ? "💥会心！ " : "") + (hits > 1 ? `${hits}回攻撃！ ` : "");
@@ -787,7 +809,19 @@
       if (enemiesRemaining > 0) {
         // 同じ階にまだ敵がいる
         spawnEnemy();
-        battleMessage.textContent = `🗡️ ${beatenName}を倒した！次の敵が現れた（残り${enemiesRemaining}体）`;
+        // 後ろの敵に蓄積した範囲ダメージを適用
+        let splashNote = "";
+        if (splashDamage > 0) {
+          const before = enemyHp;
+          enemyHp = Math.max(1, clampNum(enemyHp - splashDamage));
+          if (enemyHp < before) {
+            showDamage(clampNum(before - enemyHp), false);
+            splashNote = ` 🌪️範囲ダメージ ${formatNum(before - enemyHp)}！`;
+          }
+          splashDamage = 0;
+        }
+        battleMessage.textContent =
+          `🗡️ ${beatenName}を倒した！次の敵（残り${enemiesRemaining}体）${splashNote}`;
         updateBars();
         nextBattleQuestion();
         return;
@@ -913,11 +947,60 @@
     updateBars();
   }
 
-  function chooseEquip(item) {
-    equipment[item.slot] = item; // 同じスロットは新しい装備に置き換わる
+  // 装備する。すでに着けていた装備はリュックに保管する（消滅させない）。
+  function equipItem(item) {
+    const old = equipment[item.slot];
+    if (old) backpack.push(old);
+    equipment[item.slot] = item;
     recomputeMaxHp();
     renderEquipPanel();
+  }
+
+  function chooseEquip(item) {
+    equipItem(item);
     advanceFloor(`${item.name}を装備！`);
+  }
+
+  /* --- リュック（外した装備の保管＆付け替え）--- */
+  function showBackpack(returnToBattle) {
+    shopReturnsToBattle = !!returnToBattle;
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    renderBackpack();
+  }
+
+  function renderBackpack() {
+    rewardTitle.textContent = `🎒 リュック（保管中：${backpack.length}個）`;
+    battleMessage.textContent = "装備を選ぶと付け替え（今の装備はリュックへ）";
+    rewardGrid.innerHTML = "";
+    if (backpack.length === 0) {
+      shopSection("リュックは空です");
+    } else {
+      backpack.forEach((item, i) => {
+        shopButton(
+          SLOT_META[item.slot].icon,
+          item.name,
+          `【${item.rarityName}】${item.desc}`,
+          false,
+          () => equipFromBackpack(i),
+          item.color,
+        );
+      });
+    }
+    if (shopReturnsToBattle) {
+      shopButton("⚔️", "バトルに戻る", "リュックを閉じる", false, () => resumeFromShop());
+    } else {
+      shopButton("➡️", "次の階へ進む", "リュックを閉じる", false, () => advanceFloor("リュックを閉じた！"));
+    }
+    updateBars();
+  }
+
+  function equipFromBackpack(i) {
+    const item = backpack[i];
+    if (!item) return;
+    backpack.splice(i, 1); // リュックから取り出す
+    equipItem(item); // 今着けている装備はリュックへ（消えない）
+    renderBackpack();
   }
 
   /* --- 5階チェックポイント：武器（装備）かショップを選ぶ --- */
@@ -938,7 +1021,7 @@
       rewardGrid.appendChild(btn);
     };
     opt("🎁", "武器を得る", "装備を3択から1つ無料でゲット", () => showTreasure(beatenName));
-    opt("🏪", "ショップ", `コインで装備や回復を買う（🪙 ${coins}）`, () => showShop());
+    opt("🏪", "ショップ", `コインで装備や回復を買う（🪙 ${coins}）`, () => showShop(false, true));
     updateBars();
   }
 
@@ -947,14 +1030,18 @@
   let shopStock = [];
   let shopReturnsToBattle = false;
 
-  function showShop(returnToBattle) {
-    shopReturnsToBattle = !!returnToBattle; // バトル中に開いた場合はバトルに戻る
-    // 在庫を3つ生成（ショップにいる間は固定。リロールで引き直せる）
+  function generateShopStock() {
     shopStock = [makeItem(), makeItem(), makeItem()].map((it) => ({
       item: it,
       price: SHOP_PRICE[it.rarity] || 30,
       bought: false,
     }));
+  }
+
+  function showShop(returnToBattle, fresh) {
+    shopReturnsToBattle = !!returnToBattle; // バトル中に開いた場合はバトルに戻る
+    // 在庫は維持。開き直しでは引き直さない（リロールか新しい階でのみ更新）
+    if (fresh || shopStock.length === 0) generateShopStock();
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
     renderShop();
@@ -970,9 +1057,47 @@
     battleInput.focus();
   }
 
-  // 「ショップを開く」ボタン（バトル中いつでも）
+  // 「ショップ」「リュック」ボタン（バトル中いつでも）
   const openShopBtn = document.getElementById("open-shop");
   if (openShopBtn) openShopBtn.addEventListener("click", () => showShop(true));
+  const openBackpackBtn = document.getElementById("open-backpack");
+  if (openBackpackBtn) openBackpackBtn.addEventListener("click", () => showBackpack(true));
+
+  // 装備アイコンのツールチップ（ホバー/タップで即表示）
+  const tipBox = document.createElement("div");
+  tipBox.className = "tip-box is-hidden";
+  document.body.appendChild(tipBox);
+  function showTip(text, x, y) {
+    tipBox.textContent = text;
+    tipBox.classList.remove("is-hidden");
+    const r = tipBox.getBoundingClientRect();
+    let left = x + 14;
+    let top = y + 16;
+    if (left + r.width > window.innerWidth - 8) left = window.innerWidth - r.width - 8;
+    if (top + r.height > window.innerHeight - 8) top = y - r.height - 12;
+    tipBox.style.left = Math.max(8, left) + "px";
+    tipBox.style.top = Math.max(8, top) + "px";
+  }
+  function hideTip() {
+    tipBox.classList.add("is-hidden");
+  }
+  if (equipPanel) {
+    equipPanel.addEventListener("mousemove", (e) => {
+      const el = e.target.closest("[data-tip]");
+      if (el) showTip(el.dataset.tip, e.clientX, e.clientY);
+      else hideTip();
+    });
+    equipPanel.addEventListener("mouseleave", hideTip);
+    // スマホ用：タップで一時表示
+    equipPanel.addEventListener("click", (e) => {
+      const el = e.target.closest("[data-tip]");
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        showTip(el.dataset.tip, rect.left + rect.width / 2, rect.bottom);
+        setTimeout(hideTip, 2500);
+      }
+    });
+  }
 
   // ショップ用の共通ヘルパー
   function shopSection(label) {
@@ -1065,9 +1190,7 @@
     if (!stock || stock.bought || coins < stock.price) return;
     coins -= stock.price;
     stock.bought = true;
-    equipment[stock.item.slot] = stock.item;
-    recomputeMaxHp();
-    renderEquipPanel();
+    equipItem(stock.item); // 外した装備はリュックへ
     updateCoinDisplay();
     renderShop();
   }
@@ -1085,11 +1208,7 @@
   function reroll() {
     if (coins < REROLL_COST) return;
     coins -= REROLL_COST;
-    shopStock = [makeItem(), makeItem(), makeItem()].map((it) => ({
-      item: it,
-      price: SHOP_PRICE[it.rarity] || 30,
-      bought: false,
-    }));
+    generateShopStock();
     updateCoinDisplay();
     renderShop();
   }
@@ -1133,11 +1252,12 @@
       cell.className = "equip-slot";
       if (item) {
         cell.style.borderColor = item.color;
-        cell.title = `${item.name}：${item.desc}`;
+        cell.dataset.tip = `${item.name}（${item.rarityName}）\n${item.desc}`;
         cell.innerHTML =
           `<span class="equip-icon">${slot.icon}</span>` +
           `<span class="equip-val" style="color:${item.color}">${shortTag(item)}</span>`;
       } else {
+        cell.dataset.tip = `${slot.name}：未装備`;
         cell.innerHTML =
           `<span class="equip-icon dim">${slot.icon}</span>` +
           `<span class="equip-val dim">—</span>`;
@@ -1150,6 +1270,7 @@
   function advanceFloor(prefix) {
     battleReward.classList.add("is-hidden");
     battleCard.classList.remove("is-hidden");
+    shopStock = []; // 階が変わったら次のショップは新しい在庫に
     floor++;
     // 階を進む（＝レベルアップ）効果
     bonusAtk += sumFx("floorAtk");

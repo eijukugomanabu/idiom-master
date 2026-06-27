@@ -48,10 +48,11 @@ test("各レベルに熟語が10個以上ある（十問ずつのセットが作
   }
 });
 
-test("filterByLevel は指定レベルの熟語だけを返す", () => {
-  const junior = filterByLevel(IDIOMS, "junior");
-  assert.ok(junior.length > 0);
-  assert.ok(junior.every((i) => i.level === "junior"));
+test("filterByLevel は指定レベルの単語だけを返す", () => {
+  const lv = LEVELS[0].id;
+  const items = filterByLevel(IDIOMS, lv);
+  assert.ok(items.length > 0);
+  assert.ok(items.every((i) => i.level === lv));
 });
 
 test("装備カタログ：各装備が正しいスロット・レア度・効果を持つ", () => {
@@ -112,8 +113,9 @@ test("matchesIdiom は正解と似た意味の別解(accept)を受け入れる",
   assert.ok(!matchesIdiom("something else", { phrase: "bite the bullet" }));
 });
 
-test("似た意味グループが実データに反映されている", () => {
-  const lookFor = IDIOMS.find((i) => i.phrase === "look for");
-  assert.ok(lookFor && Array.isArray(lookFor.accept), "look for に accept が無い");
-  assert.ok(matchesIdiom("search for", lookFor), "look for は search for を受け入れる");
+test("実データの単語が正しく判定できる", () => {
+  const w = IDIOMS.find((i) => i.phrase === "available");
+  assert.ok(w, "available が見つからない");
+  assert.ok(matchesIdiom("available", w));
+  assert.ok(!matchesIdiom("zzz", w));
 });
