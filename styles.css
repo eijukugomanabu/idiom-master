@@ -876,3 +876,17 @@ header {
 .level-genre:first-child {
   margin-top: 0;
 }
+
+/* バトル中いつでも開けるショップボタン */
+.open-shop-btn {
+  display: block;
+  width: 100%;
+  margin-top: 0.8rem;
+  background: transparent;
+  color: var(--accent-2);
+  border: 1px dashed #475569;
+  font-weight: 700;
+}
+.open-shop-btn:hover {
+  border-color: var(--accent-2);
+}

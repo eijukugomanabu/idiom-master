@@ -945,9 +945,11 @@
   /* --- ショップ（コインで購入） --- */
   const SHOP_PRICE = { common: 15, uncommon: 35, rare: 80, epic: 180, legendary: 450 };
   let shopStock = [];
+  let shopReturnsToBattle = false;
 
-  function showShop() {
-    // 在庫を3つ生成（ショップにいる間は固定）
+  function showShop(returnToBattle) {
+    shopReturnsToBattle = !!returnToBattle; // バトル中に開いた場合はバトルに戻る
+    // 在庫を3つ生成（ショップにいる間は固定。リロールで引き直せる）
     shopStock = [makeItem(), makeItem(), makeItem()].map((it) => ({
       item: it,
       price: SHOP_PRICE[it.rarity] || 30,
@@ -957,6 +959,20 @@
     battleReward.classList.remove("is-hidden");
     renderShop();
   }
+
+  // バトル中に開いたショップを閉じて戦闘に戻る（階は進めない）
+  function resumeFromShop() {
+    battleReward.classList.add("is-hidden");
+    battleCard.classList.remove("is-hidden");
+    battleInput.disabled = false;
+    battleMessage.textContent = "クイズに正解して攻撃しよう！";
+    updateBars();
+    battleInput.focus();
+  }
+
+  // 「ショップを開く」ボタン（バトル中いつでも）
+  const openShopBtn = document.getElementById("open-shop");
+  if (openShopBtn) openShopBtn.addEventListener("click", () => showShop(true));
 
   // ショップ用の共通ヘルパー
   function shopSection(label) {
@@ -1036,7 +1052,11 @@
       coins < healPrice || playerHp >= playerMaxHp,
       () => buyHeal(healPrice),
     );
-    shopButton("➡️", "次の階へ進む", "ショップを出る", false, () => advanceFloor("ショップを出た！"));
+    if (shopReturnsToBattle) {
+      shopButton("⚔️", "バトルに戻る", "ショップを閉じる", false, () => resumeFromShop());
+    } else {
+      shopButton("➡️", "次の階へ進む", "ショップを出る", false, () => advanceFloor("ショップを出た！"));
+    }
     updateBars();
   }
 
