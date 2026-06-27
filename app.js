@@ -795,7 +795,7 @@
     if (heal) playerHp = Math.min(playerMaxHp, playerHp + heal);
 
     // コインをランダム入手（階が上がるほど増える）
-    const coinGain = randInt(3, 7) + Math.floor(floor * 1.5);
+    const coinGain = randInt(10, 20) + Math.floor(floor * 4);
     coins += coinGain;
     updateCoinDisplay();
 
@@ -830,7 +830,7 @@
       if (floor >= MAX_FLOOR) {
         onGameClear();
       } else if (floor % 5 === 0) {
-        showCheckpoint(beatenName, coinGain); // 5階ごとは「武器 or ショップ」
+        showGacha(beatenName); // 5階ごとは武器ガチャ
       } else {
         // ランダムで「ステータスの妖精」が出ると2回選べる
         bonusActive = Math.random() < 0.18;
@@ -1004,25 +1004,67 @@
   }
 
   /* --- 5階チェックポイント：武器（装備）かショップを選ぶ --- */
-  function showCheckpoint(beatenName, coinGain) {
+  /* --- 武器ガチャ（5階ごと。1回200ゴールド、レア以上の武器のみ） --- */
+  const GACHA_COST = 200;
+  function rarityInfo(id) {
+    return RARITIES.find((r) => r.id === id) || { name: id, color: "#94a3b8" };
+  }
+  // 排出確率：レア60% / エピック35% / レジェンダリー5%
+  function rollGachaRarity() {
+    const r = Math.random();
+    if (r < 0.6) return "rare";
+    if (r < 0.95) return "epic";
+    return "legendary";
+  }
+
+  function showGacha(beatenName) {
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    battleMessage.textContent = `🏁 ${beatenName}を倒した！ 🪙+${coinGain}`;
-    rewardTitle.textContent = `🏁 どちらにする？（🪙 ${coins}）`;
+    battleMessage.textContent = `🎉 ${beatenName}を倒した！武器ガチャを引こう`;
+    renderGacha(null);
+  }
+
+  function renderGacha(result) {
+    rewardTitle.textContent = `🎰 武器ガチャ　🪙 ${coins}`;
     rewardGrid.innerHTML = "";
-    const opt = (icon, name, desc, onClick) => {
-      const btn = document.createElement("button");
-      btn.className = "reward-card";
-      btn.innerHTML =
-        `<span class="reward-icon">${icon}</span>` +
-        `<span class="reward-name">${name}</span>` +
-        `<span class="reward-desc">${desc}</span>`;
-      btn.addEventListener("click", onClick);
-      rewardGrid.appendChild(btn);
-    };
-    opt("🎁", "武器を得る", "装備を3択から1つ無料でゲット", () => showTreasure(beatenName));
-    opt("🏪", "ショップ", `コインで装備や回復を買う（🪙 ${coins}）`, () => showShop(false, true));
+    if (result) {
+      const card = document.createElement("button");
+      card.className = "reward-card gacha-result";
+      card.disabled = true;
+      card.style.borderColor = result.color;
+      card.innerHTML =
+        `<span class="reward-icon">⚔️</span>` +
+        `<span class="reward-name" style="color:${result.color}">${result.name}</span>` +
+        `<span class="reward-desc">【${result.rarityName}】${result.desc}</span>`;
+      rewardGrid.appendChild(card);
+    }
+    shopButton("🎰", "ガチャを引く", `🪙${GACHA_COST}・レア以上の武器`, coins < GACHA_COST, () => pullGacha());
+    shopButton("➡️", "次の階へ進む", "ガチャを終える", false, () => advanceFloor("ガチャ終了！"));
     updateBars();
+  }
+
+  function pullGacha() {
+    if (coins < GACHA_COST) return;
+    coins -= GACHA_COST;
+    const rarity = rollGachaRarity();
+    const candidates = EQUIPMENT.filter((e) => e.slot === "weapon" && e.rarity === rarity);
+    const tmpl = randomOf(candidates);
+    const info = rarityInfo(rarity);
+    const item = {
+      slot: "weapon",
+      name: tmpl.name,
+      desc: tmpl.desc,
+      fx: tmpl.fx,
+      rarity,
+      rarityName: info.name,
+      color: info.color,
+    };
+    equipItem(item); // 装備（外した武器はリュックへ）
+    updateCoinDisplay();
+    const flair =
+      rarity === "legendary" ? "✨レジェンダリー✨ " : rarity === "epic" ? "💜エピック " : "💙レア ";
+    battleMessage.textContent = `${flair}「${item.name}」を入手して装備！`;
+    renderGacha(item);
   }
 
   /* --- ショップ（コインで購入） --- */
