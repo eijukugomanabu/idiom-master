@@ -347,6 +347,10 @@
   let enemiesRemaining = 1; // この階に残っている敵の数
   let perkPicksLeft = 0; // 残りのパーク選択回数（妖精で2回になる）
   let bonusActive = false; // ステータスの妖精による2回選択中か
+  let atkStackMult = 1; // 攻撃ごとに乗算で増える倍率（一部装備）
+  let noHitStreak = 0; // 被弾せずに連続攻撃した回数
+  let tempAtkBuffPct = 0; // 被弾後の一時攻撃バフ（次の攻撃で消費）
+  let totalDamageDealt = 0; // これまでに与えた累計ダメージ
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -409,42 +413,87 @@
     return arr;
   }
 
+  // 装備中の指定レア度の数
+  function countRarity(r) {
+    return equippedItems().filter((it) => it.rarity === r).length;
+  }
+  // 大きな数を読みやすく
+  function formatNum(n) {
+    if (!isFinite(n)) return "∞";
+    return Math.round(n).toLocaleString("en-US");
+  }
+  function clampNum(n) {
+    if (!isFinite(n) || n > Number.MAX_SAFE_INTEGER) return Number.MAX_SAFE_INTEGER;
+    return n;
+  }
+
   function baseAtk() {
     return attackBonus + sumFx("atk") + bonusAtk;
   }
   function baseDef() {
     return damageReduction + sumFx("def") + bonusDef;
   }
+  // 会心率（基本＋装備＋変換＋条件）
   function critTotal() {
-    return critChance + sumFx("crit") + bonusCrit;
+    let c = critChance + sumFx("crit") + bonusCrit;
+    c += baseDef() * sumFx("convDefToCrit"); // 防御→会心
+    const hpRatio = playerMaxHp > 0 ? playerHp / playerMaxHp : 1;
+    c += (1 - hpRatio) * sumFx("scalingLowHpCrit"); // HPが低いほど会心up
+    for (const x of condList("lowHpCrit")) if (hpRatio <= x.th) c += x.pct;
+    if (enemyIsBoss) c += sumFx("bossCrit");
+    c *= 1 + sumFx("critMult"); // 会心率の乗算（例 1.5倍）
+    if (enemyIsBoss && hasFx("bossCritMult")) c *= Math.max(1, sumFx("bossCritMult"));
+    return c;
   }
   function effAttack() {
     let a = baseAtk();
-    a += baseDef() * sumFx("convDefToAtk");
-    a += playerHp * sumFx("convCurHpToAtk");
-    return Math.max(0, Math.round(a));
+    a += baseDef() * sumFx("convDefToAtk"); // 防御→攻撃
+    a += playerHp * sumFx("convCurHpToAtk"); // 現在HP→攻撃
+    a += playerMaxHp * sumFx("convMaxHpToAtk"); // 最大HP→攻撃
+    return Math.max(0, a);
   }
   function effDefense() {
     let d = baseDef();
     d += baseAtk() * sumFx("convAtkToDef");
+    d *= 1 + sumFx("defMult"); // 防御の乗算（例 2倍）
     return Math.max(0, Math.round(d));
   }
-  // 攻撃の倍率（HP割合・ボス・敵HPなどの条件）
+  // 攻撃の倍率（HP割合・ボス・敵HP・装備数などの条件。加算式）
   function attackMultiplier() {
     let mult = 1;
     const hpRatio = playerMaxHp > 0 ? playerHp / playerMaxHp : 1;
     for (const c of condList("lowHpAtk")) if (hpRatio <= c.th) mult += c.pct;
     const scaleMax = maxFx("scalingLowHpAtk");
     if (scaleMax > 0) mult += (1 - hpRatio) * scaleMax;
+    mult += (1 - hpRatio) * sumFx("missingHpAtk"); // 残りHPが少ないほど攻撃up
     if (enemyIsBoss) mult += sumFx("bossAtk");
     const enemyRatio = enemyMaxHp > 0 ? enemyHp / enemyMaxHp : 1;
     for (const c of condList("lowEnemyAtk")) if (enemyRatio <= c.th) mult += c.pct;
+    for (const c of condList("highEnemyAtk")) if (enemyRatio >= c.th) mult += c.pct;
+    mult += sumFx("atkPct"); // 攻撃力+X%
+    if (hpRatio >= 0.999) mult += sumFx("highHpAtk"); // HP最大時
+    if (critTotal() >= 1) mult += sumFx("critOverAtk"); // 会心率100%以上で
+    mult += countRarity("common") * sumFx("commonCountAtkPct"); // コモン装備数で
+    mult += equippedItems().length * sumFx("allCountAtkPct"); // 全装備数で
+    mult += tempAtkBuffPct; // 被弾後の一時バフ
     return mult;
   }
-  // 最大HPを再計算（基本＋パーク＋装備＋累積＋変換）。増えた分は回復する。
+  // 会心ダメージ倍率（基本2倍＋特殊）
+  function critMultiplier() {
+    let m = 2 + sumFx("critDmgBonus");
+    const over = sumFx("critOverDmgMult"); // 会心率100%超過1%につき乗算
+    if (over > 0) {
+      const overPct = Math.max(0, critTotal() - 1) * 100;
+      if (overPct > 0) m *= Math.pow(over, overPct);
+    }
+    if (enemyIsBoss && hasFx("bossDigitsCrit")) m *= 14;
+    return m;
+  }
+  // 最大HPを再計算（基本＋パーク＋装備＋累積＋変換＋乗算）。増えた分は回復する。
   function recomputeMaxHp() {
     let m = BASE_MAX_HP + perkMaxHpBonus + sumFx("maxHp") + bonusMaxHp;
     m += baseDef() * sumFx("convDefToHp");
+    m *= 1 + sumFx("maxHpMult"); // 最大HPの乗算（例 2倍）
     m = Math.max(1, Math.round(m));
     const delta = m - playerMaxHp;
     playerMaxHp = m;
@@ -481,6 +530,10 @@
     updateCoinDisplay();
     perkPicksLeft = 0;
     bonusActive = false;
+    atkStackMult = 1;
+    noHitStreak = 0;
+    tempAtkBuffPct = 0;
+    totalDamageDealt = 0;
     beginFloorEnemies();
     nextBattleQuestion();
     updateBars();
@@ -490,6 +543,9 @@
     const isFinal = floor >= MAX_FLOOR;
     const isBoss = floor % 10 === 0;
     enemyIsBoss = isFinal || isBoss;
+    if (enemyIsBoss && hasFx("totalDmgToAtkOnBoss")) {
+      bonusAtk = clampNum(bonusAtk + totalDamageDealt); // ボス戦開始時、累計ダメージを攻撃へ
+    }
     currentEnemy = isFinal ? FINAL_BOSS : isBoss ? BOSS : randomOf(ENEMIES);
     const base = isFinal ? 140 : isBoss ? 70 : 22;
     // 10階上がるごとに敵HPを10倍にする（1〜10階は×1、11〜20階は×10、…91〜100階は×10^9）
@@ -577,14 +633,29 @@
   function attackEnemy(phrase) {
     combo++; // 連続正解でコンボが伸びる
     updateComboDisplay();
-    // 1コンボごとに攻撃力 ×1.1（コンボ数の累乗）
-    const comboMult = Math.pow(1.1, combo);
-    let hit = Math.round((randInt(16, 24) + effAttack()) * attackMultiplier() * comboMult);
-    // 敵の最大HPの割合ダメージ（HPが高いほど効く＝ラスボス対策）
-    hit += Math.round(enemyMaxHp * sumFx("enemyMaxHpPct"));
+    const comboMult = Math.pow(1.1, combo); // 1コンボごと×1.1
+
+    // 基礎攻撃 × 各種倍率（加算式＋乗算式）
+    let hit = (randInt(16, 24) + effAttack()) * attackMultiplier() * comboMult * atkStackMult;
+    if (enemyIsBoss && hasFx("bossMult")) hit *= Math.max(1, sumFx("bossMult"));
+    if (floor >= MAX_FLOOR && hasFx("floor100Mult")) hit *= Math.max(1, sumFx("floor100Mult"));
+    if (hasFx("critAsAtkMult")) hit *= Math.max(1, critTotal() * 100); // 会心率%を倍率に
+    if (hasFx("noHitStreakMult") && noHitStreak > 0) hit *= Math.pow(sumFx("noHitStreakMult"), noHitStreak);
+    if (playerHp <= 1 && hasFx("hp1Mult")) hit *= Math.max(1, sumFx("hp1Mult"));
+    if (hasFx("allCountMultEach")) hit *= Math.max(1, equippedItems().length * sumFx("allCountMultEach"));
+    if (hasFx("defAsDamageMult")) hit *= Math.max(1, effDefense());
+    // 割合ダメージ（最大HP/現在HP）
+    hit += enemyMaxHp * sumFx("enemyMaxHpPct");
+    hit += enemyHp * sumFx("enemyCurHpPct");
+    hit = clampNum(hit);
+
     const crit = Math.random() < critTotal();
-    if (crit) hit *= 2;
-    const hits = hasFx("extraHit") ? 2 : 1;
+    if (crit) hit = clampNum(hit * critMultiplier());
+    hit = Math.round(hit);
+
+    let hits = hasFx("extraHit") ? 2 : 1;
+    if (hasFx("extraHitChance") && Math.random() < sumFx("extraHitChance")) hits += 1;
+
     let dealt = 0;
     let note = "";
     if (hasFx("instakill") && Math.random() < sumFx("instakill")) {
@@ -593,7 +664,7 @@
     } else {
       for (let h = 0; h < hits; h++) {
         enemyHp -= hit;
-        dealt += hit;
+        dealt = clampNum(dealt + hit);
       }
       const execTh = maxFx("execute");
       if (execTh > 0 && enemyHp > 0 && enemyHp <= enemyMaxHp * execTh) {
@@ -601,14 +672,31 @@
         note = "☠️処刑！ ";
       }
     }
-    const dToAtk = sumFx("damageToAtkPct");
-    if (dToAtk > 0) bonusAtk += Math.floor(dealt * dToAtk);
+    // 累積・永久加算系
+    if (dealt > 0) {
+      totalDamageDealt = clampNum(totalDamageDealt + dealt);
+      const dToAtk = sumFx("damageToAtkPct");
+      if (dToAtk > 0) bonusAtk = clampNum(bonusAtk + Math.floor(dealt * dToAtk));
+    }
+    const emEach = sumFx("enemyMaxHpToAtkEach");
+    if (emEach) bonusAtk = clampNum(bonusAtk + Math.round(enemyMaxHp * emEach));
+    const mhEach = sumFx("maxHpToAtkEach");
+    if (mhEach) bonusAtk = clampNum(bonusAtk + Math.round(playerMaxHp * mhEach));
+    const stk = sumFx("atkStackPerAttack");
+    if (stk) atkStackMult = clampNum(atkStackMult * (1 + stk));
+    if (enemyIsBoss) {
+      const bstk = sumFx("atkStackPerBossHit");
+      if (bstk) atkStackMult = clampNum(atkStackMult * (1 + bstk));
+    }
+    noHitStreak++;
+    tempAtkBuffPct = 0; // 一時バフを消費
     if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
+
     const flair =
-      (combo >= 2 ? `🔥${combo}コンボ ` : "") + (crit ? "💥会心！ " : "") + (hits > 1 ? "2回攻撃！ " : "");
+      (combo >= 2 ? `🔥${combo}コンボ ` : "") + (crit ? "💥会心！ " : "") + (hits > 1 ? `${hits}回攻撃！ ` : "");
     battleMessage.textContent = note
       ? `${note}「${phrase}」で敵を倒した！`
-      : `⚔️ ${flair}「${phrase}」で ${dealt} のダメージ！`;
+      : `⚔️ ${flair}「${phrase}」で ${formatNum(dealt)} のダメージ！`;
     updateBars();
     shakeEnemy();
     showDamage(dealt > 0 ? dealt : "⚡", crit);
@@ -638,6 +726,8 @@
     incoming = Math.max(0, Math.round(incoming * (1 - reduce)));
     playerHp -= incoming;
     if (reflectDmg > 0) enemyHp -= reflectDmg;
+    noHitStreak = 0; // 被弾でストリークが切れる
+    tempAtkBuffPct = Math.max(tempAtkBuffPct, sumFx("onHitBuffAtkPct")); // 被弾で次の攻撃にバフ
     battleMessage.textContent =
       `❌ 正解は「${phrase}」。${currentEnemy.name}の反撃で ${incoming} のダメージ！` +
       (reflectDmg > 0 ? `（${reflectDmg} 反射）` : "");
