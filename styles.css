@@ -890,3 +890,52 @@ header {
 .open-shop-btn:hover {
   border-color: var(--accent-2);
 }
+
+/* 今のステータス表示 */
+.player-stats {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.player-stats span {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+}
+
+/* バトル中のツールボタン（ショップ／リュック） */
+.battle-tools {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+.battle-tools .open-shop-btn {
+  margin-top: 0;
+  flex: 1;
+}
+
+/* 装備のツールチップ */
+.equip-slot {
+  cursor: pointer;
+}
+.tip-box {
+  position: fixed;
+  z-index: 200;
+  max-width: 240px;
+  background: #0f172a;
+  color: var(--text);
+  border: 1px solid var(--accent-2);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-line;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
