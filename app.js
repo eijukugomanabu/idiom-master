@@ -587,7 +587,6 @@
     bombStore = 0;
     lastAttackDamage = 0;
     peakTier = 0;
-    document.body.classList.remove("combo-hot-1", "combo-hot-2", "combo-hot-3");
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
     beginFloorEnemies();
     nextBattleQuestion();
@@ -883,11 +882,6 @@
     } else {
       comboBadge.classList.add("is-hidden");
     }
-    // コンボが伸びるほど画面全体が熱くなる（縁が脈打つ）
-    const ct = combo >= 15 ? 3 : combo >= 8 ? 2 : combo >= 4 ? 1 : 0;
-    document.body.classList.toggle("combo-hot-1", ct === 1);
-    document.body.classList.toggle("combo-hot-2", ct === 2);
-    document.body.classList.toggle("combo-hot-3", ct >= 3);
   }
 
   battleForm.addEventListener("submit", (e) => {
