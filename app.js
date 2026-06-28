@@ -337,6 +337,7 @@
   const battleStage = document.querySelector("#battle .battle-stage");
   const coinBadge = document.getElementById("coin-badge");
   const playerStats = document.getElementById("player-stats");
+  const damageStats = document.getElementById("damage-stats");
 
   let pool = [];
   let playerHp = BASE_MAX_HP;
@@ -359,6 +360,8 @@
   let bonusHits = 0; // 追加攻撃回数（撃破で増える）
   let causalAtk = 0; // 因果律の剣：与ダメから永続加算する攻撃（武器を外すと無効）
   let bombStore = 0; // チンギスの騎馬靴：貯めた爆弾ダメージ
+  let lastAttackDamage = 0; // 直近の攻撃で与えたダメージ
+  let maxAttackDamage = Number(localStorage.getItem("idiomMaxDamage")) || 0; // 過去最高ダメージ（保存）
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -433,12 +436,28 @@
     return equippedItems().filter((it) => it.rarity === r).length;
   }
   // 大きな数を読みやすく
+  // 巨大数を日本語の単位（万・億・兆・京…無量大数）で短く表示する
+  const BIG_UNITS = [
+    [1e68, "無量大数"], [1e64, "不可思議"], [1e60, "那由他"], [1e56, "阿僧祇"],
+    [1e52, "恒河沙"], [1e48, "極"], [1e44, "載"], [1e40, "正"], [1e36, "澗"],
+    [1e32, "溝"], [1e28, "穣"], [1e24, "𥝱"], [1e20, "垓"], [1e16, "京"],
+  ];
   function formatNum(n) {
     if (!isFinite(n)) return "∞";
-    return Math.round(n).toLocaleString("en-US");
+    n = Math.round(n);
+    const abs = Math.abs(n);
+    if (abs < 1e16) return n.toLocaleString("en-US"); // 1京未満は今まで通りカンマ区切り
+    if (abs >= 1e72) return n.toExponential(2); // 無量大数を超えたら指数表記
+    for (const [v, name] of BIG_UNITS) {
+      if (abs >= v) return (n / v).toFixed(2).replace(/\.?0+$/, "") + name;
+    }
+    return n.toExponential(2);
   }
+  // ダメージ・ステータスの上限（1e300＝ほぼ無限。Infinity/NaNで計算が壊れるのを防ぐ）
+  const NUM_CAP = 1e300;
   function clampNum(n) {
-    if (!isFinite(n) || n > Number.MAX_SAFE_INTEGER) return Number.MAX_SAFE_INTEGER;
+    if (Number.isNaN(n)) return 0;
+    if (!isFinite(n) || n > NUM_CAP) return NUM_CAP;
     return n;
   }
 
@@ -558,6 +577,7 @@
     bonusHits = 0;
     causalAtk = 0;
     bombStore = 0;
+    lastAttackDamage = 0;
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
     beginFloorEnemies();
     nextBattleQuestion();
@@ -619,6 +639,21 @@
       `<span title="防御力">🛡️ ${formatNum(effDefense())}</span>` +
       `<span title="最大HP">❤️ ${formatNum(playerMaxHp)}</span>` +
       `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>`;
+    if (damageStats) {
+      damageStats.innerHTML =
+        `<span title="直近の攻撃で与えたダメージ">💢 攻撃 ${formatNum(lastAttackDamage)}</span>` +
+        `<span title="今までに出した最大ダメージ">🏆 最大 ${formatNum(maxAttackDamage)}</span>`;
+    }
+  }
+
+  // ダメージ記録を更新する（直近ダメージ＋過去最高を保存）
+  function recordDamage(d) {
+    if (!(d > 0)) return;
+    lastAttackDamage = d;
+    if (d > maxAttackDamage) {
+      maxAttackDamage = d;
+      try { localStorage.setItem("idiomMaxDamage", String(maxAttackDamage)); } catch (e) {}
+    }
   }
 
   // 与えたダメージ数を敵の上にポップ表示する
@@ -749,6 +784,7 @@
     if (enemiesRemaining > 1 && dealt > 0) {
       splashDamage = clampNum(splashDamage + Math.round(dealt * (0.3 + sumFx("splashBonusPct"))));
     }
+    recordDamage(dealt); // 直近ダメージ・最大ダメージを記録
 
     const flair =
       (combo >= 2 ? `🔥${combo}コンボ ` : "") + (crit ? "💥会心！ " : "") + (hits > 1 ? `${hits}回攻撃！ ` : "");
@@ -1209,6 +1245,7 @@
     const dmg = bombStore;
     bombStore = 0;
     enemyHp = clampNum(enemyHp - dmg);
+    recordDamage(dmg); // 爆弾ダメージも記録
     showDamage(dmg, true);
     shakeEnemy();
     battleMessage.textContent = `💥 爆弾炸裂！ ${formatNum(dmg)} のダメージ！`;
