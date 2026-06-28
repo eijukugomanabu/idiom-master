@@ -1116,24 +1116,6 @@ header {
   100% { transform: scale(1); }
 }
 
-/* コンボが伸びるほど画面の縁が脈打つ */
-.combo-hot-1::after,
-.combo-hot-2::after,
-.combo-hot-3::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 250;
-}
-.combo-hot-1::after { box-shadow: inset 0 0 60px rgba(251, 146, 60, 0.28); }
-.combo-hot-2::after { box-shadow: inset 0 0 95px rgba(244, 63, 94, 0.38); animation: comboPulse 1.1s ease-in-out infinite; }
-.combo-hot-3::after { box-shadow: inset 0 0 140px rgba(217, 70, 239, 0.52); animation: comboPulse 0.65s ease-in-out infinite; }
-@keyframes comboPulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}
-
 /* リュックの振り分けタブ */
 .backpack-filter {
   display: flex;
