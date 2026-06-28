@@ -368,6 +368,7 @@
   let enemyMaxHp = 0;
   let currentEnemy = null;
   let battleIdiom = null;
+  let answerPeekOn = false; // テストモード：答えをのぞき見表示中か
 
   // パーク（敵撃破ごとの3択強化）
   let attackBonus = 0; // 攻撃ダメージに加算
@@ -631,6 +632,69 @@
     battleInput.value = "";
     battleInput.disabled = false;
     battleInput.focus();
+    renderAnswerPeek(); // 答え表示中なら新しい問題の答えに更新
+  }
+
+  /* --- テストモード：答えをのぞき見＆ワンタップでコピー＆入力 --- */
+  const peekBtn = document.getElementById("peek-answer");
+  const answerChip = document.getElementById("answer-chip");
+  const peekFeedback = document.getElementById("peek-feedback");
+
+  function renderAnswerPeek() {
+    if (!answerChip) return;
+    if (answerPeekOn && battleIdiom) {
+      answerChip.textContent = `📋 ${battleIdiom.phrase}`;
+      answerChip.classList.remove("is-hidden");
+      if (peekBtn) peekBtn.textContent = "🙈 答えをかくす";
+    } else {
+      answerChip.classList.add("is-hidden");
+      if (peekFeedback) peekFeedback.classList.add("is-hidden");
+      if (peekBtn) peekBtn.textContent = "🔑 答えを見る";
+    }
+  }
+
+  // クリップボードにコピー（失敗時はテキストエリア経由でフォールバック）
+  function copyText(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+        return;
+      }
+    } catch (e) {}
+    fallbackCopy(text);
+  }
+  function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    ta.remove();
+  }
+  function flashPeekFeedback() {
+    if (!peekFeedback) return;
+    peekFeedback.classList.remove("is-hidden");
+    clearTimeout(flashPeekFeedback._t);
+    flashPeekFeedback._t = setTimeout(() => peekFeedback.classList.add("is-hidden"), 1500);
+  }
+
+  if (peekBtn) {
+    peekBtn.addEventListener("click", () => {
+      answerPeekOn = !answerPeekOn;
+      renderAnswerPeek();
+    });
+  }
+  if (answerChip) {
+    // タップで答えをコピー＆入力欄へ自動入力（すぐ攻撃できる）
+    answerChip.addEventListener("click", () => {
+      if (!battleIdiom) return;
+      copyText(battleIdiom.phrase);
+      battleInput.value = battleIdiom.phrase;
+      battleInput.focus();
+      flashPeekFeedback();
+    });
   }
 
   function updateBars() {
