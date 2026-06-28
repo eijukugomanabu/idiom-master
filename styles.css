@@ -126,7 +126,7 @@ main {
 
 .view.is-hidden,
 .is-hidden {
-  display: none;
+  display: none !important;
 }
 
 .progress {
@@ -907,6 +907,14 @@ header {
   border: 1px solid #334155;
   border-radius: 999px;
   padding: 0.12rem 0.6rem;
+}
+.damage-stats {
+  margin-top: 0.3rem;
+}
+.damage-stats span {
+  background: #1e1b4b;
+  border-color: #6366f1;
+  color: #c7d2fe;
 }
 
 /* バトル中のツールボタン（ショップ／リュック） */
