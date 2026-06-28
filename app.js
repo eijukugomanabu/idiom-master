@@ -312,6 +312,7 @@
     { id: "rare", name: "レア", color: "#38bdf8" },
     { id: "epic", name: "エピック", color: "#a78bfa" },
     { id: "legendary", name: "レジェンダリー", color: "#fbbf24" },
+    { id: "mythic", name: "ミシック", color: "#f43f5e" }, // ガチャ限定
   ];
 
   const floorLabel = document.getElementById("floor-label");
@@ -354,6 +355,8 @@
   let noHitStreak = 0; // 被弾せずに連続攻撃した回数
   let tempAtkBuffPct = 0; // 被弾後の一時攻撃バフ（次の攻撃で消費）
   let totalDamageDealt = 0; // これまでに与えた累計ダメージ
+  let immuneLeft = 0; // 残りダメージ無効回数（神核装甲など）
+  let bonusHits = 0; // 追加攻撃回数（撃破で増える）
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -540,6 +543,9 @@
     noHitStreak = 0;
     tempAtkBuffPct = 0;
     totalDamageDealt = 0;
+    immuneLeft = 0;
+    bonusHits = 0;
+    if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
     beginFloorEnemies();
     nextBattleQuestion();
     updateBars();
@@ -653,6 +659,12 @@
     updateComboDisplay();
     const comboMult = Math.pow(1.1, combo); // 1コンボごと×1.1
 
+    // ミシック：毎ターン攻撃倍率を乗算で増やす
+    if (hasFx("atkMultPerTurn")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("atkMultPerTurn")));
+    // ミシック：毎ターン最大HPの割合を回復
+    const turnHeal = sumFx("turnHealPct");
+    if (turnHeal) playerHp = Math.min(playerMaxHp, playerHp + Math.round(playerMaxHp * turnHeal));
+
     // 基礎攻撃 × 各種倍率（加算式＋乗算式）
     let hit = (randInt(16, 24) + effAttack()) * attackMultiplier() * comboMult * atkStackMult;
     if (enemyIsBoss && hasFx("bossMult")) hit *= Math.max(1, sumFx("bossMult"));
@@ -662,6 +674,9 @@
     if (playerHp <= 1 && hasFx("hp1Mult")) hit *= Math.max(1, sumFx("hp1Mult"));
     if (hasFx("allCountMultEach")) hit *= Math.max(1, equippedItems().length * sumFx("allCountMultEach"));
     if (hasFx("defAsDamageMult")) hit *= Math.max(1, effDefense());
+    // ミシック：毎ターン3〜30倍などランダム倍率（混沌の脚衣）
+    const trm = condList("turnRandomMult")[0];
+    if (trm) hit *= randInt(trm.lo, trm.hi);
     // 割合ダメージ（最大HP/現在HP）
     hit += enemyMaxHp * sumFx("enemyMaxHpPct");
     hit += enemyHp * sumFx("enemyCurHpPct");
@@ -673,6 +688,7 @@
 
     let hits = hasFx("extraHit") ? 2 : 1;
     if (hasFx("extraHitChance") && Math.random() < sumFx("extraHitChance")) hits += 1;
+    hits += sumFx("extraHits") + bonusHits; // ミシック：追加攻撃回数（神速の靴など）
 
     let dealt = 0;
     let note = "";
@@ -689,6 +705,10 @@
         enemyHp = 0;
         note = "☠️処刑！ ";
       }
+    }
+    // ミシック：オーバーキル分を次の敵へ持ち越す（アポカリオン）
+    if (hasFx("overkillCarry") && enemyHp < 0 && enemiesRemaining > 1) {
+      splashDamage = clampNum(splashDamage + Math.round(-enemyHp * sumFx("overkillCarry")));
     }
     // 累積・永久加算系
     if (dealt > 0) {
@@ -731,9 +751,22 @@
     wrongCount++;
     combo = 0; // 間違えるとコンボはリセット
     updateComboDisplay();
+    // ミシック：無敵回数があるとダメージを無効化（虚無王の王冠）
+    if (immuneLeft > 0) {
+      immuneLeft--;
+      const im = sumFx("immuneAtkMult");
+      if (im) atkStackMult = clampNum(atkStackMult * Math.max(1, im));
+      battleMessage.textContent = `❌ 正解は「${phrase}」。でも無敵！ ダメージ0（残り${immuneLeft}回）`;
+      noHitStreak = 0;
+      updateBars();
+      nextBattleQuestion();
+      return;
+    }
     let incoming = Math.max(1, 8 + floor - effDefense());
     const dodgeP = Math.min(0.9, sumFx("dodge"));
     if (dodgeP > 0 && Math.random() < dodgeP) {
+      const das = sumFx("dodgeAtkStack"); // ミシック：回避するたび攻撃倍率UP（星渡りの靴）
+      if (das) atkStackMult = clampNum(atkStackMult * Math.max(1, das));
       battleMessage.textContent = `❌ 正解は「${phrase}」。でも回避！ ダメージ0`;
       updateBars();
       nextBattleQuestion();
@@ -776,6 +809,9 @@
 
   function onEnemyDefeated() {
     defeated++;
+    // ミシック：撃破ごとに攻撃倍率を乗算で増やす／追加攻撃回数を増やす
+    if (hasFx("atkMultPerKill")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("atkMultPerKill")));
+    bonusHits += sumFx("killExtraHit");
     // 撃破時の効果
     bonusAtk += sumFx("killAtk");
     bonusDef += sumFx("killDef");
@@ -795,7 +831,7 @@
     if (heal) playerHp = Math.min(playerMaxHp, playerHp + heal);
 
     // コインをランダム入手（階が上がるほど増える）
-    const coinGain = randInt(10, 20) + Math.floor(floor * 4);
+    const coinGain = randInt(25, 50) + Math.floor(floor * 10);
     coins += coinGain;
     updateCoinDisplay();
 
@@ -952,6 +988,8 @@
     const old = equipment[item.slot];
     if (old) backpack.push(old);
     equipment[item.slot] = item;
+    // ダメージ無効回数を付与（神核装甲など）
+    if (item.fx && item.fx.immuneHits) immuneLeft += item.fx.immuneHits;
     recomputeMaxHp();
     renderEquipPanel();
   }
@@ -1009,12 +1047,13 @@
   function rarityInfo(id) {
     return RARITIES.find((r) => r.id === id) || { name: id, color: "#94a3b8" };
   }
-  // 排出確率：レア60% / エピック35% / レジェンダリー5%
+  // 排出確率：レア55% / エピック30% / レジェンダリー10% / ミシック5%
   function rollGachaRarity() {
     const r = Math.random();
-    if (r < 0.6) return "rare";
-    if (r < 0.95) return "epic";
-    return "legendary";
+    if (r < 0.55) return "rare";
+    if (r < 0.85) return "epic";
+    if (r < 0.95) return "legendary";
+    return "mythic";
   }
 
   function showGacha(beatenName) {
@@ -1047,11 +1086,15 @@
     if (coins < GACHA_COST) return;
     coins -= GACHA_COST;
     const rarity = rollGachaRarity();
-    const candidates = EQUIPMENT.filter((e) => e.slot === "weapon" && e.rarity === rarity);
+    // ミシックは全スロットが対象、それ以外は武器のみ
+    const candidates =
+      rarity === "mythic"
+        ? EQUIPMENT.filter((e) => e.rarity === "mythic")
+        : EQUIPMENT.filter((e) => e.slot === "weapon" && e.rarity === rarity);
     const tmpl = randomOf(candidates);
     const info = rarityInfo(rarity);
     const item = {
-      slot: "weapon",
+      slot: tmpl.slot,
       name: tmpl.name,
       desc: tmpl.desc,
       fx: tmpl.fx,
@@ -1059,10 +1102,16 @@
       rarityName: info.name,
       color: info.color,
     };
-    equipItem(item); // 装備（外した武器はリュックへ）
+    equipItem(item); // 装備（外した装備はリュックへ）
     updateCoinDisplay();
     const flair =
-      rarity === "legendary" ? "✨レジェンダリー✨ " : rarity === "epic" ? "💜エピック " : "💙レア ";
+      rarity === "mythic"
+        ? "🌟ミシック🌟 "
+        : rarity === "legendary"
+          ? "✨レジェンダリー✨ "
+          : rarity === "epic"
+            ? "💜エピック "
+            : "💙レア ";
     battleMessage.textContent = `${flair}「${item.name}」を入手して装備！`;
     renderGacha(item);
   }
