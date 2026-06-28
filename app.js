@@ -362,6 +362,7 @@
   let bombStore = 0; // チンギスの騎馬靴：貯めた爆弾ダメージ
   let lastAttackDamage = 0; // 直近の攻撃で与えたダメージ
   let maxAttackDamage = Number(localStorage.getItem("idiomMaxDamage")) || 0; // 過去最高ダメージ（保存）
+  let peakTier = 0; // この戦闘で到達したダメージ演出の最大ランク
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -578,6 +579,8 @@
     causalAtk = 0;
     bombStore = 0;
     lastAttackDamage = 0;
+    peakTier = 0;
+    document.body.classList.remove("combo-hot-1", "combo-hot-2", "combo-hot-3");
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
     beginFloorEnemies();
     nextBattleQuestion();
@@ -656,14 +659,129 @@
     }
   }
 
+  /* ===== 脳が溶ける演出（ジュース）レイヤー ===== */
+  const fxLayer = document.createElement("div");
+  fxLayer.id = "fx-layer";
+  document.body.appendChild(fxLayer);
+
+  // ダメージの大きさを 0〜7 のランクに変換（演出の強さに使う）
+  function damageTier(d) {
+    if (!(d > 0)) return 0;
+    if (d < 1e3) return 1;
+    if (d < 1e4) return 2;
+    if (d < 1e6) return 3;
+    if (d < 1e9) return 4;
+    if (d < 1e12) return 5;
+    if (d < 1e16) return 6;
+    return 7; // 京以上＝脳が溶ける
+  }
+  const TIER_LABEL = {
+    3: "GREAT!!", 4: "EXCELLENT!!", 5: "INSANE!!!", 6: "GODLIKE!!!", 7: "💥脳が溶ける💥",
+  };
+
+  // 画面フラッシュ
+  function screenFlash(kind, intensity) {
+    const f = document.createElement("div");
+    f.className = "fx-flash fx-flash-" + kind;
+    f.style.setProperty("--a", Math.min(0.85, 0.25 + intensity * 0.1));
+    fxLayer.appendChild(f);
+    setTimeout(() => f.remove(), 360);
+  }
+  // 要素を震わせる
+  function shakeEl(el, amp, dur) {
+    if (!el) return;
+    el.style.setProperty("--amp", amp + "px");
+    el.style.setProperty("--shdur", (dur || 0.34) + "s");
+    el.classList.remove("fx-shake");
+    void el.offsetWidth;
+    el.classList.add("fx-shake");
+    setTimeout(() => el.classList.remove("fx-shake"), (dur || 0.34) * 1000 + 30);
+  }
+  function screenShake(intensity) {
+    shakeEl(battleStage, Math.min(26, 3 + intensity * 3), 0.34);
+    if (intensity >= 5) shakeEl(document.querySelector("main"), Math.min(14, intensity * 1.6), 0.4);
+  }
+  // 弾けるパーティクル
+  function spawnBurst(count, opts) {
+    if (!battleStage) return;
+    opts = opts || {};
+    const colors = opts.colors || ["#fbbf24", "#f87171", "#a78bfa", "#38bdf8", "#4ade80", "#fff"];
+    const n = Math.min(44, count);
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement("div");
+      p.className = "fx-particle";
+      const ang = Math.random() * Math.PI * 2;
+      const dist = (opts.dist || 60) + Math.random() * (opts.spread || 70);
+      p.style.setProperty("--tx", Math.cos(ang) * dist + "px");
+      p.style.setProperty("--ty", Math.sin(ang) * dist + "px");
+      p.style.setProperty("--sz", 4 + Math.random() * 7 + "px");
+      p.style.setProperty("--dur", 0.5 + Math.random() * 0.5 + "s");
+      p.style.background = colors[i % colors.length];
+      p.style.color = colors[i % colors.length];
+      p.style.left = (opts.x != null ? opts.x : 50) + "%";
+      p.style.top = (opts.y != null ? opts.y : 64) + "px";
+      battleStage.appendChild(p);
+      setTimeout(() => p.remove(), 1050);
+    }
+  }
+  // 衝撃波リング
+  function spawnShockwave() {
+    if (!battleStage) return;
+    const w = document.createElement("div");
+    w.className = "fx-shockwave";
+    battleStage.appendChild(w);
+    setTimeout(() => w.remove(), 700);
+  }
+  // コインの雨
+  function spawnCoinShower(n) {
+    if (!battleStage) return;
+    for (let i = 0; i < Math.min(18, n); i++) {
+      const c = document.createElement("div");
+      c.className = "fx-coin";
+      c.textContent = "🪙";
+      c.style.left = 15 + Math.random() * 70 + "%";
+      c.style.setProperty("--delay", Math.random() * 0.25 + "s");
+      c.style.setProperty("--dur", 0.7 + Math.random() * 0.5 + "s");
+      battleStage.appendChild(c);
+      setTimeout(() => c.remove(), 1500);
+    }
+  }
+  // ランクの大きな掛け声
+  function rankBanner(tier) {
+    const label = TIER_LABEL[tier];
+    if (!label) return;
+    const b = document.createElement("div");
+    b.className = "fx-rank fx-rank-" + tier;
+    b.textContent = label;
+    fxLayer.appendChild(b);
+    setTimeout(() => b.remove(), 950);
+  }
+  // 攻撃ヒット時の総合演出
+  function juiceHit(crit, dealt) {
+    const tier = damageTier(dealt);
+    screenShake(crit ? tier + 1 : tier);
+    if (crit || tier >= 3) screenFlash(tier >= 6 ? "rainbow" : crit ? "crit" : "hit", tier);
+    spawnBurst(tier * 4 + (crit ? 8 : 2), {
+      colors: tier >= 6 ? ["#ff00ff", "#00ffff", "#ffff00", "#ffffff", "#f87171"] : undefined,
+    });
+    if (tier > peakTier && tier >= 3) {
+      peakTier = tier;
+      rankBanner(tier);
+    }
+  }
+
   // 与えたダメージ数を敵の上にポップ表示する
   function showDamage(amount, crit) {
     if (!battleStage) return;
+    const isNum = typeof amount === "number";
+    const tier = isNum ? Math.max(1, damageTier(amount)) : 1;
     const el = document.createElement("div");
-    el.className = "dmg-float" + (crit ? " crit" : "");
-    el.textContent = typeof amount === "number" ? amount.toLocaleString("en-US") : amount;
+    el.className = `dmg-float dtier-${tier}` + (crit ? " crit" : "");
+    el.textContent = isNum ? formatNum(amount) : amount;
+    el.style.left = `calc(50% + ${Math.round(Math.random() * 44 - 22)}px)`;
+    el.style.setProperty("--rot", Math.round(Math.random() * 14 - 7) + "deg");
     battleStage.appendChild(el);
-    setTimeout(() => el.remove(), 850);
+    setTimeout(() => el.remove(), 950);
   }
 
   // 攻撃時に敵を揺らす
@@ -686,9 +804,17 @@
     if (combo >= 1) {
       comboBadge.classList.remove("is-hidden");
       comboBadge.textContent = `🔥 ${combo} コンボ`;
+      comboBadge.classList.remove("fx-combo-pop");
+      void comboBadge.offsetWidth;
+      comboBadge.classList.add("fx-combo-pop");
     } else {
       comboBadge.classList.add("is-hidden");
     }
+    // コンボが伸びるほど画面全体が熱くなる（縁が脈打つ）
+    const ct = combo >= 15 ? 3 : combo >= 8 ? 2 : combo >= 4 ? 1 : 0;
+    document.body.classList.toggle("combo-hot-1", ct === 1);
+    document.body.classList.toggle("combo-hot-2", ct === 2);
+    document.body.classList.toggle("combo-hot-3", ct >= 3);
   }
 
   battleForm.addEventListener("submit", (e) => {
@@ -794,6 +920,7 @@
     updateBars();
     shakeEnemy();
     showDamage(dealt > 0 ? dealt : "⚡", crit);
+    juiceHit(crit, dealt);
     if (enemyHp <= 0) onEnemyDefeated();
     else nextBattleQuestion();
   }
@@ -934,6 +1061,12 @@
     enemyEmoji.classList.remove("shake");
     void enemyEmoji.offsetWidth; // リフローでアニメ再起動
     enemyEmoji.classList.add("defeated");
+    // 撃破の大爆発：閃光＋衝撃波＋粉砕パーティクル＋コインの雨＋画面シェイク
+    screenFlash("kill", 7);
+    screenShake(6);
+    spawnShockwave();
+    spawnBurst(36, { dist: 50, spread: 130, colors: ["#fbbf24", "#ffffff", "#f87171", "#fb923c", "#fde68a"] });
+    spawnCoinShower(14);
     if (battleStage) {
       const burst = document.createElement("div");
       burst.className = "defeat-burst";
