@@ -57,7 +57,7 @@ test("filterByLevel は指定レベルの単語だけを返す", () => {
 
 test("装備カタログ：各装備が正しいスロット・レア度・効果を持つ", () => {
   const slots = new Set(["weapon", "head", "body", "legs", "shoes"]);
-  const rarities = new Set(["common", "uncommon", "rare", "epic", "legendary"]);
+  const rarities = new Set(["common", "uncommon", "rare", "epic", "legendary", "mythic"]);
   assert.ok(EQUIPMENT.length >= 30, `装備数=${EQUIPMENT.length}`);
   for (const item of EQUIPMENT) {
     assert.ok(slots.has(item.slot), `不明なスロット: ${item.slot}（${item.name}）`);

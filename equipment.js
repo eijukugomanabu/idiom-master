@@ -214,6 +214,63 @@ const EQUIPMENT = [
   { slot: "shoes", name: "反逆の軍靴", rarity: "epic", desc: "ボスへの攻撃力+5000%", fx: { bossAtk: 50 } },
   { slot: "shoes", name: "処刑の軍靴", rarity: "legendary", desc: "ボスのHPが1%以下で即死させる", fx: { execute: 0.01 } },
   { slot: "shoes", name: "不抜の軍靴", rarity: "legendary", desc: "被弾せず耐えるほど、1ターンごと攻撃力×100(乗算)", fx: { noHitStreakMult: 100 } },
+
+  // ========== ✨ ミシック（ガチャ限定・最高レア）==========
+  // ⚔️ 武器
+  {
+    slot: "weapon", name: "創世神剣 ジェネシス", rarity: "mythic",
+    desc: "戦闘開始時に攻撃力×100 / 与えたダメージ分だけ攻撃力が永続増加 / 敵を倒すたび攻撃力×2 / ボス戦ではさらに攻撃力×10",
+    fx: { startAtkMult: 100, damageToAtkPct: 1, atkMultPerKill: 2, bossMult: 10 },
+  },
+  {
+    slot: "weapon", name: "星界終焉剣 アポカリオン", rarity: "mythic",
+    desc: "毎ターン攻撃力×10 / 与えるダメージに敵HPの5%を追加 / オーバーキル分を次の敵へ100%持ち越す / 敵を倒すたび攻撃力×2",
+    fx: { atkMultPerTurn: 10, enemyCurHpPct: 0.05, overkillCarry: 1, atkMultPerKill: 2 },
+  },
+  // 👑 頭
+  {
+    slot: "head", name: "神王の冠", rarity: "mythic",
+    desc: "全ステータス×5（攻撃+400% / 防御×5 / 最大HP×5）/ ボス戦ではさらに攻撃×3",
+    fx: { atkPct: 4, defMult: 4, maxHpMult: 4, bossMult: 3 },
+  },
+  {
+    slot: "head", name: "虚無王の王冠", rarity: "mythic",
+    desc: "HP50%以下で攻撃力×100 / HP50%以下で被ダメージを98%軽減",
+    fx: { lowHpAtk: { th: 0.5, pct: 99 }, damageReduceLowHp: { th: 0.5, pct: 0.98 } },
+  },
+  // 🛡️ 胸
+  {
+    slot: "body", name: "世界樹の鎧", rarity: "mythic",
+    desc: "毎ターン最大HPを100%回復 / 最大HPの100%を攻撃力に加算 / 防御力をHPに加算",
+    fx: { turnHealPct: 1, convMaxHpToAtk: 1, convDefToHp: 1 },
+  },
+  {
+    slot: "body", name: "神核装甲 Ω", rarity: "mythic",
+    desc: "最初の10回の被ダメージを無効化 / 無効化するたび攻撃力×3 / ボス戦では攻撃力×5",
+    fx: { immuneHits: 10, immuneAtkMult: 3, bossMult: 5 },
+  },
+  // 🦵 ズボン
+  {
+    slot: "legs", name: "天界守護脚甲", rarity: "mythic",
+    desc: "防御力を攻撃力に加算 / 防御力をHPにも加算",
+    fx: { convDefToAtk: 1, convDefToHp: 1 },
+  },
+  {
+    slot: "legs", name: "混沌の脚衣", rarity: "mythic",
+    desc: "毎ターン攻撃力が3〜30倍になる（毎ターンランダム）",
+    fx: { turnRandomMult: { lo: 3, hi: 30 } },
+  },
+  // 👢 靴
+  {
+    slot: "shoes", name: "神速の靴 アストラ", rarity: "mythic",
+    desc: "毎ターン5回攻撃 / 敵を倒すたび攻撃回数+1（永続）",
+    fx: { extraHits: 4, killExtraHit: 1 },
+  },
+  {
+    slot: "shoes", name: "星渡りの靴", rarity: "mythic",
+    desc: "敵の攻撃を80%の確率で回避 / 回避するたび攻撃力×2（永続で累積）",
+    fx: { dodge: 0.8, dodgeAtkStack: 2 },
+  },
 ];
 
 if (typeof module !== "undefined" && module.exports) {
