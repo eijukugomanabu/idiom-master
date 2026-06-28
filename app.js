@@ -831,6 +831,7 @@
   // 攻撃ヒット時の総合演出
   function juiceHit(crit, dealt) {
     const tier = damageTier(dealt);
+    if (typeof Music !== "undefined") Music.hit(tier, crit); // 脳が溶ける打撃音
     screenShake(crit ? tier + 1 : tier);
     if (crit || tier >= 3) screenFlash(tier >= 6 ? "rainbow" : crit ? "crit" : "hit", tier);
     spawnBurst(tier * 4 + (crit ? 8 : 2), {
@@ -1141,6 +1142,7 @@
     enemyEmoji.classList.remove("shake");
     void enemyEmoji.offsetWidth; // リフローでアニメ再起動
     enemyEmoji.classList.add("defeated");
+    if (typeof Music !== "undefined") Music.kill(); // 撃破SE（脳が溶ける大爆発音）
     // 撃破の大爆発：閃光＋衝撃波＋粉砕パーティクル＋コインの雨＋画面シェイク
     screenFlash("kill", 7);
     screenShake(6);
