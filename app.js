@@ -350,6 +350,7 @@
   let enemiesRemaining = 1; // この階に残っている敵の数
   let splashDamage = 0; // 後ろの敵に蓄積する範囲ダメージ
   const backpack = []; // 外した装備を保管するリュック
+  let backpackFilter = "all"; // リュックの振り分け（all / weapon / head / body / legs / shoes）
   let perkPicksLeft = 0; // 残りのパーク選択回数（妖精で2回になる）
   let bonusActive = false; // ステータスの妖精による2回選択中か
   let atkStackMult = 1; // 攻撃ごとに乗算で増える倍率（一部装備）
@@ -435,6 +436,11 @@
   // 装備中の指定レア度の数
   function countRarity(r) {
     return equippedItems().filter((it) => it.rarity === r).length;
+  }
+  // レア度の強さ順位（高いほど高レア。並べ替えに使う）
+  function rarityRank(id) {
+    const i = RARITIES.findIndex((r) => r.id === id);
+    return i < 0 ? 0 : i;
   }
   // 大きな数を読みやすく
   // 巨大数を日本語の単位（万・億・兆・京…無量大数）で短く表示する
@@ -611,7 +617,9 @@
   // 1つの階の敵をまとめてセットアップ（通常は複数体、ボス階は1体）
   function beginFloorEnemies() {
     const isBossFloor = floor % 10 === 0 || floor >= MAX_FLOOR;
-    enemiesRemaining = isBossFloor ? 1 : randInt(1, 3);
+    // 20階ごとに敵の数が増える（最大 +4体）
+    const extra = Math.min(4, Math.floor(floor / 20));
+    enemiesRemaining = isBossFloor ? 1 : randInt(1 + extra, 3 + extra);
     splashDamage = 0; // 階が変わったら範囲ダメージはリセット
     spawnEnemy();
   }
@@ -1029,12 +1037,20 @@
         let splashNote = "";
         if (splashDamage > 0) {
           const before = enemyHp;
-          enemyHp = Math.max(1, clampNum(enemyHp - splashDamage));
-          if (enemyHp < before) {
-            showDamage(clampNum(before - enemyHp), false);
-            splashNote = ` 🌪️範囲ダメージ ${formatNum(before - enemyHp)}！`;
-          }
+          enemyHp = clampNum(enemyHp - splashDamage); // 0以下まで削れる（1で止めない）
           splashDamage = 0;
+          if (before > enemyHp) {
+            const dealtSplash = before - Math.max(0, enemyHp);
+            showDamage(clampNum(dealtSplash), false);
+            // 範囲ダメージで次の敵も倒した → 連鎖撃破
+            if (enemyHp <= 0) {
+              battleMessage.textContent = `🌪️ 範囲ダメージで ${currentEnemy.name} も撃破！`;
+              updateBars();
+              onEnemyDefeated();
+              return;
+            }
+            splashNote = ` 🌪️範囲ダメージ ${formatNum(dealtSplash)}！`;
+          }
         }
         battleMessage.textContent =
           `🗡️ ${beatenName}を倒した！次の敵（残り${enemiesRemaining}体）${splashNote}`;
@@ -1208,29 +1224,79 @@
   /* --- リュック（外した装備の保管＆付け替え）--- */
   function showBackpack(returnToBattle) {
     shopReturnsToBattle = !!returnToBattle;
+    backpackFilter = "all"; // 開くたびに「全部」表示にもどす
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
     renderBackpack();
   }
 
+  // リュック上部の「振り分け」タブ（スロット別フィルタ）
+  function renderBackpackFilter() {
+    const bar = document.createElement("div");
+    bar.className = "backpack-filter";
+    const tabs = [{ id: "all", icon: "📦", name: "全部" }].concat(
+      SLOTS.map((s) => ({ id: s.id, icon: s.icon, name: s.name })),
+    );
+    tabs.forEach((t) => {
+      const count = t.id === "all" ? backpack.length : backpack.filter((it) => it.slot === t.id).length;
+      const b = document.createElement("button");
+      b.className = "bp-tab" + (backpackFilter === t.id ? " active" : "");
+      b.innerHTML = `${t.icon} ${t.name}<span class="bp-count">${count}</span>`;
+      b.addEventListener("click", () => {
+        backpackFilter = t.id;
+        renderBackpack();
+      });
+      bar.appendChild(b);
+    });
+    rewardGrid.appendChild(bar);
+  }
+
   function renderBackpack() {
     rewardTitle.textContent = `🎒 リュック（保管中：${backpack.length}個）`;
-    battleMessage.textContent = "装備を選ぶと付け替え（今の装備はリュックへ）";
+    battleMessage.textContent = "装備中をタップで外す／リュックの装備をタップで付け替え";
     rewardGrid.innerHTML = "";
+
+    // 振り分け（スロット別フィルタ）
+    renderBackpackFilter();
+
+    // 装備中（タップで外せる）
+    const equippedNow = SLOTS.filter((s) => equipment[s.id]);
+    if (equippedNow.length) {
+      shopSection("🧷 装備中（タップで外す）");
+      equippedNow.forEach((s) => {
+        const it = equipment[s.id];
+        shopButton(s.icon, it.name, `【${it.rarityName}】タップで外す`, false, () => unequip(s.id), it.color);
+      });
+    }
+
+    // リュックの中身：スロットごと → レア度の高い順に並べる
     if (backpack.length === 0) {
       shopSection("リュックは空です");
     } else {
-      backpack.forEach((item, i) => {
-        shopButton(
-          SLOT_META[item.slot].icon,
-          item.name,
-          `【${item.rarityName}】${item.desc}`,
-          false,
-          () => equipFromBackpack(i),
-          item.color,
-        );
+      let shown = 0;
+      SLOTS.forEach((slot) => {
+        if (backpackFilter !== "all" && backpackFilter !== slot.id) return;
+        const inSlot = backpack
+          .map((item, idx) => ({ item, idx }))
+          .filter((x) => x.item.slot === slot.id)
+          .sort((a, b) => rarityRank(b.item.rarity) - rarityRank(a.item.rarity));
+        if (!inSlot.length) return;
+        shown += inSlot.length;
+        shopSection(`${slot.icon} ${slot.name}（${inSlot.length}）`);
+        inSlot.forEach(({ item, idx }) => {
+          shopButton(
+            SLOT_META[item.slot].icon,
+            item.name,
+            `【${item.rarityName}】${item.desc}`,
+            false,
+            () => equipFromBackpack(idx),
+            item.color,
+          );
+        });
       });
+      if (shown === 0) shopSection("この種類の装備はありません");
     }
+
     if (shopReturnsToBattle) {
       shopButton("⚔️", "バトルに戻る", "リュックを閉じる", false, () => resumeFromShop());
     } else {
@@ -1244,6 +1310,25 @@
     if (!item) return;
     backpack.splice(i, 1); // リュックから取り出す
     equipItem(item); // 今着けている装備はリュックへ（消えない）
+    renderBackpack();
+  }
+
+  // 装備を外してリュックへ戻す
+  function unequip(slotId) {
+    const it = equipment[slotId];
+    if (!it) return;
+    // 破軍の剣など：外したらHPと付与した攻撃を元に戻す
+    if (it._sacBonus) {
+      bonusAtk = Math.max(0, bonusAtk - it._sacBonus);
+      if (it._sacHp) playerHp = Math.min(playerMaxHp || Infinity, playerHp + it._sacHp);
+      it._sacBonus = 0;
+      it._sacHp = 0;
+    }
+    equipment[slotId] = null;
+    backpack.push(it);
+    recomputeMaxHp();
+    renderEquipPanel();
+    updateBombButton();
     renderBackpack();
   }
 
@@ -1308,7 +1393,7 @@
       rarityName: info.name,
       color: info.color,
     };
-    equipItem(item); // 装備（外した装備はリュックへ）
+    backpack.push(item); // 自動装備せずリュックへ（リュックから付け替え）
     updateCoinDisplay();
     const flair =
       rarity === "mythic"
@@ -1318,7 +1403,7 @@
           : rarity === "epic"
             ? "💜エピック "
             : "💙レア ";
-    battleMessage.textContent = `${flair}「${item.name}」を入手して装備！`;
+    battleMessage.textContent = `${flair}「${item.name}」をゲット！🎒リュックに入れたよ`;
     renderGacha(item);
   }
 
@@ -1480,14 +1565,28 @@
       shopButton(u.icon, u.name, `🪙${u.price}`, coins < u.price, () => buyUpgrade(u));
     });
 
-    // 装備を売る
+    // 装備を売る（装備中＋リュックの中身）
     const equipped = SLOTS.filter((s) => equipment[s.id]);
-    if (equipped.length) {
+    if (equipped.length || backpack.length) {
       shopSection("💰 装備を売る");
       equipped.forEach((s) => {
         const it = equipment[s.id];
-        shopButton(s.icon, it.name, `売る 🪙+${sellValue(it)}`, false, () => sellEquip(s.id), it.color);
+        shopButton(s.icon, it.name, `装備中・売る 🪙+${sellValue(it)}`, false, () => sellEquip(s.id), it.color);
       });
+      // リュックの中身はレア度順で並べて売れるように
+      backpack
+        .map((item, idx) => ({ item, idx }))
+        .sort((a, b) => rarityRank(b.item.rarity) - rarityRank(a.item.rarity))
+        .forEach(({ item, idx }) => {
+          shopButton(
+            SLOT_META[item.slot].icon,
+            item.name,
+            `🎒リュック・売る 🪙+${sellValue(item)}`,
+            false,
+            () => sellFromBackpack(idx),
+            item.color,
+          );
+        });
     }
 
     // その他（回復・退店）
@@ -1513,7 +1612,8 @@
     if (!stock || stock.bought || coins < stock.price) return;
     coins -= stock.price;
     stock.bought = true;
-    equipItem(stock.item); // 外した装備はリュックへ
+    backpack.push(stock.item); // 自動装備せずリュックへ（リュックから付け替え）
+    battleMessage.textContent = `🛒 「${stock.item.name}」を購入！🎒リュックに入れたよ`;
     updateCoinDisplay();
     renderShop();
   }
@@ -1554,6 +1654,16 @@
     equipment[slotId] = null;
     recomputeMaxHp();
     renderEquipPanel();
+    updateCoinDisplay();
+    renderShop();
+  }
+
+  // リュックの装備を売ってコインにする
+  function sellFromBackpack(i) {
+    const it = backpack[i];
+    if (!it) return;
+    coins += sellValue(it);
+    backpack.splice(i, 1);
     updateCoinDisplay();
     renderShop();
   }
