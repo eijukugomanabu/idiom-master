@@ -357,6 +357,8 @@
   let totalDamageDealt = 0; // これまでに与えた累計ダメージ
   let immuneLeft = 0; // 残りダメージ無効回数（神核装甲など）
   let bonusHits = 0; // 追加攻撃回数（撃破で増える）
+  let causalAtk = 0; // 因果律の剣：与ダメから永続加算する攻撃（武器を外すと無効）
+  let bombStore = 0; // チンギスの騎馬靴：貯めた爆弾ダメージ
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -400,14 +402,21 @@
   function equippedItems() {
     return Object.values(equipment).filter(Boolean);
   }
+  // 徳川家康の太刀「天下統一」：防具（武器以外）の効果を2倍にする
+  function doubleArmorActive() {
+    return equippedItems().some((it) => it.fx.doubleArmor);
+  }
+  function fxScale(it) {
+    return it.slot !== "weapon" && doubleArmorActive() ? 2 : 1;
+  }
   function sumFx(key) {
     let t = 0;
-    for (const it of equippedItems()) if (typeof it.fx[key] === "number") t += it.fx[key];
+    for (const it of equippedItems()) if (typeof it.fx[key] === "number") t += it.fx[key] * fxScale(it);
     return t;
   }
   function maxFx(key) {
     let m = 0;
-    for (const it of equippedItems()) if (typeof it.fx[key] === "number") m = Math.max(m, it.fx[key]);
+    for (const it of equippedItems()) if (typeof it.fx[key] === "number") m = Math.max(m, it.fx[key] * fxScale(it));
     return m;
   }
   function hasFx(key) {
@@ -434,7 +443,8 @@
   }
 
   function baseAtk() {
-    return attackBonus + sumFx("atk") + bonusAtk;
+    // 因果律の剣の永続加算は、その武器を装備している間だけ有効
+    return attackBonus + sumFx("atk") + bonusAtk + (hasFx("damageToAtkPct") ? causalAtk : 0);
   }
   function baseDef() {
     return damageReduction + sumFx("def") + bonusDef;
@@ -492,13 +502,14 @@
       const overPct = Math.max(0, critTotal() - 1) * 100;
       if (overPct > 0) m *= Math.pow(over, overPct);
     }
-    if (enemyIsBoss && hasFx("bossDigitsCrit")) m *= 14;
+    if (enemyIsBoss && hasFx("bossDigitsCrit")) m *= 1000;
     return m;
   }
   // 最大HPを再計算（基本＋パーク＋装備＋累積＋変換＋乗算）。増えた分は回復する。
   function recomputeMaxHp() {
     let m = BASE_MAX_HP + perkMaxHpBonus + sumFx("maxHp") + bonusMaxHp;
     m += baseDef() * sumFx("convDefToHp");
+    m += baseAtk() * sumFx("convAtkToHp"); // 天界守護脚甲：攻撃力をHPにも加算
     m *= 1 + sumFx("maxHpMult"); // 最大HPの乗算（例 2倍）
     m = Math.max(1, Math.round(m));
     const delta = m - playerMaxHp;
@@ -545,6 +556,8 @@
     totalDamageDealt = 0;
     immuneLeft = 0;
     bonusHits = 0;
+    causalAtk = 0;
+    bombStore = 0;
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
     beginFloorEnemies();
     nextBattleQuestion();
@@ -595,6 +608,7 @@
     playerHpFill.style.width = Math.max(0, (playerHp / playerMaxHp) * 100) + "%";
     playerHpText.textContent = `${formatNum(Math.max(0, playerHp))} / ${formatNum(playerMaxHp)}`;
     renderStats();
+    updateBombButton();
   }
 
   // 今の自分のステータス（攻撃/防御/最大HP/会心）を表示
@@ -689,6 +703,7 @@
     let hits = hasFx("extraHit") ? 2 : 1;
     if (hasFx("extraHitChance") && Math.random() < sumFx("extraHitChance")) hits += 1;
     hits += sumFx("extraHits") + bonusHits; // ミシック：追加攻撃回数（神速の靴など）
+    hits = Math.max(hits, maxFx("hitCount")); // 宮本武蔵の木刀：固定の多段攻撃
 
     let dealt = 0;
     let note = "";
@@ -714,7 +729,8 @@
     if (dealt > 0) {
       totalDamageDealt = clampNum(totalDamageDealt + dealt);
       const dToAtk = sumFx("damageToAtkPct");
-      if (dToAtk > 0) bonusAtk = clampNum(bonusAtk + Math.floor(dealt * dToAtk));
+      if (dToAtk > 0) causalAtk = clampNum(causalAtk + Math.floor(dealt * dToAtk)); // 因果律の剣（外すと無効）
+      if (hasFx("bombStorePct")) bombStore = clampNum(bombStore + Math.round(dealt * sumFx("bombStorePct"))); // 火薬の使い手
     }
     const emEach = sumFx("enemyMaxHpToAtkEach");
     if (emEach) bonusAtk = clampNum(bonusAtk + Math.round(enemyMaxHp * emEach));
@@ -731,7 +747,7 @@
     if (lifesteal > 0) playerHp = Math.min(playerMaxHp, playerHp + lifesteal);
     // この階に後ろの敵がいれば、与ダメージの30%を範囲ダメージとして蓄積
     if (enemiesRemaining > 1 && dealt > 0) {
-      splashDamage = clampNum(splashDamage + Math.round(dealt * 0.3));
+      splashDamage = clampNum(splashDamage + Math.round(dealt * (0.3 + sumFx("splashBonusPct"))));
     }
 
     const flair =
@@ -828,6 +844,7 @@
     let heal = sumFx("killHeal");
     const healPct = sumFx("killHealPct");
     if (healPct) heal += Math.round(playerMaxHp * healPct);
+    if (hasFx("killHealEnemyMaxHp")) heal = clampNum(heal + enemyMaxHp); // 血月の剣：撃破した敵のHPを丸ごと回復
     if (heal) playerHp = Math.min(playerMaxHp, playerHp + heal);
 
     // コインをランダム入手（階が上がるほど増える）
@@ -986,12 +1003,32 @@
   // 装備する。すでに着けていた装備はリュックに保管する（消滅させない）。
   function equipItem(item) {
     const old = equipment[item.slot];
-    if (old) backpack.push(old);
+    if (old) {
+      // 破軍の剣などを外したら、削ったHPと付与した攻撃を元に戻す
+      if (old._sacBonus) {
+        bonusAtk = Math.max(0, bonusAtk - old._sacBonus);
+        if (old._sacHp) playerHp = Math.min(playerMaxHp || Infinity, playerHp + old._sacHp);
+        old._sacBonus = 0;
+        old._sacHp = 0;
+      }
+      backpack.push(old);
+    }
     equipment[item.slot] = item;
     // ダメージ無効回数を付与（神核装甲など）
     if (item.fx && item.fx.immuneHits) immuneLeft += item.fx.immuneHits;
+    // 破軍の剣：HPを99%削り、失った分の倍率を攻撃力に変換
+    if (item.fx && item.fx.hpSacrificeToAtk && playerHp > 1) {
+      const lost = playerHp - Math.max(1, Math.round(playerHp * 0.01));
+      if (lost > 0) {
+        playerHp -= lost;
+        item._sacHp = lost;
+        item._sacBonus = clampNum(lost * item.fx.hpSacrificeToAtk);
+        bonusAtk = clampNum(bonusAtk + item._sacBonus);
+      }
+    }
     recomputeMaxHp();
     renderEquipPanel();
+    updateBombButton();
   }
 
   function chooseEquip(item) {
@@ -1153,6 +1190,31 @@
   if (openShopBtn) openShopBtn.addEventListener("click", () => showShop(true));
   const openBackpackBtn = document.getElementById("open-backpack");
   if (openBackpackBtn) openBackpackBtn.addEventListener("click", () => showBackpack(true));
+
+  // 「💣 爆弾を放出」ボタン（チンギスの騎馬靴を装備中のみ表示）
+  const detonateBtn = document.getElementById("detonate-bomb");
+  if (detonateBtn) detonateBtn.addEventListener("click", detonateBomb);
+  function updateBombButton() {
+    if (!detonateBtn) return;
+    if (hasFx("bombStorePct")) {
+      detonateBtn.classList.remove("is-hidden");
+      detonateBtn.textContent = `💣 爆弾を放出（${formatNum(bombStore)}）`;
+      detonateBtn.disabled = bombStore <= 0;
+    } else {
+      detonateBtn.classList.add("is-hidden");
+    }
+  }
+  function detonateBomb() {
+    if (bombStore <= 0 || enemyHp <= 0 || battleInput.disabled) return;
+    const dmg = bombStore;
+    bombStore = 0;
+    enemyHp = clampNum(enemyHp - dmg);
+    showDamage(dmg, true);
+    shakeEnemy();
+    battleMessage.textContent = `💥 爆弾炸裂！ ${formatNum(dmg)} のダメージ！`;
+    updateBars();
+    if (enemyHp <= 0) onEnemyDefeated();
+  }
 
   // 装備アイコンのツールチップ（ホバー/タップで即表示）
   const tipBox = document.createElement("div");
