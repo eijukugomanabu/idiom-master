@@ -1209,3 +1209,90 @@ header {
   font-weight: 700;
   color: #4ade80;
 }
+
+/* ====================================================== */
+/* 🎰 ガチャ抽選の演出 */
+/* ====================================================== */
+.gacha-anim {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 320;
+  pointer-events: none;
+}
+.gacha-anim::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 44%, var(--gc, #888) 0%, rgba(2, 6, 23, 0.92) 56%);
+  opacity: 0;
+  animation: gachaDim 0.4s ease forwards;
+}
+@keyframes gachaDim {
+  from { opacity: 0; }
+  to { opacity: 0.92; }
+}
+.gacha-orb {
+  position: relative;
+  font-size: 4.6rem;
+  z-index: 1;
+  filter: drop-shadow(0 0 18px var(--gc, #fff));
+  animation: gachaCharge 0.7s ease-in-out infinite alternate, gachaJitter 0.16s linear infinite;
+}
+@keyframes gachaCharge {
+  from { transform: scale(0.9); filter: drop-shadow(0 0 10px var(--gc, #fff)); }
+  to { transform: scale(1.18); filter: drop-shadow(0 0 36px var(--gc, #fff)); }
+}
+@keyframes gachaJitter {
+  0%, 100% { margin-left: -3px; }
+  50% { margin-left: 3px; }
+}
+.gacha-anim.burst .gacha-orb {
+  animation: gachaPopOut 0.5s ease-out forwards;
+}
+@keyframes gachaPopOut {
+  0% { transform: scale(1.2); opacity: 1; }
+  40% { transform: scale(2.3); opacity: 1; filter: drop-shadow(0 0 50px var(--gc, #fff)); }
+  100% { transform: scale(3.6); opacity: 0; }
+}
+.gacha-banner {
+  position: absolute;
+  top: 56%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  font-weight: 900;
+  font-size: 2rem;
+  white-space: nowrap;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.7);
+  animation: fxRank 1.15s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.gacha-banner.mythic {
+  font-size: 2.4rem;
+  background: linear-gradient(90deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: fxRank 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, rainbowSlide 0.7s linear infinite;
+}
+.gacha-summary {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 0.3rem;
+  color: var(--text);
+}
+.gacha-result { animation: gachaPop 0.4s ease backwards; }
+.gacha-result.rank-4 { box-shadow: 0 0 16px rgba(251, 191, 36, 0.6); }
+.gacha-result.rank-5 {
+  animation: gachaPop 0.4s ease backwards, mythicGlow 1.4s ease-in-out infinite;
+}
+@keyframes mythicGlow {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 0, 255, 0.5); }
+  50% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.85); }
+}

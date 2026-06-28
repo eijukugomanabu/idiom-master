@@ -1418,37 +1418,62 @@
     renderGacha(null);
   }
 
-  function renderGacha(result) {
-    rewardTitle.textContent = `🎰 武器ガチャ　🪙 ${coins}`;
+  const GACHA_MAX_PULLS = 100; // 「最大」で一度に引ける上限
+  function renderGacha(results) {
+    rewardTitle.textContent = `🎰 武器ガチャ　🪙 ${formatNum(coins)}`;
     rewardGrid.innerHTML = "";
-    if (result) {
-      const card = document.createElement("button");
-      card.className = "reward-card gacha-result";
-      card.disabled = true;
-      card.style.borderColor = result.color;
-      card.innerHTML =
-        `<span class="reward-icon">⚔️</span>` +
-        `<span class="reward-name" style="color:${result.color}">${result.name}</span>` +
-        `<span class="reward-desc">【${result.rarityName}】${result.desc}</span>`;
-      rewardGrid.appendChild(card);
+
+    if (results && results.length) {
+      // 複数連は結果サマリー（レア度別の個数）
+      if (results.length > 1) {
+        const counts = {};
+        results.forEach((it) => (counts[it.rarity] = (counts[it.rarity] || 0) + 1));
+        const summary = ["mythic", "legendary", "epic", "rare"]
+          .filter((r) => counts[r])
+          .map((r) => `<span style="color:${rarityInfo(r).color}">${rarityInfo(r).name}×${counts[r]}</span>`)
+          .join("　");
+        const s = document.createElement("div");
+        s.className = "gacha-summary";
+        s.innerHTML = `${results.length}連の結果：${summary}`;
+        rewardGrid.appendChild(s);
+      }
+      // レア度の高い順にカード表示
+      results
+        .slice()
+        .sort((a, b) => rarityRank(b.rarity) - rarityRank(a.rarity))
+        .forEach((result) => {
+          const card = document.createElement("div");
+          card.className = "reward-card gacha-result rank-" + rarityRank(result.rarity);
+          card.style.borderColor = result.color;
+          card.innerHTML =
+            `<span class="reward-icon">${SLOT_META[result.slot].icon}</span>` +
+            `<span class="reward-name" style="color:${result.color}">${result.name}</span>` +
+            `<span class="reward-desc">【${result.rarityName}】${result.desc}</span>`;
+          rewardGrid.appendChild(card);
+        });
     }
-    shopButton("🎰", "ガチャを引く", `🪙${GACHA_COST}・レア以上の武器`, coins < GACHA_COST, () => pullGacha());
+
+    // コインに応じて引く回数を選べる
+    shopSection(`🎰 何回引く？（1回 🪙${GACHA_COST}）`);
+    shopButton("🎰", "1回を引く", `🪙${GACHA_COST}`, coins < GACHA_COST, () => pullGachaMany(1));
+    shopButton("🔟", "10回を引く", `🪙${formatNum(GACHA_COST * 10)}`, coins < GACHA_COST * 10, () => pullGachaMany(10));
+    const maxN = Math.min(GACHA_MAX_PULLS, Math.floor(coins / GACHA_COST));
+    if (maxN >= 1) {
+      shopButton("💎", `最大 ${maxN}回を引く`, `🪙${formatNum(GACHA_COST * maxN)}`, false, () => pullGachaMany(maxN));
+    }
     shopButton("➡️", "次の階へ進む", "ガチャを終える", false, () => advanceFloor("ガチャ終了！"));
     updateBars();
   }
 
-  function pullGacha() {
-    if (coins < GACHA_COST) return;
-    coins -= GACHA_COST;
-    const rarity = rollGachaRarity();
-    // ミシックは全スロットが対象、それ以外は武器のみ
+  // 指定レア度の装備を1つ作る
+  function makeGachaItem(rarity) {
     const candidates =
       rarity === "mythic"
         ? EQUIPMENT.filter((e) => e.rarity === "mythic")
         : EQUIPMENT.filter((e) => e.slot === "weapon" && e.rarity === rarity);
     const tmpl = randomOf(candidates);
     const info = rarityInfo(rarity);
-    const item = {
+    return {
       slot: tmpl.slot,
       name: tmpl.name,
       desc: tmpl.desc,
@@ -1457,18 +1482,73 @@
       rarityName: info.name,
       color: info.color,
     };
-    backpack.push(item); // 自動装備せずリュックへ（リュックから付け替え）
+  }
+
+  // 複数回まとめて引く（演出 → 結果表示）
+  function pullGachaMany(count) {
+    const total = GACHA_COST * count;
+    if (count < 1 || coins < total) return;
+    coins -= total;
+    const results = [];
+    for (let k = 0; k < count; k++) results.push(makeGachaItem(rollGachaRarity()));
+    results.forEach((it) => backpack.push(it)); // 自動装備せずリュックへ
     updateCoinDisplay();
-    const flair =
-      rarity === "mythic"
-        ? "🌟ミシック🌟 "
-        : rarity === "legendary"
-          ? "✨レジェンダリー✨ "
-          : rarity === "epic"
-            ? "💜エピック "
-            : "💙レア ";
-    battleMessage.textContent = `${flair}「${item.name}」をゲット！🎒リュックに入れたよ`;
-    renderGacha(item);
+    rewardGrid.innerHTML = "";
+    battleMessage.textContent = "🎰 ガチャ抽選中…";
+    playGachaReveal(results, () => {
+      const best = results.reduce((a, b) => (rarityRank(b.rarity) > rarityRank(a.rarity) ? b : a), results[0]);
+      const r = rarityRank(best.rarity);
+      const flair = r >= 5 ? "🌟ミシック🌟" : r === 4 ? "✨レジェンダリー✨" : r === 3 ? "💜エピック" : "🎉";
+      battleMessage.textContent =
+        count > 1 ? `${flair} ${count}連ガチャ！🎒リュックに入れたよ` : `${flair}「${best.name}」をゲット！🎒リュックへ`;
+      renderGacha(results);
+    });
+  }
+
+  // ガチャ抽選アニメ：溜め → 弾けて称号 → 結果
+  function playGachaReveal(results, done) {
+    const best = results.reduce((a, b) => (rarityRank(b.rarity) > rarityRank(a.rarity) ? b : a), results[0]);
+    const rank = rarityRank(best.rarity);
+    const col = rarityInfo(best.rarity).color;
+    const wrap = document.createElement("div");
+    wrap.className = "gacha-anim";
+    wrap.style.setProperty("--gc", col);
+    wrap.innerHTML = `<div class="gacha-orb">🎰</div>`;
+    fxLayer.appendChild(wrap);
+    const buildMs = rank >= 4 ? 1400 : 800; // 高レアほど溜める
+    setTimeout(() => {
+      wrap.classList.add("burst");
+      screenFlash(rank >= 5 ? "rainbow" : "kill", 7);
+      screenShake(6);
+      // 中央でパーティクル爆散
+      for (let i = 0; i < 46; i++) {
+        const p = document.createElement("div");
+        p.className = "fx-particle";
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 70 + Math.random() * 130;
+        p.style.setProperty("--tx", Math.cos(ang) * dist + "px");
+        p.style.setProperty("--ty", Math.sin(ang) * dist + "px");
+        p.style.setProperty("--sz", 5 + Math.random() * 8 + "px");
+        p.style.setProperty("--dur", 0.6 + Math.random() * 0.5 + "s");
+        const c = rank >= 5 ? ["#ff00ff", "#00ffff", "#ffff00", "#ffffff"][i % 4] : col;
+        p.style.background = c;
+        p.style.color = c;
+        p.style.left = "50%";
+        p.style.top = "44%";
+        wrap.appendChild(p);
+      }
+      // 称号バナー
+      const banner = document.createElement("div");
+      banner.className = "gacha-banner" + (rank >= 5 ? " mythic" : "");
+      if (rank < 5) banner.style.color = col;
+      banner.textContent =
+        rank >= 5 ? "🌟 ミシック 降臨 🌟" : rank === 4 ? "✨ レジェンダリー ✨" : `${rarityInfo(best.rarity).name} GET!`;
+      wrap.appendChild(banner);
+      setTimeout(() => {
+        wrap.remove();
+        done();
+      }, rank >= 4 ? 1200 : 600);
+    }, buildMs);
   }
 
   /* --- ショップ（コインで購入） --- */
