@@ -617,9 +617,13 @@
   // 1つの階の敵をまとめてセットアップ（通常は複数体、ボス階は1体）
   function beginFloorEnemies() {
     const isBossFloor = floor % 10 === 0 || floor >= MAX_FLOOR;
-    // 20階ごとに敵の数が増える（最大 +4体）
-    const extra = Math.min(4, Math.floor(floor / 20));
-    enemiesRemaining = isBossFloor ? 1 : randInt(1 + extra, 3 + extra);
+    // 階が深いほど敵が増える。40階以降は後ろに大群（最大100体くらい）
+    let count;
+    if (isBossFloor) count = 1;
+    else if (floor >= 40) count = randInt(40, 100);
+    else if (floor >= 20) count = randInt(3, 6);
+    else count = randInt(1, 3);
+    enemiesRemaining = count;
     splashDamage = 0; // 階が変わったら範囲ダメージはリセット
     spawnEnemy();
   }
@@ -1053,7 +1057,7 @@
     }
   }
 
-  function onEnemyDefeated() {
+  function onEnemyDefeated(chained) {
     defeated++;
     // ミシック：撃破ごとに攻撃倍率を乗算で増やす／追加攻撃回数を増やす
     if (hasFx("atkMultPerKill")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("atkMultPerKill")));
@@ -1084,32 +1088,32 @@
 
     const beatenName = currentEnemy.name;
     battleInput.disabled = true;
-    playDefeatAnim(); // 撃破演出
+    if (!chained) playDefeatAnim(); // 撃破演出（連鎖中は省略して軽く）
     enemiesRemaining--;
 
-    // 演出を見せてから次へ
+    // 演出を見せてから次へ（連鎖撃破中は短く）
     setTimeout(() => {
       if (enemiesRemaining > 0) {
         // 同じ階にまだ敵がいる
         spawnEnemy();
-        // 後ろの敵に蓄積した範囲ダメージを適用
+        // 後ろの敵に蓄積した範囲ダメージを適用（余りは次の敵へ持ち越して連鎖）
         let splashNote = "";
         if (splashDamage > 0) {
           const before = enemyHp;
-          enemyHp = clampNum(enemyHp - splashDamage); // 0以下まで削れる（1で止めない）
-          splashDamage = 0;
-          if (before > enemyHp) {
-            const dealtSplash = before - Math.max(0, enemyHp);
-            showDamage(clampNum(dealtSplash), false);
-            // 範囲ダメージで次の敵も倒した → 連鎖撃破
-            if (enemyHp <= 0) {
-              battleMessage.textContent = `🌪️ 範囲ダメージで ${currentEnemy.name} も撃破！`;
-              updateBars();
-              onEnemyDefeated();
-              return;
-            }
-            splashNote = ` 🌪️範囲ダメージ ${formatNum(dealtSplash)}！`;
+          const applied = Math.min(before, splashDamage);
+          if (applied > 0) showDamage(clampNum(applied), false);
+          if (splashDamage >= before) {
+            // 範囲ダメージで撃破 → オーバーキル分を次の敵へ持ち越して連鎖
+            splashDamage = clampNum(splashDamage - before);
+            enemyHp = 0;
+            battleMessage.textContent = `🌪️ 範囲ダメージで ${currentEnemy.name} も撃破！（残り${enemiesRemaining - 1}体）`;
+            updateBars();
+            onEnemyDefeated(true);
+            return;
           }
+          enemyHp = clampNum(enemyHp - splashDamage);
+          splashDamage = 0;
+          splashNote = ` 🌪️範囲ダメージ ${formatNum(applied)}！`;
         }
         battleMessage.textContent =
           `🗡️ ${beatenName}を倒した！次の敵（残り${enemiesRemaining}体）${splashNote}`;
@@ -1128,7 +1132,7 @@
         perkPicksLeft = bonusActive ? 2 : 1;
         showPerks(beatenName);
       }
-    }, 480);
+    }, chained ? 70 : 480);
   }
 
   // 撃破演出：敵がはじけて消える＋💥
@@ -1247,6 +1251,16 @@
 
   // 装備する。すでに着けていた装備はリュックに保管する（消滅させない）。
   function equipItem(item) {
+    // ミシックは同時に1つだけ。別スロットのミシックは外してリュックへ戻す
+    if (item.rarity === "mythic") {
+      for (const s of SLOTS) {
+        const cur = equipment[s.id];
+        if (s.id !== item.slot && cur && cur.rarity === "mythic") {
+          equipment[s.id] = null;
+          backpack.push(cur);
+        }
+      }
+    }
     const old = equipment[item.slot];
     if (old) {
       // 破軍の剣などを外したら、削ったHPと付与した攻撃を元に戻す
@@ -1410,13 +1424,13 @@
   function showGacha(beatenName) {
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    battleMessage.textContent = `🎉 ${beatenName}を倒した！武器ガチャを引こう`;
+    battleMessage.textContent = `🎉 ${beatenName}を倒した！装備ガチャを引こう`;
     renderGacha(null);
   }
 
   const GACHA_MAX_PULLS = 100; // 「最大」で一度に引ける上限
   function renderGacha(results) {
-    rewardTitle.textContent = `🎰 武器ガチャ　🪙 ${formatNum(coins)}`;
+    rewardTitle.textContent = `🎰 装備ガチャ　🪙 ${formatNum(coins)}`;
     rewardGrid.innerHTML = "";
 
     if (results && results.length) {
@@ -1463,10 +1477,8 @@
 
   // 指定レア度の装備を1つ作る
   function makeGachaItem(rarity) {
-    const candidates =
-      rarity === "mythic"
-        ? EQUIPMENT.filter((e) => e.rarity === "mythic")
-        : EQUIPMENT.filter((e) => e.slot === "weapon" && e.rarity === rarity);
+    // 全スロットから抽選（剣だけに偏らないように）
+    const candidates = EQUIPMENT.filter((e) => e.rarity === rarity);
     const tmpl = randomOf(candidates);
     const info = rarityInfo(rarity);
     return {
@@ -1512,6 +1524,7 @@
     wrap.innerHTML = `<div class="gacha-orb">🎰</div>`;
     fxLayer.appendChild(wrap);
     const buildMs = rank >= 4 ? 1400 : 800; // 高レアほど溜める
+    if (typeof Music !== "undefined") Music.gacha(rank, buildMs); // ガチャ抽選音
     setTimeout(() => {
       wrap.classList.add("burst");
       screenFlash(rank >= 5 ? "rainbow" : "kill", 7);
@@ -1709,6 +1722,18 @@
     const equipped = SLOTS.filter((s) => equipment[s.id]);
     if (equipped.length || backpack.length) {
       shopSection("💰 装備を売る");
+      // リュックのレア以下（コモン/アンコモン/レア）をまとめて売る
+      const lowItems = backpack.filter((it) => rarityRank(it.rarity) <= rarityRank("rare"));
+      if (lowItems.length) {
+        const lowTotal = lowItems.reduce((sum, it) => sum + sellValue(it), 0);
+        shopButton(
+          "🧹",
+          `レア以下を一括売却（${lowItems.length}個）`,
+          `🪙+${formatNum(lowTotal)}`,
+          false,
+          () => sellBulkBelowRare(),
+        );
+      }
       equipped.forEach((s) => {
         const it = equipment[s.id];
         shopButton(s.icon, it.name, `装備中・売る 🪙+${sellValue(it)}`, false, () => sellEquip(s.id), it.color);
@@ -1806,6 +1831,25 @@
     backpack.splice(i, 1);
     updateCoinDisplay();
     renderShop();
+  }
+
+  // リュックのレア以下（コモン/アンコモン/レア）をまとめて売る
+  function sellBulkBelowRare() {
+    let gained = 0;
+    let n = 0;
+    for (let i = backpack.length - 1; i >= 0; i--) {
+      if (rarityRank(backpack[i].rarity) <= rarityRank("rare")) {
+        gained += sellValue(backpack[i]);
+        backpack.splice(i, 1);
+        n++;
+      }
+    }
+    if (n > 0) {
+      coins += gained;
+      battleMessage.textContent = `🧹 レア以下を${n}個まとめて売却！🪙+${formatNum(gained)}`;
+      updateCoinDisplay();
+      renderShop();
+    }
   }
 
   // 装備パネル用の短い表示（基本ステータスがあれば数値、特殊効果は★）

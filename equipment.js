@@ -99,10 +99,7 @@ const EQUIPMENT = [
   { slot: "weapon", name: "削岩の刃", rarity: "epic", desc: "敵の最大HPの3%を追加ダメージ", fx: { enemyMaxHpPct: 0.03, atk: 60 } },
   { slot: "weapon", name: "山割りの大剣", rarity: "epic", desc: "敵の最大HPの5%を追加ダメージ", fx: { enemyMaxHpPct: 0.05 } },
   { slot: "weapon", name: "竜殺しの剣", rarity: "epic", desc: "ボスへの攻撃力+5000%", fx: { bossAtk: 50 } },
-  { slot: "weapon", name: "神殺しの槍", rarity: "legendary", desc: "ボスへの攻撃力+100000%", fx: { bossAtk: 1000 } },
   { slot: "weapon", name: "処刑人の斧", rarity: "legendary", desc: "HP60%以下の敵を即死", fx: { execute: 0.6 } },
-  { slot: "weapon", name: "断罪の処刑剣", rarity: "legendary", desc: "HP60%以下の敵を即死", fx: { execute: 0.6 } },
-  { slot: "weapon", name: "真・因果律の剣", rarity: "legendary", desc: "与ダメージの100%を永続的に攻撃へ（外すと効果は消える）", fx: { damageToAtkPct: 1.0 } },
   { slot: "weapon", name: "世界喰らいの剣", rarity: "legendary", desc: "攻撃力+100万", fx: { atk: 1000000 } },
 
   // ========== 追加ラインナップ（剣）==========
@@ -153,7 +150,7 @@ const EQUIPMENT = [
   { slot: "body", name: "反撃の鎧", rarity: "uncommon", desc: "被ダメージ時、次の攻撃力+20%", fx: { onHitBuffAtkPct: 0.2 } },
   { slot: "body", name: "万全の鎧", rarity: "uncommon", desc: "HPが最大の時、攻撃力+20%", fx: { highHpAtk: 0.2 } },
   { slot: "body", name: "重甲冑", rarity: "uncommon", desc: "防御力+60", fx: { def: 60 } },
-  { slot: "body", name: "巨人の鎧", rarity: "uncommon", desc: "最大HP+400", fx: { maxHp: 400 } },
+  { slot: "body", name: "巨人の鎧", rarity: "uncommon", desc: "最大HP+700", fx: { maxHp: 700 } },
   { slot: "body", name: "対ボスの鎧", rarity: "rare", desc: "受けるダメージを30%カット", fx: { damageReducePct: 0.3 } },
   { slot: "body", name: "力変換の鎧", rarity: "rare", desc: "防御力の100%を攻撃力に加算", fx: { convDefToAtk: 1 } },
   { slot: "body", name: "生命倍化の鎧", rarity: "rare", desc: "最大HP2倍(乗算)", fx: { maxHpMult: 1 } },
