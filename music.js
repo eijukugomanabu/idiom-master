@@ -368,7 +368,87 @@ const Music = (function () {
     } catch (e) {}
   }
 
-  return { start, stop, toggle, isMuted, hit, kill };
+  // ガチャ：溜める上昇音 → レア度に応じたきらびやかなリビール
+  function gacha(rank, buildMs) {
+    try {
+      if (!ensure()) return;
+      resumeCtx();
+      rank = Math.max(2, Math.min(5, rank || 2));
+      const t = ctx.currentTime;
+      const build = Math.max(0.3, (buildMs || 900) / 1000);
+
+      // チャージ：ピッチとフィルターが上がり、トレモロが速くなる（ドキドキ）
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(70, t);
+      o.frequency.exponentialRampToValueAtTime(700 + rank * 130, t + build);
+      const lp = ctx.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.Q.value = 7;
+      lp.frequency.setValueAtTime(280, t);
+      lp.frequency.exponentialRampToValueAtTime(4200, t + build);
+      const trem = ctx.createGain();
+      trem.gain.value = 0.55;
+      const tl = ctx.createOscillator();
+      tl.type = "square";
+      tl.frequency.setValueAtTime(6, t);
+      tl.frequency.exponentialRampToValueAtTime(42, t + build);
+      const tla = ctx.createGain();
+      tla.gain.value = 0.45;
+      tl.connect(tla);
+      tla.connect(trem.gain);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.16, t + 0.12);
+      g.gain.setValueAtTime(0.2, t + build - 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + build + 0.06);
+      o.connect(lp);
+      lp.connect(trem);
+      trem.connect(g);
+      g.connect(sfxGain);
+      g.connect(sfxSend);
+      o.start(t);
+      tl.start(t);
+      o.stop(t + build + 0.1);
+      tl.stop(t + build + 0.1);
+
+      // リビール：当たりが豪華なほど厚いコード
+      const rt = t + build;
+      const chord =
+        rank >= 5 ? [0, 4, 7, 11, 14, 19] : rank >= 4 ? [0, 4, 7, 11, 16] : rank >= 3 ? [0, 4, 7, 12] : [0, 7, 12];
+      chord.forEach((s, i) => {
+        const oo = ctx.createOscillator();
+        oo.type = "triangle";
+        oo.frequency.value = freq(s + 12);
+        const gg = ctx.createGain();
+        const st = rt + i * 0.04;
+        gg.gain.setValueAtTime(0.0001, st);
+        gg.gain.linearRampToValueAtTime(0.16, st + 0.02);
+        gg.gain.exponentialRampToValueAtTime(0.0001, st + 0.95);
+        oo.connect(gg);
+        gg.connect(sfxGain);
+        gg.connect(sfxSend);
+        oo.start(st);
+        oo.stop(st + 1.05);
+      });
+      // 高レアはサブの「ドゥン」を足す
+      if (rank >= 4) {
+        const sub = ctx.createOscillator();
+        sub.type = "sine";
+        sub.frequency.setValueAtTime(120, rt);
+        sub.frequency.exponentialRampToValueAtTime(45, rt + 0.5);
+        const sg = ctx.createGain();
+        sg.gain.setValueAtTime(0.5, rt);
+        sg.gain.exponentialRampToValueAtTime(0.0001, rt + 0.6);
+        sub.connect(sg);
+        sg.connect(sfxGain);
+        sub.start(rt);
+        sub.stop(rt + 0.65);
+      }
+    } catch (e) {}
+  }
+
+  return { start, stop, toggle, isMuted, hit, kill, gacha };
 })();
 
 if (typeof module !== "undefined" && module.exports) {
