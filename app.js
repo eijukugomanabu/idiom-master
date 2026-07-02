@@ -280,20 +280,20 @@
   const BASE_MAX_HP = 100;
   const MAX_FLOOR = 100;
   const ENEMIES = [
-    { emoji: "🐀", name: "ねずみ" },
-    { emoji: "🦇", name: "こうもり" },
-    { emoji: "🕷️", name: "クモ" },
-    { emoji: "🐍", name: "ヘビ" },
-    { emoji: "🦂", name: "サソリ" },
-    { emoji: "🐺", name: "おおかみ" },
-    { emoji: "👻", name: "ゆうれい" },
-    { emoji: "🧟", name: "ゾンビ" },
-    { emoji: "👹", name: "おに" },
-    { emoji: "👺", name: "てんぐ" },
-    { emoji: "🦈", name: "サメ" },
+    { emoji: "🐀", name: "ねずみ", img: "img/enemies/nezumi.png" },
+    { emoji: "🦇", name: "こうもり", img: "img/enemies/koumori.png" },
+    { emoji: "🕷️", name: "クモ", img: "img/enemies/kumo.png" },
+    { emoji: "🐍", name: "ヘビ", img: "img/enemies/hebi.png" },
+    { emoji: "🦂", name: "サソリ", img: "img/enemies/sasori.png" },
+    { emoji: "🐺", name: "おおかみ", img: "img/enemies/ookami.png" },
+    { emoji: "👻", name: "ゆうれい", img: "img/enemies/yuurei.png" },
+    { emoji: "🧟", name: "ゾンビ", img: "img/enemies/zombie.png" },
+    { emoji: "👹", name: "おに", img: "img/enemies/oni.png" },
+    { emoji: "👺", name: "てんぐ", img: "img/enemies/tengu.png" },
+    { emoji: "🦈", name: "サメ", img: "img/enemies/same.png" },
   ];
-  const BOSS = { emoji: "🐉", name: "ドラゴン" };
-  const FINAL_BOSS = { emoji: "🐲", name: "魔王" };
+  const BOSS = { emoji: "🐉", name: "ドラゴン", img: "img/enemies/dragon.png" };
+  const FINAL_BOSS = { emoji: "🐲", name: "魔王", img: "img/enemies/maou.png" };
 
   // 装備スロット
   const SLOTS = [
@@ -752,7 +752,14 @@
     floorLabel.textContent =
       `ステージ${stageNum}・${Math.max(1, layerIdx + 1)}/${MAP_LAYERS}マス` + (isBossNode ? "（ボス）" : "");
     enemyEmoji.classList.remove("defeated", "shake");
-    enemyEmoji.textContent = enemyElite ? enemyElite.emoji + currentEnemy.emoji : currentEnemy.emoji;
+    // 敵の画像（エリートは特性の絵文字バッジを重ねる）
+    if (currentEnemy.img) {
+      enemyEmoji.innerHTML =
+        `<img class="enemy-img${enemyIsBoss ? " boss" : ""}" src="${currentEnemy.img}" alt="${currentEnemy.name}">` +
+        (enemyElite ? `<span class="elite-badge">${enemyElite.emoji}</span>` : "");
+    } else {
+      enemyEmoji.textContent = enemyElite ? enemyElite.emoji + currentEnemy.emoji : currentEnemy.emoji;
+    }
     enemyName.textContent =
       `${ELEMENTS[enemyElement].emoji}` +
       (enemyElite ? `${enemyElite.name}` : "") +
