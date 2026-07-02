@@ -315,6 +315,28 @@
     { id: "mythic", name: "ミシック", color: "#f43f5e" }, // ガチャ限定
   ];
 
+  /* --- 戦略システムの定義 --- */
+  // 構え：ダメージ倍率／被ダメージ倍率／バリアを壊せる枚数
+  const STANCES = {
+    attack: { icon: "⚔️", name: "攻めの構え", deal: 1.5, take: 1.7, break: 2, desc: "与ダメ1.5倍・バリア2枚破壊、でも被ダメ1.7倍" },
+    normal: { icon: "⚖️", name: "自然体", deal: 1, take: 1, break: 1, desc: "バランス型" },
+    guard: { icon: "🛡️", name: "守りの構え", deal: 0.5, take: 0.3, break: 1, desc: "被ダメ0.3倍、でも与ダメ半減" },
+  };
+  // エリート敵（階の最後の敵として出現。バリア持ちで毎ターン行動）
+  const ELITES = [
+    { id: "iron", name: "鉄壁の", emoji: "💠", barrier: 3, coinMult: 3, desc: "バリア3枚" },
+    { id: "berserk", name: "狂暴な", emoji: "💢", barrier: 2, atkMult: 2, coinMult: 3, desc: "攻撃2倍" },
+    { id: "gold", name: "黄金の", emoji: "👑", barrier: 2, coinMult: 6, desc: "コイン6倍" },
+    { id: "hex", name: "呪術師の", emoji: "🔮", barrier: 2, cursey: true, coinMult: 3, desc: "呪いを多用" },
+  ];
+  // 敵の行動予告
+  const INTENT_INFO = {
+    attack: { icon: "🗡️", label: "攻撃" },
+    strong: { icon: "😤", label: "強攻撃（2.5倍）" },
+    heal: { icon: "💚", label: "回復" },
+    curse: { icon: "🔮", label: "呪い" },
+  };
+
   const floorLabel = document.getElementById("floor-label");
   const enemyEmoji = document.getElementById("enemy-emoji");
   const enemyName = document.getElementById("enemy-name");
@@ -364,6 +386,13 @@
   let lastAttackDamage = 0; // 直近の攻撃で与えたダメージ
   let maxAttackDamage = Number(localStorage.getItem("idiomMaxDamage")) || 0; // 過去最高ダメージ（保存）
   let peakTier = 0; // この戦闘で到達したダメージ演出の最大ランク
+  /* --- 戦略システム --- */
+  let stance = "normal"; // 構え（attack / normal / guard）
+  let enemyBarrier = 0; // 敵のバリア枚数（ボス・エリートは一撃で倒せない）
+  let enemyIntent = null; // 敵の次の行動の予告
+  let enemyElite = null; // エリート敵の特性（nullなら通常敵）
+  let enemyActs = false; // 毎ターン行動する敵か（ボス・エリート）
+  let curseNext = false; // 呪い状態：次の攻撃が半減＆バリアを壊せない
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -587,6 +616,9 @@
     bombStore = 0;
     lastAttackDamage = 0;
     peakTier = 0;
+    stance = "normal";
+    curseNext = false;
+    renderStanceButtons();
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
     beginFloorEnemies();
     nextBattleQuestion();
@@ -601,17 +633,152 @@
       bonusAtk = clampNum(bonusAtk + totalDamageDealt); // ボス戦開始時、累計ダメージを攻撃へ
     }
     currentEnemy = isFinal ? FINAL_BOSS : isBoss ? BOSS : randomOf(ENEMIES);
+    // エリート：3階以降、その階の最後の敵が35%でエリート化（ボス階は除く）
+    enemyElite = null;
+    if (!enemyIsBoss && floor >= 3 && enemiesRemaining === 1 && Math.random() < 0.35) {
+      enemyElite = randomOf(ELITES);
+    }
+    // バリア：ボスとエリートは一撃で倒せない（1ターンに構えの枚数だけ破壊）
+    enemyActs = enemyIsBoss || !!enemyElite;
+    enemyBarrier = isFinal ? 8 : enemyIsBoss ? Math.min(7, 4 + Math.floor(floor / 20)) : enemyElite ? enemyElite.barrier : 0;
+    curseNext = false;
     const base = isFinal ? 140 : isBoss ? 70 : 22;
     // 10階上がるごとに敵HPを10倍にする（1〜10階は×1、11〜20階は×10、…91〜100階は×10^9）
     const hpScale = Math.pow(10, Math.floor((floor - 1) / 10));
-    enemyMaxHp = Math.round((base + floor * 6) * (isBoss || isFinal ? 1.4 : 1) * hpScale);
+    enemyMaxHp = Math.round((base + floor * 6) * (isFinal ? 10 : isBoss ? 6 : enemyElite ? 2 : 1) * hpScale);
     enemyHp = enemyMaxHp;
     floorLabel.textContent =
       `${floor}/${MAX_FLOOR}階` + (isFinal ? "（最終ボス）" : isBoss ? "（ボス）" : "");
     enemyEmoji.classList.remove("defeated", "shake");
-    enemyEmoji.textContent = currentEnemy.emoji;
+    enemyEmoji.textContent = enemyElite ? enemyElite.emoji + currentEnemy.emoji : currentEnemy.emoji;
     enemyName.textContent =
-      currentEnemy.name + (enemiesRemaining > 1 ? `（この階 残り${enemiesRemaining}体）` : "");
+      (enemyElite ? `${enemyElite.name}` : "") +
+      currentEnemy.name +
+      (enemiesRemaining > 1 ? `（この階 残り${enemiesRemaining}体）` : "");
+    rollIntent();
+  }
+
+  /* --- 戦略システム：行動予告・バリア・構え・敵のターン --- */
+  const enemyIntentEl = document.getElementById("enemy-intent");
+
+  // 敵の次の行動を決めて予告を表示
+  function rollIntent() {
+    if (!enemyActs) {
+      enemyIntent = null;
+      renderIntent();
+      return;
+    }
+    const r = Math.random();
+    if (enemyElite && enemyElite.cursey && r < 0.35) enemyIntent = "curse";
+    else if (r < 0.5) enemyIntent = "attack";
+    else if (r < 0.75) enemyIntent = "strong";
+    else if (r < 0.9) enemyIntent = "heal";
+    else enemyIntent = "curse";
+    renderIntent();
+  }
+
+  function renderIntent() {
+    if (!enemyIntentEl) return;
+    if (!enemyActs || !enemyIntent) {
+      enemyIntentEl.classList.add("is-hidden");
+      return;
+    }
+    const info = INTENT_INFO[enemyIntent];
+    enemyIntentEl.classList.remove("is-hidden");
+    enemyIntentEl.innerHTML =
+      (enemyBarrier > 0 ? `<span class="barrier-badge">🛡️ バリア×${enemyBarrier}</span>` : "") +
+      `<span class="intent-badge">次の行動：${info.icon} ${info.label}</span>`;
+  }
+
+  // 敵の1回分のダメージを自分に適用（無敵・回避・軽減・反射・復活も処理）
+  // 戻り値：true=続行できる / false=ゲームオーバー
+  function applyEnemyHit(mult, label) {
+    if (immuneLeft > 0) {
+      immuneLeft--;
+      const im = sumFx("immuneAtkMult");
+      if (im) atkStackMult = clampNum(atkStackMult * Math.max(1, im));
+      battleMessage.textContent += ` ／ ${label}を無敵で無効化！（残り${immuneLeft}回）`;
+      noHitStreak = 0;
+      return true;
+    }
+    const dodgeP = Math.min(0.9, sumFx("dodge"));
+    if (dodgeP > 0 && Math.random() < dodgeP) {
+      const das = sumFx("dodgeAtkStack");
+      if (das) atkStackMult = clampNum(atkStackMult * Math.max(1, das));
+      battleMessage.textContent += ` ／ ${label}を回避！`;
+      return true;
+    }
+    // 基本ダメージ＋（ボス/エリートは防御を貫通する割合ダメージ）
+    let raw = Math.max(0, 8 + Math.round(floor * 1.5) - effDefense());
+    const pierce = enemyIsBoss ? 0.12 : enemyElite ? 0.07 : 0;
+    raw += Math.round(playerMaxHp * pierce);
+    raw = Math.max(1, raw);
+    if (enemyElite && enemyElite.atkMult) raw *= enemyElite.atkMult;
+    raw *= mult * STANCES[stance].take; // 強攻撃倍率と構え
+    let reduce = sumFx("damageReducePct");
+    for (const c of condList("damageReduceLowHp")) {
+      if (playerHp / playerMaxHp <= c.th) reduce += c.pct;
+    }
+    reduce = Math.min(0.95, reduce);
+    const reflectDmg = Math.round(raw * sumFx("reflect"));
+    const incoming = Math.max(0, Math.round(raw * (1 - reduce)));
+    playerHp -= incoming;
+    if (reflectDmg > 0) enemyHp -= reflectDmg;
+    noHitStreak = 0;
+    tempAtkBuffPct = Math.max(tempAtkBuffPct, sumFx("onHitBuffAtkPct"));
+    battleMessage.textContent +=
+      ` ／ ${label}で ${formatNum(incoming)} のダメージ！` + (reflectDmg > 0 ? `（${formatNum(reflectDmg)} 反射）` : "");
+    if (playerHp <= 0) {
+      const revivePct = maxFx("revive");
+      if (revivePct > 0 && !reviveUsed) {
+        reviveUsed = true;
+        playerHp = Math.max(1, Math.round(playerMaxHp * revivePct));
+        battleMessage.textContent += ` 💫復活！ HP ${formatNum(playerHp)}`;
+        return true;
+      }
+      onGameOver();
+      return false;
+    }
+    return true;
+  }
+
+  // 予告していた行動を敵が実行する（ボス・エリートのターン）
+  // 戻り値：true=続行できる / false=ゲームオーバー
+  function executeIntent() {
+    if (!enemyActs || enemyHp <= 0) return true;
+    let ok = true;
+    if (enemyIntent === "heal") {
+      const h = Math.round(enemyMaxHp * 0.2);
+      enemyHp = Math.min(enemyMaxHp, enemyHp + h);
+      battleMessage.textContent += ` ／ 💚 ${currentEnemy.name}はHPを${formatNum(h)}回復！`;
+    } else if (enemyIntent === "curse") {
+      curseNext = true;
+      battleMessage.textContent += ` ／ 🔮 呪いをかけられた！次の攻撃は半減＆バリアを壊せない`;
+    } else {
+      ok = applyEnemyHit(enemyIntent === "strong" ? 2.5 : 1, INTENT_INFO[enemyIntent].icon + INTENT_INFO[enemyIntent].label);
+    }
+    rollIntent();
+    return ok;
+  }
+
+  // 構えの切り替えボタン
+  const stanceRow = document.getElementById("stance-row");
+  function renderStanceButtons() {
+    if (!stanceRow) return;
+    stanceRow.innerHTML = "";
+    Object.entries(STANCES).forEach(([id, s]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "stance-btn" + (stance === id ? " active" : "");
+      b.textContent = `${s.icon} ${s.name}`;
+      b.title = s.desc;
+      b.addEventListener("click", () => {
+        stance = id;
+        renderStanceButtons();
+        battleMessage.textContent = `${s.icon} ${s.name}！ ${s.desc}`;
+      });
+      stanceRow.appendChild(b);
+    });
   }
 
   // 1つの階の敵をまとめてセットアップ（通常は複数体、ボス階は1体）
@@ -707,6 +874,7 @@
     playerHpText.textContent = `${formatNum(Math.max(0, playerHp))} / ${formatNum(playerMaxHp)}`;
     renderStats();
     updateBombButton();
+    renderIntent();
   }
 
   // 今の自分のステータス（攻撃/防御/最大HP/会心）を表示
@@ -911,8 +1079,38 @@
     const turnHeal = sumFx("turnHealPct");
     if (turnHeal) playerHp = Math.min(playerMaxHp, playerHp + Math.round(playerMaxHp * turnHeal));
 
+    // バリアがある間はHPに届かない（構えの枚数だけ破壊する）
+    if (enemyBarrier > 0) {
+      let breakN = STANCES[stance].break;
+      if (curseNext) {
+        breakN = 0;
+        curseNext = false;
+        battleMessage.textContent = `🔮 呪い発動！「${phrase}」の攻撃はバリアを壊せなかった…`;
+      } else {
+        enemyBarrier = Math.max(0, enemyBarrier - breakN);
+        battleMessage.textContent =
+          enemyBarrier > 0
+            ? `⚔️ 「${phrase}」でバリアを${breakN}枚破壊！（残り${enemyBarrier}枚）`
+            : `💥 「${phrase}」でバリアを全て破壊！本体にダメージが通るぞ！`;
+        if (typeof Music !== "undefined") Music.hit(2, enemyBarrier === 0);
+        screenShake(enemyBarrier === 0 ? 5 : 2);
+        spawnBurst(enemyBarrier === 0 ? 24 : 10, { colors: ["#93c5fd", "#e0f2fe", "#38bdf8"] });
+        shakeEnemy();
+      }
+      const alive = executeIntent(); // 敵のターン
+      renderIntent();
+      updateBars();
+      if (alive) nextBattleQuestion();
+      return;
+    }
+
     // 基礎攻撃 × 各種倍率（加算式＋乗算式）
     let hit = (randInt(16, 24) + effAttack()) * attackMultiplier() * comboMult * atkStackMult;
+    hit *= STANCES[stance].deal; // 構えの倍率
+    if (curseNext) {
+      hit *= 0.5;
+      curseNext = false;
+    }
     if (enemyIsBoss && hasFx("bossMult")) hit *= Math.max(1, sumFx("bossMult"));
     if (floor >= MAX_FLOOR && hasFx("floor100Mult")) hit *= Math.max(1, sumFx("floor100Mult"));
     if (hasFx("critAsAtkMult")) hit *= Math.max(1, critTotal() * 100); // 会心率%を倍率に
@@ -992,8 +1190,14 @@
     shakeEnemy();
     showDamage(dealt > 0 ? dealt : "⚡", crit);
     juiceHit(crit, dealt);
-    if (enemyHp <= 0) onEnemyDefeated();
-    else nextBattleQuestion();
+    if (enemyHp <= 0) {
+      onEnemyDefeated();
+    } else {
+      // ボス・エリートは生きていれば毎ターン反撃してくる
+      const alive = enemyActs ? executeIntent() : true;
+      updateBars();
+      if (alive) nextBattleQuestion();
+    }
   }
 
   // 不正解 → 敵の反撃
@@ -1001,60 +1205,17 @@
     wrongCount++;
     combo = 0; // 間違えるとコンボはリセット
     updateComboDisplay();
-    // ミシック：無敵回数があるとダメージを無効化（虚無王の王冠）
-    if (immuneLeft > 0) {
-      immuneLeft--;
-      const im = sumFx("immuneAtkMult");
-      if (im) atkStackMult = clampNum(atkStackMult * Math.max(1, im));
-      battleMessage.textContent = `❌ 正解は「${phrase}」。でも無敵！ ダメージ0（残り${immuneLeft}回）`;
-      noHitStreak = 0;
-      updateBars();
-      nextBattleQuestion();
-      return;
-    }
-    let incoming = Math.max(1, 8 + floor - effDefense());
-    const dodgeP = Math.min(0.9, sumFx("dodge"));
-    if (dodgeP > 0 && Math.random() < dodgeP) {
-      const das = sumFx("dodgeAtkStack"); // ミシック：回避するたび攻撃倍率UP（星渡りの靴）
-      if (das) atkStackMult = clampNum(atkStackMult * Math.max(1, das));
-      battleMessage.textContent = `❌ 正解は「${phrase}」。でも回避！ ダメージ0`;
-      updateBars();
-      nextBattleQuestion();
-      return;
-    }
-    let reduce = sumFx("damageReducePct");
-    for (const c of condList("damageReduceLowHp")) {
-      if (playerHp / playerMaxHp <= c.th) reduce += c.pct;
-    }
-    reduce = Math.min(0.95, reduce);
-    const reflectDmg = Math.round(incoming * sumFx("reflect"));
-    incoming = Math.max(0, Math.round(incoming * (1 - reduce)));
-    playerHp -= incoming;
-    if (reflectDmg > 0) enemyHp -= reflectDmg;
-    noHitStreak = 0; // 被弾でストリークが切れる
-    tempAtkBuffPct = Math.max(tempAtkBuffPct, sumFx("onHitBuffAtkPct")); // 被弾で次の攻撃にバフ
-    battleMessage.textContent =
-      `❌ 正解は「${phrase}」。${currentEnemy.name}の反撃で ${incoming} のダメージ！` +
-      (reflectDmg > 0 ? `（${reflectDmg} 反射）` : "");
+    battleMessage.textContent = `❌ 正解は「${phrase}」。`;
+    // ボス・エリートは予告していた行動を実行、通常敵はふつうの反撃
+    const alive = enemyActs ? executeIntent() : applyEnemyHit(1, `${currentEnemy.name}の反撃`);
+    renderIntent();
     updateBars();
+    if (!alive) return; // ゲームオーバー
     if (enemyHp <= 0) {
-      onEnemyDefeated();
+      onEnemyDefeated(); // 反射ダメージで倒した
       return;
     }
-    if (playerHp <= 0) {
-      const revivePct = maxFx("revive");
-      if (revivePct > 0 && !reviveUsed) {
-        reviveUsed = true;
-        playerHp = Math.max(1, Math.round(playerMaxHp * revivePct));
-        battleMessage.textContent = `💫 復活！ HP ${playerHp} で立ち上がった！`;
-        updateBars();
-        nextBattleQuestion();
-      } else {
-        onGameOver();
-      }
-    } else {
-      nextBattleQuestion();
-    }
+    nextBattleQuestion();
   }
 
   function onEnemyDefeated(chained) {
@@ -1081,8 +1242,10 @@
     if (hasFx("killHealEnemyMaxHp")) heal = clampNum(heal + enemyMaxHp); // 血月の剣：撃破した敵のHPを丸ごと回復
     if (heal) playerHp = Math.min(playerMaxHp, playerHp + heal);
 
-    // コインをランダム入手（階が上がるほど増える）
-    const coinGain = randInt(25, 50) + Math.floor(floor * 10);
+    // コインをランダム入手（階が上がるほど増える。エリート・ボスはボーナス）
+    let coinGain = randInt(25, 50) + Math.floor(floor * 10);
+    if (enemyElite) coinGain = Math.round(coinGain * enemyElite.coinMult);
+    else if (enemyIsBoss) coinGain = Math.round(coinGain * 3);
     coins += coinGain;
     updateCoinDisplay();
 
@@ -1098,6 +1261,10 @@
         spawnEnemy();
         // 後ろの敵に蓄積した範囲ダメージを適用（余りは次の敵へ持ち越して連鎖）
         let splashNote = "";
+        if (splashDamage > 0 && enemyBarrier > 0) {
+          splashDamage = 0; // バリアが範囲ダメージを吸収する
+          splashNote = " 🛡️バリアが範囲ダメージを防いだ！";
+        }
         if (splashDamage > 0) {
           const before = enemyHp;
           const applied = Math.min(before, splashDamage);
@@ -1613,6 +1780,13 @@
   }
   function detonateBomb() {
     if (bombStore <= 0 || enemyHp <= 0 || battleInput.disabled) return;
+    if (enemyBarrier > 0) {
+      enemyBarrier--;
+      battleMessage.textContent = `💣 爆弾がバリアを1枚破壊！（残り${enemyBarrier}枚）`;
+      renderIntent();
+      updateBars();
+      return;
+    }
     const dmg = bombStore;
     bombStore = 0;
     enemyHp = clampNum(enemyHp - dmg);

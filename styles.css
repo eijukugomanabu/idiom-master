@@ -1269,6 +1269,58 @@ header {
   padding: 0.3rem;
   color: var(--text);
 }
+/* ====================================================== */
+/* ⚔️ 戦略システム：構え・行動予告・バリア */
+/* ====================================================== */
+.stance-row {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.stance-btn {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
+}
+.stance-btn:hover { transform: translateY(-1px); }
+.stance-btn.active {
+  border-color: #f59e0b;
+  background: #292013;
+  color: #fcd34d;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+}
+.enemy-intent {
+  display: flex;
+  gap: 0.45rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.barrier-badge {
+  color: #7dd3fc;
+  background: #082f49;
+  border: 1px solid #38bdf8;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+.intent-badge {
+  color: #fda4af;
+  background: #2a0e15;
+  border: 1px solid #fb7185;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
 .gacha-result { animation: gachaPop 0.4s ease backwards; }
 .gacha-result.rank-4 { box-shadow: 0 0 16px rgba(251, 191, 36, 0.6); }
 .gacha-result.rank-5 {
