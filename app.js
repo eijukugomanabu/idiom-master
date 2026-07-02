@@ -337,6 +337,55 @@
     curse: { icon: "🔮", label: "呪い" },
   };
 
+  /* --- 5属性システム --- */
+  const ELEMENTS = {
+    fire: { name: "火", emoji: "🔥", color: "#f87171" },
+    water: { name: "水", emoji: "💧", color: "#38bdf8" },
+    wood: { name: "木", emoji: "🌳", color: "#4ade80" },
+    light: { name: "光", emoji: "✨", color: "#fde047" },
+    dark: { name: "闇", emoji: "🌑", color: "#c084fc" },
+  };
+  const ELEM_KEYS = ["fire", "water", "wood", "light", "dark"];
+  // aがbを攻撃する時の相性倍率（火→木 / 水→火 / 木→水 が有利。光と闇は互いに弱点）
+  function elemAdvantage(a, b) {
+    if (!a || !b) return 1;
+    const strong = { fire: "wood", water: "fire", wood: "water" };
+    if (strong[a] === b) return 1.5;
+    if (strong[b] === a) return 0.6;
+    if ((a === "light" && b === "dark") || (a === "dark" && b === "light")) return 1.5;
+    return 1;
+  }
+  // 装備名から属性を決める（同じ装備は必ず同じ属性になる）
+  function elementOf(name) {
+    let h = 0;
+    for (const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+    return ELEM_KEYS[h % 5];
+  }
+  // 装備名の前に属性の絵文字を付ける（一覧表示用）
+  function nameWithElem(name) {
+    return `${ELEMENTS[elementOf(name)].emoji}${name}`;
+  }
+
+  /* --- キャラクター --- */
+  const CHARS = [
+    { id: "fire", name: "炎の剣士", emoji: "🔥", element: "fire", desc: "攻撃力+25%", atkPct: 0.25 },
+    { id: "water", name: "水の魔導士", emoji: "💧", element: "water", desc: "会心率+15%・回避+10%", crit: 0.15, dodge: 0.1 },
+    { id: "wood", name: "森の守護者", emoji: "🌳", element: "wood", desc: "最大HP+60%・防御+40", hpPct: 0.6, def: 40 },
+    { id: "light", name: "光の勇者", emoji: "✨", element: "light", desc: "コイン+50%・撃破時HP10%回復", coinMult: 1.5, killHealPct: 0.1 },
+    { id: "dark", name: "闇の暗殺者", emoji: "🌑", element: "dark", desc: "5%で即死・攻撃+20%・被ダメ+20%", instakill: 0.05, atkPct: 0.2, takeMult: 1.2 },
+  ];
+
+  /* --- ルートマップ（分岐型ローグライク） --- */
+  const MAP_LAYERS = 15; // 1ステージのマス数（最後はボス）
+  const NODE_TYPES = {
+    battle: { icon: "⚔️", name: "敵遭遇" },
+    elite: { icon: "💠", name: "エリート" },
+    event: { icon: "❓", name: "イベント" },
+    shop: { icon: "🛒", name: "ショップ" },
+    gacha: { icon: "🎲", name: "ガチャ" },
+    boss: { icon: "👹", name: "ボス" },
+  };
+
   const floorLabel = document.getElementById("floor-label");
   const enemyEmoji = document.getElementById("enemy-emoji");
   const enemyName = document.getElementById("enemy-name");
@@ -393,6 +442,15 @@
   let enemyElite = null; // エリート敵の特性（nullなら通常敵）
   let enemyActs = false; // 毎ターン行動する敵か（ボス・エリート）
   let curseNext = false; // 呪い状態：次の攻撃が半減＆バリアを壊せない
+  /* --- ルート選択型ローグライク --- */
+  let playerChar = CHARS[0]; // 選択中のキャラクター
+  let enemyElement = "fire"; // 今の敵の属性
+  let currentNodeType = "battle"; // 今いるマスの種類
+  let routeMap = []; // ステージのマップ（レイヤーごとのマスの配列）
+  let layerIdx = -1; // 今いるレイヤー（-1=出発前）
+  let nodeIdx = -1; // 今いるマスの位置
+  let stageNum = 1; // 何ステージ目か
+  let overkillStreak = 0; // オーバーキル連続回数（自動バランス調整用）
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -503,11 +561,15 @@
     return attackBonus + sumFx("atk") + bonusAtk + (hasFx("damageToAtkPct") ? causalAtk : 0);
   }
   function baseDef() {
-    return damageReduction + sumFx("def") + bonusDef;
+    return damageReduction + sumFx("def") + bonusDef + (playerChar.def || 0);
+  }
+  // 自分の攻撃属性（武器の属性。武器がなければキャラの属性）
+  function attackElement() {
+    return equipment.weapon ? elementOf(equipment.weapon.name) : playerChar.element;
   }
   // 会心率（基本＋装備＋変換＋条件）
   function critTotal() {
-    let c = critChance + sumFx("crit") + bonusCrit;
+    let c = critChance + sumFx("crit") + bonusCrit + (playerChar.crit || 0);
     c += baseDef() * sumFx("convDefToCrit"); // 防御→会心
     const hpRatio = playerMaxHp > 0 ? playerHp / playerMaxHp : 1;
     c += (1 - hpRatio) * sumFx("scalingLowHpCrit"); // HPが低いほど会心up
@@ -548,6 +610,7 @@
     mult += countRarity("common") * sumFx("commonCountAtkPct"); // コモン装備数で
     mult += equippedItems().length * sumFx("allCountAtkPct"); // 全装備数で
     mult += tempAtkBuffPct; // 被弾後の一時バフ
+    mult += playerChar.atkPct || 0; // キャラクターの攻撃ボーナス
     return mult;
   }
   // 会心ダメージ倍率（基本2倍＋特殊）
@@ -567,6 +630,7 @@
     m += baseDef() * sumFx("convDefToHp");
     m += baseAtk() * sumFx("convAtkToHp"); // 天界守護脚甲：攻撃力をHPにも加算
     m *= 1 + sumFx("maxHpMult"); // 最大HPの乗算（例 2倍）
+    m *= 1 + (playerChar.hpPct || 0); // キャラクターのHPボーナス
     m = Math.max(1, Math.round(m));
     const delta = m - playerMaxHp;
     playerMaxHp = m;
@@ -618,43 +682,82 @@
     peakTier = 0;
     stance = "normal";
     curseNext = false;
+    overkillStreak = 0;
+    stageNum = 1;
+    layerIdx = -1;
+    nodeIdx = -1;
+    currentNodeType = "battle";
     renderStanceButtons();
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
-    beginFloorEnemies();
-    nextBattleQuestion();
+    showCharSelect(); // まずキャラクターを選ぶ
+    updateBars();
+  }
+
+  /* --- キャラクター選択 --- */
+  function showCharSelect() {
+    battleCard.classList.add("is-hidden");
+    battleOver.classList.add("is-hidden");
+    if (routeMapEl) routeMapEl.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    rewardTitle.textContent = "🧝 キャラクターを選ぼう";
+    battleMessage.textContent = "キャラごとに得意なことと属性がちがうよ";
+    rewardGrid.innerHTML = "";
+    CHARS.forEach((ch) => {
+      const el = ELEMENTS[ch.element];
+      shopButton(
+        ch.emoji,
+        `${ch.name}【${el.emoji}${el.name}属性】`,
+        ch.desc,
+        false,
+        () => {
+          playerChar = ch;
+          recomputeMaxHp();
+          playerHp = playerMaxHp;
+          genMap();
+          battleReward.classList.add("is-hidden");
+          showMap(`${ch.emoji} ${ch.name}で出発！🗺️ 最初のマスを選ぼう`);
+        },
+        el.color,
+      );
+    });
     updateBars();
   }
 
   function spawnEnemy() {
-    const isFinal = floor >= MAX_FLOOR;
-    const isBoss = floor % 10 === 0;
-    enemyIsBoss = isFinal || isBoss;
+    const isBossNode = currentNodeType === "boss";
+    const isFinal = isBossNode && stageNum >= 2; // 2ステージ目以降のボスは魔王
+    enemyIsBoss = isBossNode;
     if (enemyIsBoss && hasFx("totalDmgToAtkOnBoss")) {
       bonusAtk = clampNum(bonusAtk + totalDamageDealt); // ボス戦開始時、累計ダメージを攻撃へ
     }
-    currentEnemy = isFinal ? FINAL_BOSS : isBoss ? BOSS : randomOf(ENEMIES);
-    // エリート：3階以降、その階の最後の敵が35%でエリート化（ボス階は除く）
+    currentEnemy = isFinal ? FINAL_BOSS : isBossNode ? BOSS : randomOf(ENEMIES);
+    // 敵の属性はランダム（相性を見て構え・装備を選ぼう）
+    enemyElement = ELEM_KEYS[randInt(0, 4)];
+    // エリート：エリートマスでは確定。通常マスでも最後の敵が20%でエリート化
     enemyElite = null;
-    if (!enemyIsBoss && floor >= 3 && enemiesRemaining === 1 && Math.random() < 0.35) {
+    if (!enemyIsBoss && currentNodeType === "elite") {
+      enemyElite = randomOf(ELITES);
+    } else if (!enemyIsBoss && floor >= 3 && enemiesRemaining === 1 && Math.random() < 0.2) {
       enemyElite = randomOf(ELITES);
     }
     // バリア：ボスとエリートは一撃で倒せない（1ターンに構えの枚数だけ破壊）
     enemyActs = enemyIsBoss || !!enemyElite;
     enemyBarrier = isFinal ? 8 : enemyIsBoss ? Math.min(7, 4 + Math.floor(floor / 20)) : enemyElite ? enemyElite.barrier : 0;
     curseNext = false;
-    const base = isFinal ? 140 : isBoss ? 70 : 22;
-    // 10階上がるごとに敵HPを10倍にする（1〜10階は×1、11〜20階は×10、…91〜100階は×10^9）
+    const base = isFinal ? 140 : isBossNode ? 70 : 22;
+    // 深く進むごとに敵HPが増える（10マスごとに10倍）
     const hpScale = Math.pow(10, Math.floor((floor - 1) / 10));
-    enemyMaxHp = Math.round((base + floor * 6) * (isFinal ? 10 : isBoss ? 6 : enemyElite ? 2 : 1) * hpScale);
+    enemyMaxHp = Math.round((base + floor * 6) * (isFinal ? 10 : isBossNode ? 6 : enemyElite ? 2 : 1) * hpScale);
     enemyHp = enemyMaxHp;
     floorLabel.textContent =
-      `${floor}/${MAX_FLOOR}階` + (isFinal ? "（最終ボス）" : isBoss ? "（ボス）" : "");
+      `ステージ${stageNum}・${Math.max(1, layerIdx + 1)}/${MAP_LAYERS}マス` + (isBossNode ? "（ボス）" : "");
     enemyEmoji.classList.remove("defeated", "shake");
     enemyEmoji.textContent = enemyElite ? enemyElite.emoji + currentEnemy.emoji : currentEnemy.emoji;
     enemyName.textContent =
+      `${ELEMENTS[enemyElement].emoji}` +
       (enemyElite ? `${enemyElite.name}` : "") +
       currentEnemy.name +
-      (enemiesRemaining > 1 ? `（この階 残り${enemiesRemaining}体）` : "");
+      (enemiesRemaining > 1 ? `（残り${enemiesRemaining}体）` : "");
     rollIntent();
   }
 
@@ -701,7 +804,7 @@
       noHitStreak = 0;
       return true;
     }
-    const dodgeP = Math.min(0.9, sumFx("dodge"));
+    const dodgeP = Math.min(0.9, sumFx("dodge") + (playerChar.dodge || 0));
     if (dodgeP > 0 && Math.random() < dodgeP) {
       const das = sumFx("dodgeAtkStack");
       if (das) atkStackMult = clampNum(atkStackMult * Math.max(1, das));
@@ -715,6 +818,8 @@
     raw = Math.max(1, raw);
     if (enemyElite && enemyElite.atkMult) raw *= enemyElite.atkMult;
     raw *= mult * STANCES[stance].take; // 強攻撃倍率と構え
+    raw *= elemAdvantage(enemyElement, playerChar.element); // 敵との属性相性
+    raw *= playerChar.takeMult || 1; // キャラクターの被ダメ補正
     let reduce = sumFx("damageReducePct");
     for (const c of condList("damageReduceLowHp")) {
       if (playerHp / playerMaxHp <= c.th) reduce += c.pct;
@@ -781,18 +886,241 @@
     });
   }
 
-  // 1つの階の敵をまとめてセットアップ（通常は複数体、ボス階は1体）
+  // 1マス分の敵をまとめてセットアップ（ボス・エリートは1体、通常マスは深さで増える）
   function beginFloorEnemies() {
-    const isBossFloor = floor % 10 === 0 || floor >= MAX_FLOOR;
-    // 階が深いほど敵が増える。40階以降は後ろに大群（最大100体くらい）
     let count;
-    if (isBossFloor) count = 1;
+    if (currentNodeType === "boss" || currentNodeType === "elite") count = 1;
     else if (floor >= 40) count = randInt(40, 100);
     else if (floor >= 20) count = randInt(3, 6);
     else count = randInt(1, 3);
     enemiesRemaining = count;
-    splashDamage = 0; // 階が変わったら範囲ダメージはリセット
+    splashDamage = 0; // マスが変わったら範囲ダメージはリセット
     spawnEnemy();
+  }
+
+  /* ============================================================
+   * 🗺️ ルート選択型マップ（分岐するロードマップを自由に進む）
+   * ============================================================ */
+  const routeMapEl = document.getElementById("route-map");
+
+  // マップ生成：15レイヤー。最初は戦闘、最後はボス、途中はいろいろなマス
+  function genMap() {
+    routeMap = [];
+    for (let L = 0; L < MAP_LAYERS; L++) {
+      const width = L === MAP_LAYERS - 1 ? 1 : L === 0 ? 2 : randInt(2, 3);
+      const layer = [];
+      for (let i = 0; i < width; i++) {
+        let type;
+        if (L === MAP_LAYERS - 1) type = "boss";
+        else if (L === 0) type = "battle";
+        else {
+          const r = Math.random();
+          if (r < 0.5) type = "battle";
+          else if (r < 0.62) type = "elite";
+          else if (r < 0.76) type = "event";
+          else if (r < 0.88) type = "shop";
+          else type = "gacha";
+        }
+        layer.push({ type, visited: false });
+      }
+      routeMap.push(layer);
+    }
+    layerIdx = -1;
+    nodeIdx = -1;
+  }
+
+  function showMap(msg) {
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.add("is-hidden");
+    battleInput.disabled = true;
+    if (msg) battleMessage.textContent = msg;
+    routeMapEl.classList.remove("is-hidden");
+    renderMap();
+    updateBars();
+  }
+
+  function renderMap() {
+    if (!routeMapEl) return;
+    routeMapEl.innerHTML =
+      `<div class="map-title">🗺️ ステージ${stageNum}　ルートマップ` +
+      `<span class="map-sub">次のマスを1つ選ぼう（⚔️敵 💠エリート ❓イベント 🛒ショップ 🎲ガチャ 👹ボス）</span></div>`;
+    routeMap.forEach((layer, L) => {
+      const row = document.createElement("div");
+      row.className = "map-row";
+      layer.forEach((node, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "map-node";
+        b.textContent = NODE_TYPES[node.type].icon;
+        b.title = NODE_TYPES[node.type].name;
+        if (L === layerIdx && i === nodeIdx) b.classList.add("current");
+        else if (node.visited) b.classList.add("visited");
+        if (L === layerIdx + 1) {
+          b.classList.add("selectable");
+          b.addEventListener("click", () => enterNode(L, i));
+        } else {
+          b.disabled = true;
+        }
+        row.appendChild(b);
+      });
+      routeMapEl.appendChild(row);
+    });
+    // 今いる場所が見えるようにスクロール
+    const cur = routeMapEl.querySelector(".map-node.selectable") || routeMapEl.querySelector(".map-node.current");
+    if (cur) setTimeout(() => cur.scrollIntoView({ block: "center", behavior: "smooth" }), 50);
+  }
+
+  // マスに入る（深さ=floorが1増え、階を進む系の装備効果が発動する）
+  function enterNode(L, i) {
+    layerIdx = L;
+    nodeIdx = i;
+    routeMap[L][i].visited = true;
+    currentNodeType = routeMap[L][i].type;
+    floor = (stageNum - 1) * MAP_LAYERS + L + 1;
+    bonusAtk += sumFx("floorAtk");
+    bonusDef += sumFx("floorDef");
+    bonusMaxHp += sumFx("floorMaxHp");
+    const floorAll = sumFx("floorAll");
+    if (floorAll) {
+      bonusAtk += floorAll;
+      bonusDef += floorAll;
+      bonusMaxHp += floorAll;
+    }
+    recomputeMaxHp();
+    shopStock = []; // 新しいマスではショップの在庫が変わる
+    routeMapEl.classList.add("is-hidden");
+    const t = currentNodeType;
+    if (t === "shop") {
+      battleMessage.textContent = "🛒 ショップを見つけた！";
+      showShop(false, true);
+      updateBars();
+      return;
+    }
+    if (t === "gacha") {
+      battleMessage.textContent = "🎲 ガチャ台を見つけた！";
+      showGacha(null);
+      updateBars();
+      return;
+    }
+    if (t === "event") {
+      showEvent();
+      return;
+    }
+    // battle / elite / boss
+    battleCard.classList.remove("is-hidden");
+    beginFloorEnemies();
+    nextBattleQuestion();
+    battleMessage.textContent =
+      t === "boss" ? "👹 ボス戦！バリアを壊して倒せ！" : t === "elite" ? "💠 エリートが立ちふさがる！" : "⚔️ 敵と遭遇！";
+    updateBars();
+  }
+
+  // ボス撃破 → ステージクリア。次のステージへ潜るか、勝利で終えるか選べる
+  function onStageClear() {
+    battleInput.disabled = true;
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    rewardTitle.textContent = `👑 ステージ${stageNum} クリア！`;
+    battleMessage.textContent = "🎉 ボスを倒した！さらに深く潜る？それとも勝利でしめくくる？";
+    rewardGrid.innerHTML = "";
+    shopButton("⬇️", `ステージ${stageNum + 1}へ挑む`, "敵はもっと強くなる（装備・コインは持ち越し）", false, () => {
+      stageNum++;
+      overkillStreak = 0;
+      genMap();
+      showMap(`⬇️ ステージ${stageNum}に突入！🗺️ 最初のマスを選ぼう`);
+    });
+    shopButton("🏆", "勝利でおわる", "結果を見る", false, () => onGameClear());
+    updateBars();
+  }
+
+  /* --- ❓ イベントマス（ランダムな選択イベント） --- */
+  const EVENTS = [
+    {
+      name: "回復の泉",
+      text: "✨ 澄んだ泉が湧いている。どうする？",
+      choices: [
+        { icon: "💧", name: "泉の水を飲む", desc: "HPを全回復する", run: () => { playerHp = playerMaxHp; return "💧 HPが全回復した！"; } },
+        { icon: "🫗", name: "泉の力を浴びる", desc: "最大HP+20%（今のHPは変わらない）", run: () => { bonusMaxHp += Math.round(playerMaxHp * 0.2); recomputeMaxHp(); return "🫗 最大HPが増えた！"; } },
+      ],
+    },
+    {
+      name: "謎の商人",
+      text: "🧙 「ふっふっふ…良い物があるよ」",
+      choices: [
+        { icon: "💰", name: "🪙300で装備を買う", desc: "レジェンダリー装備をランダムで1つもらえる", run: () => {
+          if (coins < 300) return "🪙が足りなかった…（300必要）";
+          coins -= 300;
+          const cands = EQUIPMENT.filter((e) => e.rarity === "legendary");
+          const tmpl = randomOf(cands);
+          const info = rarityInfo("legendary");
+          backpack.push({ slot: tmpl.slot, name: tmpl.name, desc: tmpl.desc, fx: tmpl.fx, rarity: "legendary", rarityName: info.name, color: info.color });
+          updateCoinDisplay();
+          return `✨「${tmpl.name}」を手に入れた！🎒リュックへ`;
+        } },
+        { icon: "🚶", name: "立ち去る", desc: "何もしない", run: () => "🚶 商人に別れを告げた" },
+      ],
+    },
+    {
+      name: "運だめしの賭け",
+      text: "🎲 怪しいサイコロ勝負に誘われた。コインを賭ける？",
+      choices: [
+        { icon: "🎲", name: "全部賭ける", desc: "50%でコイン2倍、50%で半分になる", run: () => {
+          if (Math.random() < 0.5) { coins *= 2; updateCoinDisplay(); return "🎉 大当たり！コインが2倍になった！"; }
+          coins = Math.floor(coins / 2); updateCoinDisplay(); return "😱 負けた…コインが半分になった";
+        } },
+        { icon: "🙅", name: "賭けない", desc: "何もしない", run: () => "🙅 賭けはやめておいた" },
+      ],
+    },
+    {
+      name: "呪われた祭壇",
+      text: "🗿 不気味な祭壇がある。血を捧げると力を得られるらしい…",
+      choices: [
+        { icon: "🩸", name: "血を捧げる", desc: "HPの40%を失い、攻撃倍率×1.5（この冒険の間ずっと）", run: () => {
+          playerHp = Math.max(1, playerHp - Math.round(playerHp * 0.4));
+          atkStackMult = clampNum(atkStackMult * 1.5);
+          return "🩸 体が軽い…攻撃倍率×1.5を得た！";
+        } },
+        { icon: "🚶", name: "近寄らない", desc: "何もしない", run: () => "🚶 そっと通り過ぎた" },
+      ],
+    },
+    {
+      name: "旅の鍛冶屋",
+      text: "🔨 「鍛えてやろうか？」",
+      choices: [
+        { icon: "⚔️", name: "武器を鍛える", desc: "攻撃力+今の20%（永続）", run: () => { bonusAtk = clampNum(bonusAtk + Math.round(effAttack() * 0.2)); return "⚔️ 攻撃力が上がった！"; } },
+        { icon: "🛡️", name: "防具を鍛える", desc: "防御力+今の30%＋最大HP+10%", run: () => { bonusDef += Math.round(effDefense() * 0.3); bonusMaxHp += Math.round(playerMaxHp * 0.1); recomputeMaxHp(); return "🛡️ 守りが固くなった！"; } },
+      ],
+    },
+    {
+      name: "ステータスの妖精",
+      text: "🧚 妖精が現れた！「ごほうびを2回あげる！」",
+      choices: [
+        { icon: "🧚", name: "ありがとう！", desc: "パーク（ごほうび）を2回選べる", runView: "perks" },
+      ],
+    },
+  ];
+
+  function showEvent() {
+    battleCard.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    const ev = randomOf(EVENTS);
+    rewardTitle.textContent = `❓ イベント：${ev.name}`;
+    battleMessage.textContent = ev.text;
+    rewardGrid.innerHTML = "";
+    ev.choices.forEach((c) => {
+      shopButton(c.icon, c.name, c.desc, false, () => {
+        if (c.runView === "perks") {
+          bonusActive = true;
+          perkPicksLeft = 2;
+          showPerks();
+          return;
+        }
+        const msg = c.run();
+        updateBars();
+        showMap(`${msg}　🗺️ 次のマスを選ぼう`);
+      });
+    });
+    updateBars();
   }
 
   function nextBattleQuestion() {
@@ -880,11 +1208,13 @@
   // 今の自分のステータス（攻撃/防御/最大HP/会心）を表示
   function renderStats() {
     if (!playerStats) return;
+    const ae = ELEMENTS[attackElement()];
     playerStats.innerHTML =
       `<span title="攻撃力">⚔️ ${formatNum(effAttack())}</span>` +
       `<span title="防御力">🛡️ ${formatNum(effDefense())}</span>` +
       `<span title="最大HP">❤️ ${formatNum(playerMaxHp)}</span>` +
-      `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>`;
+      `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>` +
+      `<span title="攻撃属性（武器の属性。火→木→水→火、光⇔闇が有利）" style="color:${ae.color}">${ae.emoji} ${ae.name}属性</span>`;
     if (damageStats) {
       damageStats.innerHTML =
         `<span title="直近の攻撃で与えたダメージ">💢 攻撃 ${formatNum(lastAttackDamage)}</span>` +
@@ -1124,11 +1454,26 @@
     // 割合ダメージ（最大HP/現在HP）
     hit += enemyMaxHp * sumFx("enemyMaxHpPct");
     hit += enemyHp * sumFx("enemyCurHpPct");
+    // 属性相性（有利×1.5 / 不利×0.6）＋同属性の装備をそろえた編成ボーナス（1つ+8%）
+    const atkElem = attackElement();
+    const elemMult = elemAdvantage(atkElem, enemyElement);
+    const elemMatch = equippedItems().filter((it) => elementOf(it.name) === atkElem).length;
+    hit *= elemMult * (1 + 0.08 * elemMatch);
     hit = clampNum(hit);
 
     const crit = Math.random() < critTotal();
     if (crit) hit = clampNum(hit * critMultiplier());
     hit = Math.round(hit);
+
+    // ⚖️ 自動バランス調整：オーバーキルが続きすぎたら少し弱体化する
+    // （マップ終盤＝ボス直前の4マスでは解除＝「無双」を許容する）
+    const lateGame = layerIdx >= MAP_LAYERS - 4;
+    let nerfed = false;
+    if (!lateGame && overkillStreak >= 3) {
+      const nf = Math.max(0.15, 1 / (1 + 0.3 * (overkillStreak - 2)));
+      hit = Math.round(hit * nf);
+      nerfed = true;
+    }
 
     let hits = hasFx("extraHit") ? 2 : 1;
     if (hasFx("extraHitChance") && Math.random() < sumFx("extraHitChance")) hits += 1;
@@ -1137,7 +1482,8 @@
 
     let dealt = 0;
     let note = "";
-    if (hasFx("instakill") && Math.random() < sumFx("instakill")) {
+    const ikChance = sumFx("instakill") + (playerChar.instakill || 0);
+    if (ikChance > 0 && Math.random() < ikChance) {
       enemyHp = 0;
       note = "⚡即死！ ";
     } else {
@@ -1180,9 +1526,16 @@
       splashDamage = clampNum(splashDamage + Math.round(dealt * (0.3 + sumFx("splashBonusPct"))));
     }
     recordDamage(dealt); // 直近ダメージ・最大ダメージを記録
+    // オーバーキル連続回数を更新（自動バランス調整用）
+    if (dealt > enemyMaxHp * 25) overkillStreak++;
+    else overkillStreak = Math.max(0, overkillStreak - 1);
 
     const flair =
-      (combo >= 2 ? `🔥${combo}コンボ ` : "") + (crit ? "💥会心！ " : "") + (hits > 1 ? `${hits}回攻撃！ ` : "");
+      (combo >= 2 ? `🔥${combo}コンボ ` : "") +
+      (crit ? "💥会心！ " : "") +
+      (hits > 1 ? `${hits}回攻撃！ ` : "") +
+      (elemMult > 1 ? "🌟相性◎ " : elemMult < 1 ? "💦相性✕ " : "") +
+      (nerfed ? "⚖️ " : "");
     battleMessage.textContent = note
       ? `${note}「${phrase}」で敵を倒した！`
       : `⚔️ ${flair}「${phrase}」で ${formatNum(dealt)} のダメージ！`;
@@ -1237,7 +1590,7 @@
     if (killMaxHpPct) bonusMaxHp += Math.round(playerMaxHp * killMaxHpPct);
     recomputeMaxHp();
     let heal = sumFx("killHeal");
-    const healPct = sumFx("killHealPct");
+    const healPct = sumFx("killHealPct") + (playerChar.killHealPct || 0);
     if (healPct) heal += Math.round(playerMaxHp * healPct);
     if (hasFx("killHealEnemyMaxHp")) heal = clampNum(heal + enemyMaxHp); // 血月の剣：撃破した敵のHPを丸ごと回復
     if (heal) playerHp = Math.min(playerMaxHp, playerHp + heal);
@@ -1246,6 +1599,7 @@
     let coinGain = randInt(25, 50) + Math.floor(floor * 10);
     if (enemyElite) coinGain = Math.round(coinGain * enemyElite.coinMult);
     else if (enemyIsBoss) coinGain = Math.round(coinGain * 3);
+    coinGain = Math.round(coinGain * (playerChar.coinMult || 1)); // キャラのコイン補正
     coins += coinGain;
     updateCoinDisplay();
 
@@ -1288,14 +1642,12 @@
         nextBattleQuestion();
         return;
       }
-      // 階クリア → ごほうび
-      if (floor >= MAX_FLOOR) {
-        onGameClear();
-      } else if (floor % 5 === 0) {
-        showGacha(beatenName); // 5階ごとは武器ガチャ
+      // マスをクリア → ボスならステージクリア、それ以外はごほうび→マップへ
+      if (currentNodeType === "boss") {
+        onStageClear();
       } else {
         // ランダムで「ステータスの妖精」が出ると2回選べる
-        bonusActive = Math.random() < 0.18;
+        bonusActive = Math.random() < 0.15;
         perkPicksLeft = bonusActive ? 2 : 1;
         showPerks(beatenName);
       }
@@ -1527,7 +1879,7 @@
         inSlot.forEach(({ item, idx }) => {
           shopButton(
             SLOT_META[item.slot].icon,
-            item.name,
+            nameWithElem(item.name),
             `【${item.rarityName}】${item.desc}`,
             false,
             () => equipFromBackpack(idx),
@@ -1541,7 +1893,7 @@
     if (shopReturnsToBattle) {
       shopButton("⚔️", "バトルに戻る", "リュックを閉じる", false, () => resumeFromShop());
     } else {
-      shopButton("➡️", "次の階へ進む", "リュックを閉じる", false, () => advanceFloor("リュックを閉じた！"));
+      shopButton("➡️", "マップへ戻る", "リュックを閉じる", false, () => advanceFloor("リュックを閉じた！"));
     }
     updateBars();
   }
@@ -1591,7 +1943,7 @@
   function showGacha(beatenName) {
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    battleMessage.textContent = `🎉 ${beatenName}を倒した！装備ガチャを引こう`;
+    battleMessage.textContent = beatenName ? `🎉 ${beatenName}を倒した！装備ガチャを引こう` : "🎲 装備ガチャを引こう！";
     renderGacha(null);
   }
 
@@ -1624,7 +1976,7 @@
           card.style.borderColor = result.color;
           card.innerHTML =
             `<span class="reward-icon">${SLOT_META[result.slot].icon}</span>` +
-            `<span class="reward-name" style="color:${result.color}">${result.name}</span>` +
+            `<span class="reward-name" style="color:${result.color}">${nameWithElem(result.name)}</span>` +
             `<span class="reward-desc">【${result.rarityName}】${result.desc}</span>`;
           rewardGrid.appendChild(card);
         });
@@ -1638,7 +1990,7 @@
     if (maxN >= 1) {
       shopButton("💎", `最大 ${maxN}回を引く`, `🪙${formatNum(GACHA_COST * maxN)}`, false, () => pullGachaMany(maxN));
     }
-    shopButton("➡️", "次の階へ進む", "ガチャを終える", false, () => advanceFloor("ガチャ終了！"));
+    shopButton("➡️", "マップへ戻る", "ガチャを終える", false, () => advanceFloor("ガチャ終了！"));
     updateBars();
   }
 
@@ -1877,7 +2229,7 @@
       const { item, price, bought } = stock;
       shopButton(
         SLOT_META[item.slot].icon,
-        item.name,
+        nameWithElem(item.name),
         bought ? "✅購入済み" : `🪙${price}・${item.desc}`,
         bought || coins < price,
         () => buyEquip(i),
@@ -1919,7 +2271,7 @@
         .forEach(({ item, idx }) => {
           shopButton(
             SLOT_META[item.slot].icon,
-            item.name,
+            nameWithElem(item.name),
             `🎒リュック・売る 🪙+${sellValue(item)}`,
             false,
             () => sellFromBackpack(idx),
@@ -1941,7 +2293,7 @@
     if (shopReturnsToBattle) {
       shopButton("⚔️", "バトルに戻る", "ショップを閉じる", false, () => resumeFromShop());
     } else {
-      shopButton("➡️", "次の階へ進む", "ショップを出る", false, () => advanceFloor("ショップを出た！"));
+      shopButton("➡️", "マップへ戻る", "ショップを出る", false, () => advanceFloor("ショップを出た！"));
     }
     updateBars();
   }
@@ -2058,36 +2410,20 @@
   }
 
   /* --- 階を進める（パーク／宝箱のあと共通） --- */
+  // マスの用事（ごほうび・ショップ・ガチャなど）が終わったらマップに戻る
   function advanceFloor(prefix) {
-    battleReward.classList.add("is-hidden");
-    battleCard.classList.remove("is-hidden");
-    shopStock = []; // 階が変わったら次のショップは新しい在庫に
-    floor++;
-    // 階を進む（＝レベルアップ）効果
-    bonusAtk += sumFx("floorAtk");
-    bonusDef += sumFx("floorDef");
-    bonusMaxHp += sumFx("floorMaxHp");
-    const floorAll = sumFx("floorAll");
-    if (floorAll) {
-      bonusAtk += floorAll;
-      bonusDef += floorAll;
-      bonusMaxHp += floorAll;
-    }
-    recomputeMaxHp();
-    beginFloorEnemies();
-    nextBattleQuestion();
-    battleMessage.textContent = `${prefix} 次は${floor}階（${currentEnemy.name}）！`;
-    updateBars();
+    showMap(`${prefix}　🗺️ 次のマスを選ぼう`);
   }
 
   function onGameOver() {
     battleInput.disabled = true;
     battleCard.classList.add("is-hidden");
     battleReward.classList.add("is-hidden");
+    if (routeMapEl) routeMapEl.classList.add("is-hidden");
     battleOver.classList.remove("is-hidden");
     battleOver.innerHTML =
-      `💀 ゲームオーバー<br>到達: <strong>${floor}/${MAX_FLOOR}階</strong>　撃破: <strong>${defeated}体</strong>` +
-      `<br>間違えた回数: <strong>${wrongCount}回</strong>` +
+      `💀 ゲームオーバー<br>${playerChar.emoji} ${playerChar.name}　到達: <strong>ステージ${stageNum}・${Math.max(1, layerIdx + 1)}マス目</strong>` +
+      `<br>撃破: <strong>${defeated}体</strong>　間違えた回数: <strong>${wrongCount}回</strong>` +
       `<br><br><button id="battle-restart">もう一度挑戦</button>`;
     document.getElementById("battle-restart").addEventListener("click", startBattle);
     updateBars();
@@ -2097,10 +2433,11 @@
     battleInput.disabled = true;
     battleCard.classList.add("is-hidden");
     battleReward.classList.add("is-hidden");
+    if (routeMapEl) routeMapEl.classList.add("is-hidden");
     battleOver.classList.remove("is-hidden");
     battleOver.innerHTML =
-      `👑 全${MAX_FLOOR}階クリア！おめでとう！<br>魔王を倒した！　撃破: <strong>${defeated}体</strong>` +
-      `<br>間違えた回数: <strong>${wrongCount}回</strong>` +
+      `👑 ステージ${stageNum}を制覇！おめでとう！<br>${playerChar.emoji} ${playerChar.name}の勝利！　撃破: <strong>${defeated}体</strong>` +
+      `<br>間違えた回数: <strong>${wrongCount}回</strong>　🏆最大ダメージ: <strong>${formatNum(maxAttackDamage)}</strong>` +
       `<br><br><button id="battle-restart">もう一度挑戦</button>`;
     document.getElementById("battle-restart").addEventListener("click", startBattle);
     updateBars();
