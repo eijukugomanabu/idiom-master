@@ -378,12 +378,12 @@
   /* --- ルートマップ（分岐型ローグライク） --- */
   const MAP_LAYERS = 15; // 1ステージのマス数（最後はボス）
   const NODE_TYPES = {
-    battle: { icon: "⚔️", name: "敵遭遇" },
-    elite: { icon: "💠", name: "エリート" },
-    event: { icon: "❓", name: "イベント" },
-    shop: { icon: "🛒", name: "ショップ" },
-    gacha: { icon: "🎲", name: "ガチャ" },
-    boss: { icon: "👹", name: "ボス" },
+    battle: { icon: "⚔️", name: "敵遭遇", img: "img/nodes/battle.png" },
+    elite: { icon: "💠", name: "エリート", img: "img/nodes/elite.png" },
+    event: { icon: "❓", name: "イベント", img: "img/nodes/event.png" },
+    shop: { icon: "🛒", name: "ショップ", img: "img/nodes/shop.png" },
+    gacha: { icon: "🎲", name: "ガチャ", img: "img/nodes/gacha.png" },
+    boss: { icon: "👹", name: "ボス", img: "img/nodes/boss.png" },
   };
 
   const floorLabel = document.getElementById("floor-label");
@@ -948,9 +948,12 @@
 
   function renderMap() {
     if (!routeMapEl) return;
+    const legend = ["battle", "elite", "event", "shop", "gacha", "boss"]
+      .map((t) => `<span class="legend-item"><img src="${NODE_TYPES[t].img}" alt="">${NODE_TYPES[t].name.replace("敵遭遇", "敵")}</span>`)
+      .join(" ");
     routeMapEl.innerHTML =
       `<div class="map-title">🗺️ ステージ${stageNum}　ルートマップ` +
-      `<span class="map-sub">次のマスを1つ選ぼう（⚔️敵 💠エリート ❓イベント 🛒ショップ 🎲ガチャ 👹ボス）</span></div>`;
+      `<span class="map-sub">次のマスを1つ選ぼう　${legend}</span></div>`;
     routeMap.forEach((layer, L) => {
       const row = document.createElement("div");
       row.className = "map-row";
@@ -958,7 +961,7 @@
         const b = document.createElement("button");
         b.type = "button";
         b.className = "map-node";
-        b.textContent = NODE_TYPES[node.type].icon;
+        b.innerHTML = `<img src="${NODE_TYPES[node.type].img}" alt="${NODE_TYPES[node.type].name}">`;
         b.title = NODE_TYPES[node.type].name;
         if (L === layerIdx && i === nodeIdx) b.classList.add("current");
         else if (node.visited) b.classList.add("visited");
