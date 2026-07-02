@@ -360,6 +360,30 @@ button:hover {
 .enemy-emoji {
   font-size: 4.5rem;
   line-height: 1;
+  position: relative;
+  display: inline-block;
+}
+/* 敵のイラスト表示 */
+.enemy-img {
+  width: 190px;
+  max-width: 70vw;
+  border-radius: 14px;
+  border: 2px solid #33415588;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  display: block;
+  margin: 0 auto;
+}
+.enemy-img.boss {
+  width: 240px;
+  border-color: #f59e0b88;
+  box-shadow: 0 0 26px rgba(245, 158, 11, 0.35), 0 6px 22px rgba(0, 0, 0, 0.6);
+}
+.elite-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
 }
 
 .enemy-name {
