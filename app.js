@@ -835,11 +835,12 @@
     } else {
       enemyEmoji.textContent = enemyElite ? enemyElite.emoji + currentEnemy.emoji : currentEnemy.emoji;
     }
-    enemyName.textContent =
+    enemyName.innerHTML =
       `${ELEMENTS[enemyElement].emoji}` +
       (enemyElite ? `${enemyElite.name}` : "") +
       currentEnemy.name +
-      (enemiesRemaining > 1 ? `（残り${enemiesRemaining}体）` : "");
+      (enemiesRemaining > 1 ? `（残り${enemiesRemaining}体）` : "") +
+      (currentEnemy.trait ? `<span class="trait-badge">${currentEnemy.trait}</span>` : "");
     enemyName.title = currentEnemy.trait || "";
     rollIntent();
     // てんぐ：出会いがしらに先制攻撃してくる

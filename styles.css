@@ -1344,6 +1344,19 @@ header {
   border-radius: 999px;
   padding: 0.15rem 0.6rem;
 }
+/* 敵の特性バッジ（名前の下に表示） */
+.trait-badge {
+  display: block;
+  margin: 0.25rem auto 0;
+  width: fit-content;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+}
 
 /* ====================================================== */
 /* 🗺️ ルート選択マップ */
