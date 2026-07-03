@@ -279,21 +279,36 @@
   /* ---------- 英熟語バトル（ローグライク） ---------- */
   const BASE_MAX_HP = 100;
   const MAX_FLOOR = 100;
+  /* 敵図鑑：hp/atk=倍率、dodge=回避率、physCut=物理カット率、trait=固有特性
+   *  ねずみ   … 群れ（倒すと仲間が乱入）＋「病気」を付与
+   *  こうもり … 超回避＋攻撃でHP吸収
+   *  クモ     … 「猛毒」「束縛」を付与
+   *  ヘビ     … こちらのミスに即カウンター＋「麻痺」を付与
+   *  サソリ   … 物理30%カット。プレイヤーHP30%以下で致命の一撃
+   *  おおかみ … 仲間がいると攻撃+20%。遠吠えで次の攻撃2倍
+   *  サメ     … 手負い特効（HPが減っていると攻撃1.5倍＆会心）＋3連撃
+   *  ゆうれい … 物理をよく透かす（魔法職は必中）＋MP吸収
+   *  ゾンビ   … 一度だけ復活（火・光で倒すと復活しない）＋防具半減
+   *  おに     … 金棒ガードで物理を確率半減＋「気絶」を付与
+   *  てんぐ   … 出会いがしらに先制攻撃＋構えを乱す
+   *  ドラゴン … ブレスで「炎上」フィールド
+   *  魔王     … 3ターンごとに手下を召喚して壁に＋「死の呪い」
+   */
   const ENEMIES = [
-    { emoji: "🐀", name: "ねずみ", img: "img/enemies/nezumi.png" },
-    { emoji: "🦇", name: "こうもり", img: "img/enemies/koumori.png" },
-    { emoji: "🕷️", name: "クモ", img: "img/enemies/kumo.png" },
-    { emoji: "🐍", name: "ヘビ", img: "img/enemies/hebi.png" },
-    { emoji: "🦂", name: "サソリ", img: "img/enemies/sasori.png" },
-    { emoji: "🐺", name: "おおかみ", img: "img/enemies/ookami.png" },
-    { emoji: "👻", name: "ゆうれい", img: "img/enemies/yuurei.png" },
-    { emoji: "🧟", name: "ゾンビ", img: "img/enemies/zombie.png" },
-    { emoji: "👹", name: "おに", img: "img/enemies/oni.png" },
-    { emoji: "👺", name: "てんぐ", img: "img/enemies/tengu.png" },
-    { emoji: "🦈", name: "サメ", img: "img/enemies/same.png" },
+    { id: "nezumi", emoji: "🐀", name: "ねずみ", img: "img/enemies/nezumi.png", hp: 0.4, atk: 0.6, dodge: 0.2, trait: "群れ・病気" },
+    { id: "koumori", emoji: "🦇", name: "こうもり", img: "img/enemies/koumori.png", hp: 0.5, atk: 0.6, dodge: 0.35, trait: "超回避・吸血" },
+    { id: "kumo", emoji: "🕷️", name: "クモ", img: "img/enemies/kumo.png", hp: 1, atk: 1, dodge: 0.1, trait: "猛毒・束縛" },
+    { id: "hebi", emoji: "🐍", name: "ヘビ", img: "img/enemies/hebi.png", hp: 1, atk: 1.4, dodge: 0.15, trait: "カウンター・麻痺" },
+    { id: "sasori", emoji: "🦂", name: "サソリ", img: "img/enemies/sasori.png", hp: 1.1, atk: 1, dodge: 0, physCut: 0.3, trait: "硬い甲殻・致命の一撃" },
+    { id: "ookami", emoji: "🐺", name: "おおかみ", img: "img/enemies/ookami.png", hp: 1.1, atk: 1.3, dodge: 0.1, trait: "群れ強化・遠吠え" },
+    { id: "yuurei", emoji: "👻", name: "ゆうれい", img: "img/enemies/yuurei.png", hp: 0.6, atk: 1, dodge: 0.55, trait: "物理透過・MP吸収" },
+    { id: "zombie", emoji: "🧟", name: "ゾンビ", img: "img/enemies/zombie.png", hp: 2.5, atk: 0.9, dodge: 0, trait: "復活・防具半減" },
+    { id: "oni", emoji: "👹", name: "おに", img: "img/enemies/oni.png", hp: 3, atk: 2, dodge: 0, physCut: 0.25, trait: "金棒ガード・気絶" },
+    { id: "tengu", emoji: "👺", name: "てんぐ", img: "img/enemies/tengu.png", hp: 1.8, atk: 1.5, dodge: 0.2, trait: "先制・かく乱" },
+    { id: "same", emoji: "🦈", name: "サメ", img: "img/enemies/same.png", hp: 1.5, atk: 1.8, dodge: 0, trait: "手負い特効・3連撃" },
   ];
-  const BOSS = { emoji: "🐉", name: "ドラゴン", img: "img/enemies/dragon.png" };
-  const FINAL_BOSS = { emoji: "🐲", name: "魔王", img: "img/enemies/maou.png" };
+  const BOSS = { id: "dragon", emoji: "🐉", name: "ドラゴン", img: "img/enemies/dragon.png", hp: 1, atk: 1.2, dodge: 0, trait: "炎のブレス・炎上フィールド" };
+  const FINAL_BOSS = { id: "maou", emoji: "🐲", name: "魔王", img: "img/enemies/maou.png", hp: 1, atk: 1.5, dodge: 0.1, trait: "手下召喚・死の呪い" };
 
   // 装備スロット
   const SLOTS = [
@@ -367,12 +382,45 @@
   }
 
   /* --- キャラクター --- */
+  /* 5職業：HP/MP/ATK/DEF/SPD＋固有スキル
+   *  SPD は「敵の回避をすり抜ける力」と「自分の回避」に効く
+   *  magic:true の職業は攻撃が魔法扱い（ゆうれいに必中・サソリ/おにの物理カット無視） */
   const CHARS = [
-    { id: "fire", name: "炎の剣士", emoji: "🔥", element: "fire", desc: "攻撃力+25%", atkPct: 0.25 },
-    { id: "water", name: "水の魔導士", emoji: "💧", element: "water", desc: "会心率+15%・回避+10%", crit: 0.15, dodge: 0.1 },
-    { id: "wood", name: "森の守護者", emoji: "🌳", element: "wood", desc: "最大HP+60%・防御+40", hpPct: 0.6, def: 40 },
-    { id: "light", name: "光の勇者", emoji: "✨", element: "light", desc: "コイン+50%・撃破時HP10%回復", coinMult: 1.5, killHealPct: 0.1 },
-    { id: "dark", name: "闇の暗殺者", emoji: "🌑", element: "dark", desc: "5%で即死・攻撃+20%・被ダメ+20%", instakill: 0.05, atkPct: 0.2, takeMult: 1.2 },
+    {
+      id: "knight", name: "ナイト", emoji: "🛡️", element: "wood",
+      desc: "HP極高・防御極高。スキルで敵を気絶させ大技を止める",
+      stats: "HP:極高 MP:低 ATK:中 DEF:極高 SPD:低",
+      hpPct: 0.6, def: 40, mp: 40, spd: 2,
+      skill: { icon: "🛡️", name: "シールドバッシュ", cost: 30, desc: "防御力の5倍の物理ダメージ＋敵を1ターン気絶させる" },
+    },
+    {
+      id: "assassin", name: "アサシン", emoji: "🗡️", element: "dark",
+      desc: "神速。攻撃+25%・会心+15%。スキルは必中の暗殺撃",
+      stats: "HP:低 MP:中 ATK:高 DEF:低 SPD:極高",
+      hpPct: -0.15, atkPct: 0.25, crit: 0.15, mp: 60, spd: 10,
+      skill: { icon: "🗡️", name: "シャドウストライク", cost: 30, desc: "必中＆確定会心の一撃（回避の高い敵に有効）" },
+    },
+    {
+      id: "wizard", name: "ウィザード", emoji: "🔮", element: "fire",
+      desc: "攻撃+35%（魔法）。物理カットや物理透過を無視して当たる",
+      stats: "HP:中 MP:極高 ATK(魔):極高 DEF:低 SPD:中",
+      atkPct: 0.35, mp: 120, spd: 5, magic: true,
+      skill: { icon: "💥", name: "エクスプロージョン", cost: 40, desc: "炎の全体魔法。後ろの敵にも同じダメージ（ゾンビは復活できない）" },
+    },
+    {
+      id: "cleric", name: "クレリック", emoji: "✨", element: "light",
+      desc: "聖なる魔法使い。HP高・撃破時に回復。状態異常に強い",
+      stats: "HP:高 MP:高 ATK:中 DEF:高 SPD:中",
+      hpPct: 0.3, def: 20, killHealPct: 0.05, mp: 90, spd: 5, magic: true,
+      skill: { icon: "🌟", name: "セイント・ノヴァ", cost: 35, desc: "聖魔法ダメージ＋HP25%回復＋状態異常を1つ解除" },
+    },
+    {
+      id: "alchemist", name: "アルケミスト", emoji: "⚗️", element: "water",
+      desc: "バランス型・コイン+20%。酸で硬い敵の防御を溶かす",
+      stats: "HP:中 MP:中 ATK:中 DEF:中 SPD:高",
+      hpPct: 0.1, def: 15, atkPct: 0.1, coinMult: 1.2, mp: 80, spd: 7,
+      skill: { icon: "⚗️", name: "アシッドボトル", cost: 25, desc: "3ターンの間、敵の防御特性を無効化＋毎ターン最大HP8%の固定ダメージ" },
+    },
   ];
 
   /* --- ルートマップ（分岐型ローグライク） --- */
@@ -451,6 +499,16 @@
   let nodeIdx = -1; // 今いるマスの位置
   let stageNum = 1; // 何ステージ目か
   let overkillStreak = 0; // オーバーキル連続回数（自動バランス調整用）
+  /* --- 職業・スキル・状態異常 --- */
+  let playerMp = 100; // スキル用のMP（正解で回復）
+  let playerMaxMp = 100;
+  const playerStatus = {}; // 状態異常 { poison:残りターン, sick, para, bind, stun, doom, burn, armor }
+  let enemyStun = 0; // 敵の気絶（シールドバッシュ）
+  let enemyAcid = 0; // 酸（防御特性無効＋毎ターン固定ダメージ）の残りターン
+  let wolfHowl = false; // おおかみの遠吠え（次の攻撃2倍）
+  let maouSummonTick = 0; // 魔王の召喚カウント
+  let zombieRevived = false; // このゾンビがもう復活したか
+  let swarmAdds = 0; // この階でねずみが乱入した回数
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
@@ -590,6 +648,7 @@
     let d = baseDef();
     d += baseAtk() * sumFx("convAtkToDef");
     d *= 1 + sumFx("defMult"); // 防御の乗算（例 2倍）
+    if (playerStatus.armor > 0) d *= 0.5; // ゾンビの「防具半減」
     return Math.max(0, Math.round(d));
   }
   // 攻撃の倍率（HP割合・ボス・敵HP・装備数などの条件。加算式）
@@ -687,6 +746,12 @@
     layerIdx = -1;
     nodeIdx = -1;
     currentNodeType = "battle";
+    for (const k in playerStatus) delete playerStatus[k];
+    enemyStun = 0;
+    enemyAcid = 0;
+    wolfHowl = false;
+    maouSummonTick = 0;
+    swarmAdds = 0;
     renderStanceButtons();
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
     showCharSelect(); // まずキャラクターを選ぶ
@@ -707,10 +772,12 @@
       shopButton(
         ch.emoji,
         `${ch.name}【${el.emoji}${el.name}属性】`,
-        ch.desc,
+        `${ch.desc}<br><span class="char-stats">${ch.stats}</span><br>${ch.skill.icon}【${ch.skill.name}】${ch.skill.desc}（MP${ch.skill.cost}）`,
         false,
         () => {
           playerChar = ch;
+          playerMaxMp = 50 + (ch.mp || 0);
+          playerMp = playerMaxMp;
           recomputeMaxHp();
           playerHp = playerMaxHp;
           genMap();
@@ -744,10 +811,18 @@
     enemyActs = enemyIsBoss || !!enemyElite;
     enemyBarrier = isFinal ? 8 : enemyIsBoss ? Math.min(7, 4 + Math.floor(floor / 20)) : enemyElite ? enemyElite.barrier : 0;
     curseNext = false;
+    // 敵ごとの個体リセット
+    enemyStun = 0;
+    enemyAcid = 0;
+    wolfHowl = false;
+    zombieRevived = false;
+    if (enemyIsBoss) maouSummonTick = 0;
     const base = isFinal ? 140 : isBossNode ? 70 : 22;
-    // 深く進むごとに敵HPが増える（10マスごとに10倍）
+    // 深く進むごとに敵HPが増える（10マスごとに10倍）＋種族ごとのHP倍率
     const hpScale = Math.pow(10, Math.floor((floor - 1) / 10));
-    enemyMaxHp = Math.round((base + floor * 6) * (isFinal ? 10 : isBossNode ? 6 : enemyElite ? 2 : 1) * hpScale);
+    enemyMaxHp = Math.round(
+      (base + floor * 6) * (isFinal ? 10 : isBossNode ? 6 : enemyElite ? 2 : 1) * (currentEnemy.hp || 1) * hpScale,
+    );
     enemyHp = enemyMaxHp;
     floorLabel.textContent =
       `ステージ${stageNum}・${Math.max(1, layerIdx + 1)}/${MAP_LAYERS}マス` + (isBossNode ? "（ボス）" : "");
@@ -765,7 +840,14 @@
       (enemyElite ? `${enemyElite.name}` : "") +
       currentEnemy.name +
       (enemiesRemaining > 1 ? `（残り${enemiesRemaining}体）` : "");
+    enemyName.title = currentEnemy.trait || "";
     rollIntent();
+    // てんぐ：出会いがしらに先制攻撃してくる
+    if (currentEnemy.id === "tengu" && playerHp > 0) {
+      battleMessage.textContent = "👺 てんぐの先制攻撃！";
+      applyEnemyHit(0.6, "先制の一撃");
+      updateBars();
+    }
   }
 
   /* --- 戦略システム：行動予告・バリア・構え・敵のターン --- */
@@ -824,6 +906,29 @@
     raw += Math.round(playerMaxHp * pierce);
     raw = Math.max(1, raw);
     if (enemyElite && enemyElite.atkMult) raw *= enemyElite.atkMult;
+    raw *= currentEnemy.atk || 1; // 種族ごとの攻撃力
+    // 種族の攻撃特性
+    const sp = currentEnemy.id;
+    let spNote = "";
+    if (sp === "ookami") {
+      if (enemiesRemaining > 1) raw *= 1.2; // 群れ強化
+      if (wolfHowl) {
+        raw *= 2;
+        wolfHowl = false;
+        spNote += "（遠吠えの集中攻撃！）";
+      }
+    }
+    if (sp === "same" && playerHp < playerMaxHp) {
+      raw *= 1.5; // 手負い特効
+      if (Math.random() < 0.3) {
+        raw *= 1.8;
+        spNote += "（🦈3連続攻撃！）";
+      }
+    }
+    if (sp === "sasori" && playerHp / playerMaxHp <= 0.3) {
+      raw *= 3;
+      spNote += "（🦂致命の一撃！）";
+    }
     raw *= mult * STANCES[stance].take; // 強攻撃倍率と構え
     raw *= elemAdvantage(enemyElement, playerChar.element); // 敵との属性相性
     raw *= playerChar.takeMult || 1; // キャラクターの被ダメ補正
@@ -839,7 +944,36 @@
     noHitStreak = 0;
     tempAtkBuffPct = Math.max(tempAtkBuffPct, sumFx("onHitBuffAtkPct"));
     battleMessage.textContent +=
-      ` ／ ${label}で ${formatNum(incoming)} のダメージ！` + (reflectDmg > 0 ? `（${formatNum(reflectDmg)} 反射）` : "");
+      ` ／ ${label}で ${formatNum(incoming)} のダメージ！${spNote}` +
+      (reflectDmg > 0 ? `（${formatNum(reflectDmg)} 反射）` : "");
+    // 攻撃後の種族特性（吸血・MP吸収・状態異常・遠吠えなど）
+    if (sp === "koumori" && incoming > 0) {
+      enemyHp = Math.min(enemyMaxHp, enemyHp + incoming);
+      battleMessage.textContent += "（🦇 HPを吸収された！）";
+    }
+    if (sp === "yuurei" && playerMp > 0) {
+      playerMp = Math.max(0, playerMp - 15);
+      battleMessage.textContent += "（👻 MPを15吸い取られた！）";
+    }
+    if (sp === "ookami" && !wolfHowl && Math.random() < 0.25) {
+      wolfHowl = true;
+      battleMessage.textContent += "（🐺 遠吠え！次の攻撃が2倍になる）";
+    }
+    if (sp === "nezumi" && Math.random() < 0.3) applyStatus("sick", 3);
+    if (sp === "kumo") {
+      if (Math.random() < 0.3) applyStatus("poison", 3);
+      else if (Math.random() < 0.25) applyStatus("bind", 2);
+    }
+    if (sp === "hebi" && Math.random() < 0.25) applyStatus("para", 3);
+    if (sp === "oni" && Math.random() < 0.25) applyStatus("stun", 1);
+    if (sp === "zombie" && Math.random() < 0.25) applyStatus("armor", 3);
+    if (sp === "tengu" && Math.random() < 0.2) {
+      const keys = Object.keys(STANCES);
+      stance = keys[randInt(0, keys.length - 1)];
+      renderStanceButtons();
+      battleMessage.textContent += `（👺 かく乱！構えが${STANCES[stance].name}に乱された）`;
+    }
+    if (sp === "dragon" && mult >= 2) applyStatus("burn", 3); // ブレスで炎上フィールド
     if (playerHp <= 0) {
       const revivePct = maxFx("revive");
       if (revivePct > 0 && !reviveUsed) {
@@ -858,16 +992,36 @@
   // 戻り値：true=続行できる / false=ゲームオーバー
   function executeIntent() {
     if (!enemyActs || enemyHp <= 0) return true;
+    // 気絶中は動けない（シールドバッシュ）
+    if (enemyStun > 0) {
+      enemyStun--;
+      battleMessage.textContent += ` ／ 💫 ${currentEnemy.name}は気絶して動けない！`;
+      rollIntent();
+      return true;
+    }
     let ok = true;
     if (enemyIntent === "heal") {
       const h = Math.round(enemyMaxHp * 0.2);
       enemyHp = Math.min(enemyMaxHp, enemyHp + h);
       battleMessage.textContent += ` ／ 💚 ${currentEnemy.name}はHPを${formatNum(h)}回復！`;
     } else if (enemyIntent === "curse") {
-      curseNext = true;
-      battleMessage.textContent += ` ／ 🔮 呪いをかけられた！次の攻撃は半減＆バリアを壊せない`;
+      if (currentEnemy.id === "maou") {
+        applyStatus("doom", 4); // 死の呪い：カウント0で即死（クレリックで解除／魔王撃破で解除）
+        battleMessage.textContent += ` ／ 💀 魔王に死の呪いをかけられた！`;
+      } else {
+        curseNext = true;
+        battleMessage.textContent += ` ／ 🔮 呪いをかけられた！次の攻撃は半減＆バリアを壊せない`;
+      }
     } else {
       ok = applyEnemyHit(enemyIntent === "strong" ? 2.5 : 1, INTENT_INFO[enemyIntent].icon + INTENT_INFO[enemyIntent].label);
+    }
+    // 魔王：3ターンごとに倒された魔物を召喚して壁にする（バリア+2）
+    if (currentEnemy.id === "maou" && enemyHp > 0) {
+      maouSummonTick++;
+      if (maouSummonTick % 3 === 0) {
+        enemyBarrier += 2;
+        battleMessage.textContent += ` ／ 🐲 倒された魔物を2体召喚して壁にした！（バリア+2）`;
+      }
     }
     rollIntent();
     return ok;
@@ -893,6 +1047,182 @@
     });
   }
 
+  /* ============================================================
+   * 🧪 状態異常＆職業スキル
+   * ============================================================ */
+  const STATUS_INFO = {
+    poison: { icon: "☠️", name: "猛毒", desc: "毎ターン最大HPの5%ダメージ" },
+    sick: { icon: "🤢", name: "病気", desc: "毎ターン最大HPの3%ダメージ" },
+    para: { icon: "⚡", name: "麻痺", desc: "スキルが使えない" },
+    bind: { icon: "🕸️", name: "束縛", desc: "与えるダメージ-30%" },
+    stun: { icon: "💫", name: "気絶", desc: "次の攻撃が不発になる" },
+    doom: { icon: "💀", name: "死の呪い", desc: "0になると即死！クレリックで解除可" },
+    burn: { icon: "🔥", name: "炎上", desc: "毎ターン最大HPの5%ダメージ" },
+    armor: { icon: "🩻", name: "防具半減", desc: "防御力が半分になる" },
+  };
+  const statusRowEl = document.getElementById("status-row");
+
+  function applyStatus(key, turns) {
+    playerStatus[key] = Math.max(playerStatus[key] || 0, turns);
+    const info = STATUS_INFO[key];
+    battleMessage.textContent += `（${info.icon} ${info.name}になった！）`;
+    renderStatusRow();
+  }
+
+  function renderStatusRow() {
+    if (!statusRowEl) return;
+    const chips = Object.entries(playerStatus)
+      .filter(([, t]) => t > 0)
+      .map(([k, t]) => {
+        const s = STATUS_INFO[k];
+        return `<span class="status-chip${k === "doom" ? " doom" : ""}" title="${s.desc}">${s.icon}${s.name} ${t}</span>`;
+      });
+    statusRowEl.innerHTML = chips.join("");
+    statusRowEl.classList.toggle("is-hidden", chips.length === 0);
+  }
+
+  // 毎ターン（問題に答えるたび）状態異常が進行する。戻り値false=死亡
+  function tickPlayerStatuses() {
+    let dot = 0;
+    if (playerStatus.poison > 0) dot += Math.round(playerMaxHp * 0.05);
+    if (playerStatus.sick > 0) dot += Math.round(playerMaxHp * 0.03);
+    if (playerStatus.burn > 0) dot += Math.round(playerMaxHp * 0.05);
+    if (dot > 0) {
+      playerHp -= dot;
+      battleMessage.textContent = `🩸 状態異常で ${formatNum(dot)} のダメージ…`;
+    }
+    for (const k of Object.keys(playerStatus)) {
+      if (k === "stun") continue; // 気絶は攻撃時に消費する
+      if (playerStatus[k] > 0) playerStatus[k]--;
+    }
+    // 死の呪いが0になったら即死
+    if (playerStatus.doom === 0 && "doom" in playerStatus) {
+      delete playerStatus.doom;
+      playerHp = 0;
+      battleMessage.textContent = "💀 死の呪いが完成してしまった…！";
+    }
+    renderStatusRow();
+    if (playerHp <= 0) {
+      const revivePct = maxFx("revive");
+      if (revivePct > 0 && !reviveUsed) {
+        reviveUsed = true;
+        playerHp = Math.max(1, Math.round(playerMaxHp * revivePct));
+        battleMessage.textContent += ` 💫復活！`;
+        updateBars();
+        return true;
+      }
+      onGameOver();
+      return false;
+    }
+    updateBars();
+    return true;
+  }
+
+  /* --- 職業スキル --- */
+  const skillBtn = document.getElementById("use-skill");
+  if (skillBtn) skillBtn.addEventListener("click", useSkill);
+
+  function updateSkillButton() {
+    if (!skillBtn) return;
+    const sk = playerChar.skill;
+    if (!sk) {
+      skillBtn.classList.add("is-hidden");
+      return;
+    }
+    skillBtn.classList.remove("is-hidden");
+    const para = playerStatus.para > 0;
+    skillBtn.textContent = para ? `⚡ 麻痺中…` : `${sk.icon} ${sk.name}（MP${sk.cost}）`;
+    skillBtn.disabled = para || playerMp < sk.cost || battleInput.disabled || enemyHp <= 0;
+    skillBtn.title = sk.desc;
+  }
+
+  // スキルの基本ダメージ（コンボは乗らないが装備・倍率は乗る）
+  function skillBaseDamage() {
+    return clampNum((randInt(16, 24) + effAttack()) * attackMultiplier() * atkStackMult);
+  }
+
+  function dealSkillDamage(dmg, magicElem, label) {
+    if (enemyBarrier > 0) {
+      enemyBarrier = Math.max(0, enemyBarrier - 1);
+      battleMessage.textContent = `${label} バリアを1枚破壊！（残り${enemyBarrier}枚）`;
+      renderIntent();
+      updateBars();
+      return;
+    }
+    dmg = Math.round(clampNum(dmg));
+    enemyHp = clampNum(enemyHp - dmg);
+    recordDamage(dmg);
+    showDamage(dmg, true);
+    shakeEnemy();
+    juiceHit(true, dmg);
+    battleMessage.textContent = `${label} ${formatNum(dmg)} のダメージ！`;
+    updateBars();
+    if (enemyHp <= 0) {
+      handleEnemyKilled(magicElem);
+    }
+  }
+
+  // 撃破処理（ゾンビの復活チェック付き）。magicElem=スキルの属性（火/光ならゾンビ焼却）
+  function handleEnemyKilled(magicElem) {
+    const ae = magicElem || attackElement();
+    if (currentEnemy.id === "zombie" && !zombieRevived && ae !== "fire" && ae !== "light") {
+      zombieRevived = true;
+      enemyHp = Math.round(enemyMaxHp * 0.5);
+      battleMessage.textContent += ` ／ 🧟 ゾンビが起き上がった！（火・光属性で倒せば復活しない）`;
+      updateBars();
+      nextBattleQuestion();
+      return;
+    }
+    onEnemyDefeated();
+  }
+
+  function useSkill() {
+    const sk = playerChar.skill;
+    if (!sk || playerMp < sk.cost || battleInput.disabled || enemyHp <= 0) return;
+    if (playerStatus.para > 0) {
+      battleMessage.textContent = "⚡ 麻痺していてスキルが使えない！";
+      return;
+    }
+    playerMp -= sk.cost;
+    const id = playerChar.id;
+    if (id === "knight") {
+      // シールドバッシュ：DEF依存ダメージ＋敵を1ターン気絶
+      enemyStun = 1;
+      const dmg = clampNum((effDefense() * 5 + 100) * atkStackMult);
+      dealSkillDamage(dmg, null, "🛡️ シールドバッシュ！敵を気絶させた！");
+    } else if (id === "assassin") {
+      // シャドウストライク：必中＆確定会心
+      const dmg = clampNum(skillBaseDamage() * 2 * critMultiplier());
+      dealSkillDamage(dmg, "dark", "🗡️ シャドウストライク！（必中・確定会心）");
+    } else if (id === "wizard") {
+      // エクスプロージョン：炎の全体魔法（後ろの敵にも同ダメージ）
+      const dmg = clampNum(skillBaseDamage() * 1.5);
+      if (enemiesRemaining > 1) splashDamage = clampNum(splashDamage + dmg);
+      dealSkillDamage(dmg, "fire", "💥 エクスプロージョン！（炎の全体魔法）");
+    } else if (id === "cleric") {
+      // セイント・ノヴァ：聖魔法＋回復＋状態異常1つ解除
+      const heal = Math.round(playerMaxHp * 0.25);
+      playerHp = Math.min(playerMaxHp, playerHp + heal);
+      const order = ["doom", "para", "poison", "sick", "burn", "armor", "bind", "stun"];
+      const cured = order.find((k) => playerStatus[k] > 0 || (k === "doom" && "doom" in playerStatus));
+      let cureNote = "";
+      if (cured) {
+        delete playerStatus[cured];
+        cureNote = `＋${STATUS_INFO[cured].icon}${STATUS_INFO[cured].name}を解除`;
+        renderStatusRow();
+      }
+      const dmg = clampNum(skillBaseDamage() * 1.2);
+      dealSkillDamage(dmg, "light", `🌟 セイント・ノヴァ！HP${formatNum(heal)}回復${cureNote}／`);
+    } else if (id === "alchemist") {
+      // アシッドボトル：防御特性を無効化＋毎ターン固定ダメージ
+      enemyAcid = 3;
+      const dmg = Math.round(enemyMaxHp * 0.08);
+      dealSkillDamage(dmg, null, "⚗️ アシッドボトル！敵の装甲が溶けた！（3ターン持続）");
+    }
+    updateSkillButton();
+    updateBars();
+  }
+
   // 1マス分の敵をまとめてセットアップ（ボス・エリートは1体、通常マスは深さで増える）
   function beginFloorEnemies() {
     let count;
@@ -902,6 +1232,7 @@
     else count = randInt(1, 3);
     enemiesRemaining = count;
     splashDamage = 0; // マスが変わったら範囲ダメージはリセット
+    swarmAdds = 0; // ねずみの乱入回数もリセット
     spawnEnemy();
   }
 
@@ -1223,8 +1554,11 @@
       `<span title="攻撃力">⚔️ ${formatNum(effAttack())}</span>` +
       `<span title="防御力">🛡️ ${formatNum(effDefense())}</span>` +
       `<span title="最大HP">❤️ ${formatNum(playerMaxHp)}</span>` +
+      `<span title="スキル用MP（正解で+10回復）" style="color:#7dd3fc">🔮 ${playerMp}/${playerMaxMp}</span>` +
       `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>` +
       `<span title="攻撃属性（武器の属性。火→木→水→火、光⇔闇が有利）" style="color:${ae.color}">${ae.emoji} ${ae.name}属性</span>`;
+    updateSkillButton();
+    renderStatusRow();
     if (damageStats) {
       damageStats.innerHTML =
         `<span title="直近の攻撃で与えたダメージ">💢 攻撃 ${formatNum(lastAttackDamage)}</span>` +
@@ -1400,6 +1734,7 @@
     e.preventDefault();
     if (battleInput.disabled) return;
     const phrase = battleIdiom.phrase;
+    if (!tickPlayerStatuses()) return; // 状態異常の進行（毒・炎上・死の呪いなど）
     if (matchesIdiom(battleInput.value, battleIdiom)) {
       attackEnemy(phrase);
     } else {
@@ -1412,12 +1747,51 @@
     combo++; // 連続正解でコンボが伸びる
     updateComboDisplay();
     const comboMult = Math.pow(1.1, combo); // 1コンボごと×1.1
+    playerMp = Math.min(playerMaxMp, playerMp + 10); // 正解でMPが少し回復
+
+    // 気絶していると攻撃が不発になる
+    if (playerStatus.stun > 0) {
+      delete playerStatus.stun;
+      renderStatusRow();
+      battleMessage.textContent = `💫 気絶していて攻撃できなかった…！（正解は合ってたよ）`;
+      const alive = enemyActs ? executeIntent() : true;
+      updateBars();
+      if (alive) nextBattleQuestion();
+      return;
+    }
 
     // ミシック：毎ターン攻撃倍率を乗算で増やす
     if (hasFx("atkMultPerTurn")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("atkMultPerTurn")));
     // ミシック：毎ターン最大HPの割合を回復
     const turnHeal = sumFx("turnHealPct");
     if (turnHeal) playerHp = Math.min(playerMaxHp, playerHp + Math.round(playerMaxHp * turnHeal));
+
+    // 酸（アシッドボトル）：毎ターン固定ダメージ
+    if (enemyAcid > 0 && enemyBarrier <= 0) {
+      const acidDmg = Math.round(enemyMaxHp * 0.08);
+      enemyHp = clampNum(enemyHp - acidDmg);
+      showDamage(acidDmg, false);
+    }
+
+    // 敵の回避：すばやい敵は攻撃をかわす（魔法職は必中。SPDで回避をすり抜けやすくなる）
+    const missP = playerChar.magic
+      ? 0
+      : Math.max(0, (currentEnemy.dodge || 0) - (playerChar.spd || 0) * 0.02);
+    if (enemyBarrier <= 0 && missP > 0 && Math.random() < missP) {
+      combo = 0;
+      updateComboDisplay();
+      battleMessage.textContent = `💨 ${currentEnemy.name}に攻撃をかわされた！`;
+      // ヘビ：ミスに即カウンター
+      let alive = true;
+      if (currentEnemy.id === "hebi") {
+        battleMessage.textContent += "";
+        alive = applyEnemyHit(1, "🐍カウンター");
+      }
+      if (alive && enemyActs) alive = executeIntent();
+      updateBars();
+      if (alive) nextBattleQuestion();
+      return;
+    }
 
     // バリアがある間はHPに届かない（構えの枚数だけ破壊する）
     if (enemyBarrier > 0) {
@@ -1469,6 +1843,17 @@
     const elemMult = elemAdvantage(atkElem, enemyElement);
     const elemMatch = equippedItems().filter((it) => elementOf(it.name) === atkElem).length;
     hit *= elemMult * (1 + 0.08 * elemMatch);
+    // 敵の防御特性（魔法職と酸は無視できる）
+    let guardNote = "";
+    if (!playerChar.magic && enemyAcid <= 0) {
+      if (currentEnemy.physCut) hit *= 1 - currentEnemy.physCut; // サソリ・おにの硬い装甲
+      if (currentEnemy.id === "oni" && Math.random() < 0.4) {
+        hit *= 0.5;
+        guardNote = "👹金棒ガード！ ";
+      }
+    }
+    // 束縛：与ダメージ-30%
+    if (playerStatus.bind > 0) hit *= 0.7;
     hit = clampNum(hit);
 
     const crit = Math.random() < critTotal();
@@ -1545,16 +1930,19 @@
       (crit ? "💥会心！ " : "") +
       (hits > 1 ? `${hits}回攻撃！ ` : "") +
       (elemMult > 1 ? "🌟相性◎ " : elemMult < 1 ? "💦相性✕ " : "") +
+      guardNote +
+      (playerStatus.bind > 0 ? "🕸️束縛中 " : "") +
       (nerfed ? "⚖️ " : "");
     battleMessage.textContent = note
       ? `${note}「${phrase}」で敵を倒した！`
       : `⚔️ ${flair}「${phrase}」で ${formatNum(dealt)} のダメージ！`;
+    if (enemyAcid > 0) enemyAcid--; // 酸の残りターンを消費
     updateBars();
     shakeEnemy();
     showDamage(dealt > 0 ? dealt : "⚡", crit);
     juiceHit(crit, dealt);
     if (enemyHp <= 0) {
-      onEnemyDefeated();
+      handleEnemyKilled(playerChar.magic ? playerChar.element : null); // ゾンビの復活チェック付き
     } else {
       // ボス・エリートは生きていれば毎ターン反撃してくる
       const alive = enemyActs ? executeIntent() : true;
@@ -1583,6 +1971,18 @@
 
   function onEnemyDefeated(chained) {
     defeated++;
+    // 魔王を倒すと死の呪いが解ける
+    if (currentEnemy.id === "maou" && "doom" in playerStatus) {
+      delete playerStatus.doom;
+      battleMessage.textContent += " 💀→✨ 死の呪いが解けた！";
+      renderStatusRow();
+    }
+    // ねずみ：倒しても仲間が乱入してくることがある（1つの階で最大2回）
+    if (currentEnemy.id === "nezumi" && swarmAdds < 2 && Math.random() < 0.4) {
+      enemiesRemaining++;
+      swarmAdds++;
+      battleMessage.textContent += " 🐀 新たなねずみが乱入してきた！";
+    }
     // ミシック：撃破ごとに攻撃倍率を乗算で増やす／追加攻撃回数を増やす
     if (hasFx("atkMultPerKill")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("atkMultPerKill")));
     bonusHits += sumFx("killExtraHit");
