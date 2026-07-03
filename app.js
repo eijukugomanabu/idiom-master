@@ -1359,49 +1359,58 @@
   let pathIdx = []; // 実際に通った道（レイヤーごとの選択マス番号）
   let mapLocked = false; // マス確定後の入力ロック（連打・誤操作防止）
 
+  // ステージ構成：独立レーン → チェックポイントで合流 → 再分岐 → …→ ボス
+  // segments：各セグメントの「レーン数」と「本数（縦の長さ）」。合計＋節目＋ボスで MAP_LAYERS 列
+  const MAP_SEGMENTS = [
+    { lanes: 5, layers: 5 }, // 序盤：5本の独立ルート
+    { lanes: 4, layers: 4 }, // 中盤：4本
+    { lanes: 3, layers: 3 }, // 終盤：3本
+  ];
+  const MAP_CHECKPOINTS = ["elite", "shop"]; // セグメントの合流点（中ボス→ショップ）
+
+  // セグメント内マスのランダムな種類（ボス・チェックポイント以外）
+  function randSegType() {
+    const r = Math.random();
+    if (r < 0.48) return "battle";
+    if (r < 0.62) return "elite";
+    if (r < 0.76) return "event";
+    if (r < 0.88) return "shop";
+    return "gacha";
+  }
+
   function genMap() {
-    routeMap = [];
-    for (let L = 0; L < MAP_LAYERS; L++) {
-      const width = L === MAP_LAYERS - 1 ? 1 : L === 0 ? 3 : randInt(3, 4);
-      const layer = [];
-      for (let i = 0; i < width; i++) {
-        let type;
-        if (L === MAP_LAYERS - 1) type = "boss";
-        else if (L === 0) type = "battle";
-        else {
-          const r = Math.random();
-          if (r < 0.5) type = "battle";
-          else if (r < 0.62) type = "elite";
-          else if (r < 0.76) type = "event";
-          else if (r < 0.88) type = "shop";
-          else type = "gacha";
-        }
-        layer.push({ type, visited: false, next: [] });
+    // まず各列の「役割」を決める（seg本体／cp合流点／boss）
+    const layout = [];
+    MAP_SEGMENTS.forEach((seg, si) => {
+      for (let li = 0; li < seg.layers; li++) {
+        layout.push({ kind: "seg", lanes: seg.lanes, entry: li === 0 });
       }
-      routeMap.push(layer);
-    }
-    // 道（接続）を作る：1マスから最大3〜4方向に分岐する
-    for (let L = 0; L < MAP_LAYERS - 1; L++) {
-      const cur = routeMap[L];
-      const nxt = routeMap[L + 1];
-      const w = cur.length;
-      const w2 = nxt.length;
-      const incoming = new Array(w2).fill(0);
-      cur.forEach((node, i) => {
-        const center = w === 1 ? (w2 - 1) / 2 : (i * (w2 - 1)) / (w - 1);
-        const set = new Set([Math.round(center)]);
-        if (Math.random() < 0.8) set.add(Math.round(center) + 1);
-        if (Math.random() < 0.8) set.add(Math.round(center) - 1);
-        if (Math.random() < 0.25) set.add(Math.round(center) + 2); // たまに大またぎで最大4方向
-        node.next = [...set].filter((j) => j >= 0 && j < w2).sort((a, b) => a - b);
-        node.next.forEach((j) => incoming[j]++);
-      });
-      // どこからも入れないマスを無くす（必ず1本は道が通る）
-      incoming.forEach((n, j) => {
-        if (!n) {
-          const i = w === 1 ? 0 : Math.min(w - 1, Math.round((j * (w - 1)) / Math.max(1, w2 - 1)));
-          if (!cur[i].next.includes(j)) cur[i].next.push(j);
-          cur[i].next.sort((a, b) => a - b);
+      if (si < MAP_SEGMENTS.length - 1) layout.push({ kind: "cp", cpType: MAP_CHECKPOINTS[si] });
+    });
+    layout.push({ kind: "boss" });
+
+    // 列ごとにマスを生成
+    routeMap = layout.map((info) => {
+      if (info.kind === "cp") return [{ type: info.cpType, lane: -1, visited: false, next: [] }];
+      if (info.kind === "boss") return [{ type: "boss", lane: -1, visited: false, next: [] }];
+      const nodes = [];
+      for (let i = 0; i < info.lanes; i++) {
+        nodes.push({ type: randSegType(), lane: i, visited: false, next: [] });
+      }
+      return nodes;
+    });
+
+    // 道（接続）を張る。ルールで「レーンは合流点以外では交わらない」を保証する
+    for (let L = 0; L < layout.length - 1; L++) {
+      const A = layout[L];
+      const B = layout[L + 1];
+      routeMap[L].forEach((node, i) => {
+        if (B.kind === "cp" || B.kind === "boss") {
+          node.next = [0]; // 節目の直前：全レーンが1点に合流
+        } else if (A.kind === "cp") {
+          node.next = routeMap[L + 1].map((_, j) => j); // 節目から再分岐（全レーンへ）
+        } else {
+          node.next = [i]; // セグメント内：自分のレーンをまっすぐ進む（他レーンへは行けない）
         }
       });
     }
