@@ -65,12 +65,18 @@
           <button id="prev-card">← 前へ</button>
           <button id="next-card">次へ →</button>
         </div>
+        <button id="mark-done" class="done-btn">⬜ できた！チェック</button>
         <button id="card-next-set" class="next-set-btn is-hidden">次の10問へ →</button>
+        <button id="go-quiz-unchecked" class="go-quiz-btn">✍️ 覚えてない単語で穴埋めへ →</button>
       </section>
 
       <!-- 穴埋め入力 -->
       <section id="quiz" class="view is-hidden">
         <button class="back-btn" data-back="home">← モード選択にもどる</button>
+        <div class="quiz-filter">
+          <span id="quiz-filter-info"></span>
+          <label><input type="checkbox" id="include-mastered" /> ✅できた単語も出題する</label>
+        </div>
         <div class="progress" id="quiz-progress"></div>
         <div class="quiz-card">
           <div class="quiz-image" id="quiz-image"></div>
