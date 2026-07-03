@@ -960,7 +960,7 @@
       layer.forEach((node, i) => {
         const b = document.createElement("button");
         b.type = "button";
-        b.className = "map-node";
+        b.className = "map-node n-" + node.type;
         b.innerHTML = `<img src="${NODE_TYPES[node.type].img}" alt="${NODE_TYPES[node.type].name}">`;
         b.title = NODE_TYPES[node.type].name;
         if (L === layerIdx && i === nodeIdx) b.classList.add("current");
