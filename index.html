@@ -43,6 +43,13 @@
         </div>
       </section>
 
+      <!-- セット選択（10問ずつのグループを選ぶ） -->
+      <section id="set-select" class="view is-hidden">
+        <button class="back-btn" data-back="home">← モード選択にもどる</button>
+        <p class="home-lead" id="set-select-title">挑戦するセットを選ぼう</p>
+        <div class="set-grid" id="set-grid"><!-- JSで生成 --></div>
+      </section>
+
       <!-- フラッシュカード -->
       <section id="flashcards" class="view is-hidden">
         <button class="back-btn" data-back="home">← モード選択にもどる</button>
@@ -66,8 +73,8 @@
           <button id="next-card">次へ →</button>
         </div>
         <button id="mark-done" class="done-btn">⬜ できた！チェック</button>
-        <button id="card-next-set" class="next-set-btn is-hidden">次の10問へ →</button>
-        <button id="go-quiz-unchecked" class="go-quiz-btn">✍️ 覚えてない単語で穴埋めへ →</button>
+        <button id="go-quiz-unchecked" class="go-quiz-btn">✍️ このセットの覚えてない単語で穴埋めへ →</button>
+        <button id="card-next-set" class="next-set-btn">📚 セット選択にもどる</button>
       </section>
 
       <!-- 穴埋め入力 -->
