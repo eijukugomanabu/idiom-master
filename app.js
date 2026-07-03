@@ -15,6 +15,7 @@
   const views = {
     "level-select": document.getElementById("level-select"),
     home: document.getElementById("home"),
+    "set-select": document.getElementById("set-select"),
     flashcards: document.getElementById("flashcards"),
     quiz: document.getElementById("quiz"),
     battle: document.getElementById("battle"),
@@ -99,40 +100,90 @@
     currentMode = mode;
     if (mode === "battle") {
       startBattle();
-    } else {
-      // 穴埋めは「できたチェック」済みの単語を除外して出題（設定で切替可）
-      const pool = mode === "quiz" ? quizPool() : filterByLevel(IDIOMS, currentLevel);
-      sets = chunk(pool, CARDS_PER_SET);
-      setIndex = 0;
-      loadSet();
-      if (mode === "flashcards") {
-        index = 0;
-        renderCard();
-      } else {
-        updateQuizFilterInfo();
-        startQuiz();
-      }
+      showView(mode);
+      return;
     }
-    showView(mode);
+    // セットは常に「レベル全体を10問ずつ」で固定（第1セットの中身はいつも同じ）
+    sets = chunk(filterByLevel(IDIOMS, currentLevel), CARDS_PER_SET);
+    showSetSelect(mode);
   }
 
-  // 穴埋め画面の「何語を除外しているか」の表示を更新
+  /* ---------- セット選択画面（挑戦するセットを手動で選ぶ） ---------- */
+  function showSetSelect(mode) {
+    currentMode = mode;
+    const title = document.getElementById("set-select-title");
+    if (title) {
+      title.textContent =
+        mode === "flashcards" ? "📇 学ぶセットを選ぼう" : "✍️ 穴埋めに挑戦するセットを選ぼう（✅できた単語は出ないよ）";
+    }
+    const grid = document.getElementById("set-grid");
+    grid.innerHTML = "";
+    sets.forEach((s, i) => {
+      const done = s.filter((w) => mastered[w.phrase]).length;
+      const rest = s.length - done;
+      const allDone = done >= s.length;
+      const btn = document.createElement("button");
+      btn.className = "set-card" + (allDone ? " all-done" : "");
+      const sub =
+        mode === "quiz"
+          ? allDone
+            ? "🎉 全部できた！（全問出題）"
+            : `残り${rest}語を出題`
+          : `${s.length}語（${s[0].phrase} …）`;
+      btn.innerHTML =
+        `<span class="set-name">第${i + 1}セット</span>` +
+        `<span class="set-check">✅ ${done}/${s.length}</span>` +
+        `<span class="set-sub">${sub}</span>`;
+      btn.addEventListener("click", () => startSet(i));
+      grid.appendChild(btn);
+    });
+    showView("set-select");
+  }
+
+  // 選んだセットで学習/穴埋めを開始する
+  function startSet(i) {
+    setIndex = i;
+    if (currentMode === "flashcards") {
+      loadSet();
+      index = 0;
+      renderCard();
+      showView("flashcards");
+    } else {
+      loadQuizSet();
+      updateQuizFilterInfo();
+      startQuiz();
+      showView("quiz");
+    }
+  }
+
+  // 穴埋め画面の「何語を除外しているか」の表示を更新（選択中のセット内の話）
   function updateQuizFilterInfo() {
     const info = document.getElementById("quiz-filter-info");
     if (!info) return;
-    const all = filterByLevel(IDIOMS, currentLevel);
-    const doneCount = all.filter((w) => mastered[w.phrase]).length;
+    const base = sets[setIndex] || [];
+    const doneCount = base.filter((w) => mastered[w.phrase]).length;
     if (includeMastered) {
-      info.textContent = `全${all.length}語を出題中（✅できた ${doneCount}語もふくむ）`;
-    } else if (doneCount >= all.length && all.length > 0) {
-      info.textContent = `🎉 全部できた！なので全${all.length}語から出題中`;
+      info.textContent = `第${setIndex + 1}セット：全${base.length}語を出題中（✅${doneCount}語もふくむ）`;
+    } else if (doneCount >= base.length && base.length > 0) {
+      info.textContent = `第${setIndex + 1}セット：🎉全部できた！ので全${base.length}語を出題中`;
     } else {
-      info.textContent = `未チェックの${all.length - doneCount}語を出題中（✅できた ${doneCount}語は除外）`;
+      info.textContent = `第${setIndex + 1}セット：未チェックの${base.length - doneCount}語を出題中（✅${doneCount}語は除外）`;
     }
   }
 
   function loadSet() {
     cards = sets[setIndex] || [];
+  }
+
+  // 穴埋め用：選んだセットの中から「できたチェック」の無い単語だけを出題
+  function loadQuizSet() {
+    const base = sets[setIndex] || [];
+    if (includeMastered) {
+      cards = base;
+      return;
+    }
+    const rest = base.filter((w) => !mastered[w.phrase]);
+    cards = rest.length ? rest : base; // 全部できたセットは全問出題にフォールバック
   }
 
   /* ---------- 「できた」チェック（覚えた単語の記録。保存される） ---------- */
@@ -149,31 +200,6 @@
   }
   // 設定：できた単語も穴埋めに出すか（初期値は「出さない」）
   let includeMastered = localStorage.getItem("idiomIncludeMastered") === "1";
-
-  // 穴埋め用の出題プール：できたチェック済みを除外（全部できていたら全出題にフォールバック）
-  function quizPool() {
-    const all = filterByLevel(IDIOMS, currentLevel);
-    if (includeMastered) return all;
-    const rest = all.filter((w) => !mastered[w.phrase]);
-    return rest.length ? rest : all;
-  }
-
-  // もう一段先のセットがあるか
-  function hasNextSet() {
-    return setIndex < sets.length - 1;
-  }
-
-  function goNextSet() {
-    if (!hasNextSet()) return;
-    setIndex++;
-    loadSet();
-    if (currentMode === "flashcards") {
-      index = 0;
-      renderCard();
-    } else {
-      startQuiz();
-    }
-  }
 
   /* 「もどる」ボタン（data-back に戻り先のビュー名） */
   document.querySelectorAll("[data-back]").forEach((btn) => {
@@ -223,7 +249,7 @@
     exampleJaEl.textContent = card.exampleJa;
     const doneInSet = cards.filter((c) => mastered[c.phrase]).length;
     setProgressLabel(progressEl, `${index + 1} / ${cards.length}　✅ ${doneInSet}/${cards.length}`);
-    cardNextSet.classList.toggle("is-hidden", !hasNextSet());
+    cardNextSet.classList.remove("is-hidden"); // 「セット選択へ」は常に表示
     // 「できた」ボタンの見た目を今の単語に合わせる
     const doneBtn = document.getElementById("mark-done");
     if (doneBtn) {
@@ -242,7 +268,7 @@
     index = (index + 1) % cards.length;
     renderCard();
   });
-  cardNextSet.addEventListener("click", goNextSet);
+  cardNextSet.addEventListener("click", () => showSetSelect("flashcards")); // セット選択にもどる
 
   // 「できた！」チェックの切り替え（保存される）
   const markDoneBtn = document.getElementById("mark-done");
@@ -256,7 +282,7 @@
       renderCard();
     });
   }
-  // 「覚えてない単語で穴埋めへ」導線（できた単語を除外して穴埋めモードへ）
+  // 「このセットの覚えてない単語で穴埋めへ」導線（セット番号を引き継いで遷移）
   const goQuizBtn = document.getElementById("go-quiz-unchecked");
   if (goQuizBtn) {
     goQuizBtn.addEventListener("click", () => {
@@ -264,17 +290,20 @@
       try { localStorage.setItem("idiomIncludeMastered", "0"); } catch (e) {}
       const chk = document.getElementById("include-mastered");
       if (chk) chk.checked = false;
-      enterMode("quiz");
+      currentMode = "quiz";
+      startSet(setIndex); // 今学んでいたセットの未チェック単語だけで穴埋め開始
     });
   }
-  // 穴埋め側の設定：「できた単語も出題する」切り替え
+  // 穴埋め側の設定：「できた単語も出題する」切り替え（同じセットで出題しなおす）
   const includeChk = document.getElementById("include-mastered");
   if (includeChk) {
     includeChk.checked = includeMastered;
     includeChk.addEventListener("change", () => {
       includeMastered = includeChk.checked;
       try { localStorage.setItem("idiomIncludeMastered", includeMastered ? "1" : "0"); } catch (e) {}
-      enterMode("quiz"); // 新しい設定で出題しなおす
+      loadQuizSet();
+      updateQuizFilterInfo();
+      startQuiz();
     });
   }
 
@@ -346,19 +375,17 @@
     }
   });
 
+  // セット終了 → リザルト画面（自動で次のセットへは進まない）
   function showResult() {
     quizCard.classList.add("is-hidden");
     quizProgress.classList.add("is-hidden");
     quizResult.classList.remove("is-hidden");
-    const nextSetButton = hasNextSet()
-      ? `<button id="quiz-next-set">次の10問へ →</button>`
-      : "";
     quizResult.innerHTML =
-      `🎉 セット${setIndex + 1}終了！<br>スコア: <strong>${score} / ${cards.length}</strong>` +
-      `<br><br><button id="quiz-restart">もう一度</button> ${nextSetButton}`;
+      `🎉 第${setIndex + 1}セット終了！<br>スコア: <strong>${score} / ${cards.length}</strong>` +
+      `<br><br><button id="quiz-restart">もう一度</button> ` +
+      `<button id="quiz-to-sets">📚 セット選択へ</button>`;
     document.getElementById("quiz-restart").addEventListener("click", startQuiz);
-    const nextBtn = document.getElementById("quiz-next-set");
-    if (nextBtn) nextBtn.addEventListener("click", goNextSet);
+    document.getElementById("quiz-to-sets").addEventListener("click", () => showSetSelect("quiz"));
   }
 
   /* ---------- 英熟語バトル（ローグライク） ---------- */
