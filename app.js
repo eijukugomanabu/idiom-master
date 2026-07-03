@@ -100,20 +100,62 @@
     if (mode === "battle") {
       startBattle();
     } else {
-      sets = chunk(filterByLevel(IDIOMS, currentLevel), CARDS_PER_SET);
+      // 穴埋めは「できたチェック」済みの単語を除外して出題（設定で切替可）
+      const pool = mode === "quiz" ? quizPool() : filterByLevel(IDIOMS, currentLevel);
+      sets = chunk(pool, CARDS_PER_SET);
       setIndex = 0;
       loadSet();
       if (mode === "flashcards") {
+        index = 0;
         renderCard();
       } else {
+        updateQuizFilterInfo();
         startQuiz();
       }
     }
     showView(mode);
   }
 
+  // 穴埋め画面の「何語を除外しているか」の表示を更新
+  function updateQuizFilterInfo() {
+    const info = document.getElementById("quiz-filter-info");
+    if (!info) return;
+    const all = filterByLevel(IDIOMS, currentLevel);
+    const doneCount = all.filter((w) => mastered[w.phrase]).length;
+    if (includeMastered) {
+      info.textContent = `全${all.length}語を出題中（✅できた ${doneCount}語もふくむ）`;
+    } else if (doneCount >= all.length && all.length > 0) {
+      info.textContent = `🎉 全部できた！なので全${all.length}語から出題中`;
+    } else {
+      info.textContent = `未チェックの${all.length - doneCount}語を出題中（✅できた ${doneCount}語は除外）`;
+    }
+  }
+
   function loadSet() {
     cards = sets[setIndex] || [];
+  }
+
+  /* ---------- 「できた」チェック（覚えた単語の記録。保存される） ---------- */
+  let mastered = {};
+  try {
+    mastered = JSON.parse(localStorage.getItem("idiomMastered") || "{}") || {};
+  } catch (e) {
+    mastered = {};
+  }
+  function saveMastered() {
+    try {
+      localStorage.setItem("idiomMastered", JSON.stringify(mastered));
+    } catch (e) {}
+  }
+  // 設定：できた単語も穴埋めに出すか（初期値は「出さない」）
+  let includeMastered = localStorage.getItem("idiomIncludeMastered") === "1";
+
+  // 穴埋め用の出題プール：できたチェック済みを除外（全部できていたら全出題にフォールバック）
+  function quizPool() {
+    const all = filterByLevel(IDIOMS, currentLevel);
+    if (includeMastered) return all;
+    const rest = all.filter((w) => !mastered[w.phrase]);
+    return rest.length ? rest : all;
   }
 
   // もう一段先のセットがあるか
@@ -172,14 +214,23 @@
 
   function renderCard() {
     const card = cards[index];
+    if (!card) return;
     cardEl.classList.remove("is-flipped");
     setImage(imageEl, card);
     phraseEl.textContent = card.phrase;
     meaningEl.textContent = card.meaning;
     exampleEl.textContent = card.example;
     exampleJaEl.textContent = card.exampleJa;
-    setProgressLabel(progressEl, `${index + 1} / ${cards.length}`);
+    const doneInSet = cards.filter((c) => mastered[c.phrase]).length;
+    setProgressLabel(progressEl, `${index + 1} / ${cards.length}　✅ ${doneInSet}/${cards.length}`);
     cardNextSet.classList.toggle("is-hidden", !hasNextSet());
+    // 「できた」ボタンの見た目を今の単語に合わせる
+    const doneBtn = document.getElementById("mark-done");
+    if (doneBtn) {
+      const done = !!mastered[card.phrase];
+      doneBtn.textContent = done ? "✅ できた！（タップで外す）" : "⬜ できた！チェック";
+      doneBtn.classList.toggle("done", done);
+    }
   }
 
   cardEl.addEventListener("click", () => cardEl.classList.toggle("is-flipped"));
@@ -192,6 +243,40 @@
     renderCard();
   });
   cardNextSet.addEventListener("click", goNextSet);
+
+  // 「できた！」チェックの切り替え（保存される）
+  const markDoneBtn = document.getElementById("mark-done");
+  if (markDoneBtn) {
+    markDoneBtn.addEventListener("click", () => {
+      const card = cards[index];
+      if (!card) return;
+      if (mastered[card.phrase]) delete mastered[card.phrase];
+      else mastered[card.phrase] = true;
+      saveMastered();
+      renderCard();
+    });
+  }
+  // 「覚えてない単語で穴埋めへ」導線（できた単語を除外して穴埋めモードへ）
+  const goQuizBtn = document.getElementById("go-quiz-unchecked");
+  if (goQuizBtn) {
+    goQuizBtn.addEventListener("click", () => {
+      includeMastered = false;
+      try { localStorage.setItem("idiomIncludeMastered", "0"); } catch (e) {}
+      const chk = document.getElementById("include-mastered");
+      if (chk) chk.checked = false;
+      enterMode("quiz");
+    });
+  }
+  // 穴埋め側の設定：「できた単語も出題する」切り替え
+  const includeChk = document.getElementById("include-mastered");
+  if (includeChk) {
+    includeChk.checked = includeMastered;
+    includeChk.addEventListener("change", () => {
+      includeMastered = includeChk.checked;
+      try { localStorage.setItem("idiomIncludeMastered", includeMastered ? "1" : "0"); } catch (e) {}
+      enterMode("quiz"); // 新しい設定で出題しなおす
+    });
+  }
 
   /* ---------- 穴埋め入力 ---------- */
   const quizImage = document.getElementById("quiz-image");
