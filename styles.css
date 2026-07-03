@@ -1441,21 +1441,42 @@ header {
   color: #94a3b8;
   margin-top: 0.2rem;
 }
+.map-inner {
+  position: relative;
+}
+.map-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.map-lines .ln {
+  stroke: #334155;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.map-lines .ln.taken {
+  stroke: #16a34a;
+  stroke-width: 3.5;
+}
+.map-lines .ln.open {
+  stroke: #818cf8;
+  stroke-width: 3.5;
+  stroke-dasharray: 6 5;
+  animation: lnFlow 0.9s linear infinite;
+  filter: drop-shadow(0 0 4px rgba(129, 140, 248, 0.8));
+}
+@keyframes lnFlow {
+  to { stroke-dashoffset: -11; }
+}
 .map-row {
   display: flex;
   justify-content: center;
-  gap: 0.8rem;
-  padding: 0.22rem 0;
+  gap: 0.9rem;
+  padding: 0.55rem 0;
   position: relative;
-}
-.map-row + .map-row::before {
-  content: "";
-  position: absolute;
-  top: -0.35rem;
-  left: 50%;
-  width: 2px;
-  height: 0.55rem;
-  background: #334155;
+  z-index: 1;
 }
 .map-node {
   width: 3.1rem;
@@ -1567,22 +1588,14 @@ body {
   box-shadow: 0 0 12px rgba(124, 92, 255, 0.25), inset 0 1px 0 rgba(190, 170, 255, 0.15);
 }
 
-/* ルートマップ：石板＋ルーンの裂け目コネクタ */
+/* ルートマップ：石板テーマ（マス間の道はSVGの.map-linesで描画） */
 .route-map {
   border-radius: 18px;
   padding: 1.1rem 0.6rem 1.3rem;
 }
 .map-row {
   gap: 1.1rem;
-  padding: 0.34rem 0;
-}
-.map-row + .map-row::before {
-  width: 3px;
-  height: 0.8rem;
-  top: -0.45rem;
-  background: linear-gradient(180deg, rgba(124, 92, 255, 0.05), rgba(139, 92, 246, 0.75), rgba(124, 92, 255, 0.05));
-  box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
-  border-radius: 2px;
+  padding: 0.55rem 0;
 }
 .map-node {
   width: 3.4rem;

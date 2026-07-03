@@ -1328,10 +1328,14 @@
   const routeMapEl = document.getElementById("route-map");
 
   // マップ生成：15レイヤー。最初は戦闘、最後はボス、途中はいろいろなマス
+  // 各マスは next[]（次のレイヤーで繋がっているマスの番号）を持ち、繋がった道しか進めない
+  let pathIdx = []; // 実際に通った道（レイヤーごとの選択マス番号）
+  let mapLocked = false; // マス確定後の入力ロック（連打・誤操作防止）
+
   function genMap() {
     routeMap = [];
     for (let L = 0; L < MAP_LAYERS; L++) {
-      const width = L === MAP_LAYERS - 1 ? 1 : L === 0 ? 2 : randInt(2, 3);
+      const width = L === MAP_LAYERS - 1 ? 1 : L === 0 ? 3 : randInt(3, 4);
       const layer = [];
       for (let i = 0; i < width; i++) {
         let type;
@@ -1345,12 +1349,39 @@
           else if (r < 0.88) type = "shop";
           else type = "gacha";
         }
-        layer.push({ type, visited: false });
+        layer.push({ type, visited: false, next: [] });
       }
       routeMap.push(layer);
     }
+    // 道（接続）を作る：1マスから最大3〜4方向に分岐する
+    for (let L = 0; L < MAP_LAYERS - 1; L++) {
+      const cur = routeMap[L];
+      const nxt = routeMap[L + 1];
+      const w = cur.length;
+      const w2 = nxt.length;
+      const incoming = new Array(w2).fill(0);
+      cur.forEach((node, i) => {
+        const center = w === 1 ? (w2 - 1) / 2 : (i * (w2 - 1)) / (w - 1);
+        const set = new Set([Math.round(center)]);
+        if (Math.random() < 0.8) set.add(Math.round(center) + 1);
+        if (Math.random() < 0.8) set.add(Math.round(center) - 1);
+        if (Math.random() < 0.25) set.add(Math.round(center) + 2); // たまに大またぎで最大4方向
+        node.next = [...set].filter((j) => j >= 0 && j < w2).sort((a, b) => a - b);
+        node.next.forEach((j) => incoming[j]++);
+      });
+      // どこからも入れないマスを無くす（必ず1本は道が通る）
+      incoming.forEach((n, j) => {
+        if (!n) {
+          const i = w === 1 ? 0 : Math.min(w - 1, Math.round((j * (w - 1)) / Math.max(1, w2 - 1)));
+          if (!cur[i].next.includes(j)) cur[i].next.push(j);
+          cur[i].next.sort((a, b) => a - b);
+        }
+      });
+    }
     layerIdx = -1;
     nodeIdx = -1;
+    pathIdx = [];
+    mapLocked = false;
   }
 
   function showMap(msg) {
@@ -1359,8 +1390,17 @@
     battleInput.disabled = true;
     if (msg) battleMessage.textContent = msg;
     routeMapEl.classList.remove("is-hidden");
+    mapLocked = false; // 次のマスを選び直せるようにロック解除
     renderMap();
     updateBars();
+  }
+
+  // 今いるマスから繋がっている（＝選べる）マスかどうか
+  function isReachable(L, i) {
+    if (layerIdx === -1) return L === 0; // 出発前は1段目から選ぶ
+    if (L !== layerIdx + 1) return false; // 次のレイヤー以外は選べない
+    const cur = routeMap[layerIdx] && routeMap[layerIdx][nodeIdx];
+    return !!(cur && cur.next && cur.next.includes(i));
   }
 
   function renderMap() {
@@ -1370,7 +1410,10 @@
       .join(" ");
     routeMapEl.innerHTML =
       `<div class="map-title">🗺️ ステージ${stageNum}　ルートマップ` +
-      `<span class="map-sub">次のマスを1つ選ぼう　${legend}</span></div>`;
+      `<span class="map-sub">道がつながっているマスだけ選べるよ　${legend}</span></div>`;
+    const inner = document.createElement("div");
+    inner.className = "map-inner";
+    inner.innerHTML = `<svg class="map-lines" xmlns="http://www.w3.org/2000/svg"></svg>`;
     routeMap.forEach((layer, L) => {
       const row = document.createElement("div");
       row.className = "map-row";
@@ -1382,7 +1425,7 @@
         b.title = NODE_TYPES[node.type].name;
         if (L === layerIdx && i === nodeIdx) b.classList.add("current");
         else if (node.visited) b.classList.add("visited");
-        if (L === layerIdx + 1) {
+        if (isReachable(L, i)) {
           b.classList.add("selectable");
           b.addEventListener("click", () => enterNode(L, i));
         } else {
@@ -1390,17 +1433,72 @@
         }
         row.appendChild(b);
       });
-      routeMapEl.appendChild(row);
+      inner.appendChild(row);
     });
+    routeMapEl.appendChild(inner);
+    // マスとマスをつなぐ道を描く（レイアウト完了前に走ることがあるので少し後にも再描画）
+    requestAnimationFrame(() => drawMapLines(inner));
+    setTimeout(() => drawMapLines(inner), 150);
     // 今いる場所が見えるようにスクロール
     const cur = routeMapEl.querySelector(".map-node.selectable") || routeMapEl.querySelector(".map-node.current");
     if (cur) setTimeout(() => cur.scrollIntoView({ block: "center", behavior: "smooth" }), 50);
   }
 
+  // マス同士の接続線をSVGで描画（通った道は緑、今選べる道は光る紫）
+  function drawMapLines(inner) {
+    const svg = inner.querySelector("svg.map-lines");
+    if (!svg) return;
+    const rows = [...inner.querySelectorAll(".map-row")];
+    const innerRect = inner.getBoundingClientRect();
+    if (innerRect.width === 0) return; // 非表示中は描けない
+    svg.setAttribute("viewBox", `0 0 ${inner.clientWidth} ${inner.scrollHeight}`);
+    svg.style.width = inner.clientWidth + "px";
+    svg.style.height = inner.scrollHeight + "px";
+    let html = "";
+    routeMap.forEach((layer, L) => {
+      if (L >= routeMap.length - 1 || !rows[L] || !rows[L + 1]) return;
+      layer.forEach((node, i) => {
+        const a = rows[L].children[i];
+        if (!a) return;
+        (node.next || []).forEach((j) => {
+          const b = rows[L + 1].children[j];
+          if (!b) return;
+          const ra = a.getBoundingClientRect();
+          const rb = b.getBoundingClientRect();
+          const x1 = ra.left + ra.width / 2 - innerRect.left;
+          const y1 = ra.bottom - innerRect.top - 3;
+          const x2 = rb.left + rb.width / 2 - innerRect.left;
+          const y2 = rb.top - innerRect.top + 3;
+          let cls = "ln";
+          if (pathIdx[L] === i && pathIdx[L + 1] === j) cls += " taken"; // 通った道
+          else if (L === layerIdx && i === nodeIdx) cls += " open"; // 今選べる道
+          html += `<line class="${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+        });
+      });
+    });
+    svg.innerHTML = html;
+  }
+  // 画面サイズが変わったら道を引き直す（ズレ防止）
+  window.addEventListener("resize", () => {
+    if (!routeMapEl || routeMapEl.classList.contains("is-hidden")) return;
+    const inner = routeMapEl.querySelector(".map-inner");
+    if (inner) drawMapLines(inner);
+  });
+
   // マスに入る（深さ=floorが1増え、階を進む系の装備効果が発動する）
   function enterNode(L, i) {
+    // 【不正移動の完全禁止】確定後の連打ロック＋接続していない道はシステム側で弾く
+    if (mapLocked) return;
+    if (!isReachable(L, i)) return; // 繋がっていないマス・後戻り・横移動はすべて拒否
+    mapLocked = true;
+    // 【UIロック】選択した瞬間、他のマスをすべて選択不可にする
+    routeMapEl.querySelectorAll(".map-node").forEach((b) => {
+      b.disabled = true;
+      b.classList.remove("selectable");
+    });
     layerIdx = L;
     nodeIdx = i;
+    pathIdx[L] = i; // 通った道として記録（後戻り・横移動は不可能）
     routeMap[L][i].visited = true;
     currentNodeType = routeMap[L][i].type;
     floor = (stageNum - 1) * MAP_LAYERS + L + 1;
