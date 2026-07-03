@@ -1592,3 +1592,52 @@ body {
   border-color: #b45309;
   box-shadow: 0 0 30px rgba(245, 158, 11, 0.4), inset 0 0 24px rgba(0, 0, 0, 0.5);
 }
+
+/* 状態異常チップ */
+.status-row {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.status-chip {
+  background: #2a1215;
+  border: 1px solid #b45309;
+  color: #fbbf24;
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+}
+.status-chip.doom {
+  background: #1c1024;
+  border-color: #ef4444;
+  color: #fca5a5;
+  animation: comboPulse 0.8s ease-in-out infinite;
+}
+@keyframes comboPulse {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+/* スキルボタン */
+.skill-btn {
+  border-color: #38bdf8 !important;
+  color: #7dd3fc !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+.skill-btn:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+
+/* キャラ選択のステータス行 */
+.char-stats {
+  display: inline-block;
+  margin: 0.2rem 0;
+  font-size: 0.72rem;
+  color: #93c5fd;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
