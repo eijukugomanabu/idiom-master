@@ -464,6 +464,24 @@
     curse: { icon: "🔮", label: "呪い" },
   };
 
+  /* --- 道具カタログ（消費アイテム）＆お守りカタログ（パッシブ遺物） --- */
+  // kind: heal(HP回復) / mp(MP回復) / scroll(使い捨ての戦術) ／ battleOnly: 戦闘中のみ使用可
+  const CONSUMABLES = [
+    { id: "potion", icon: "🧪", name: "HPポーション", price: 60, kind: "heal", hpPct: 0.5, desc: "HPを50%回復" },
+    { id: "hipotion", icon: "🍶", name: "上級ポーション", price: 130, kind: "heal", hpPct: 1.0, desc: "HPを全回復" },
+    { id: "ether", icon: "🔷", name: "エーテル", price: 70, kind: "mp", mpPct: 0.6, desc: "MPを60%回復" },
+    { id: "sc_bomb", icon: "📜", name: "爆炎の巻物", price: 100, kind: "scroll", sc: "bomb", battleOnly: true, desc: "敵に特大ダメージ（バリア貫通）" },
+    { id: "sc_shatter", icon: "📜", name: "破魔の巻物", price: 80, kind: "scroll", sc: "shatter", battleOnly: true, desc: "敵のバリアを全て破壊する" },
+    { id: "sc_purify", icon: "📜", name: "浄化の巻物", price: 80, kind: "scroll", sc: "purify", desc: "状態異常を全回復＋HP30%回復" },
+  ];
+  const RELICS_CATALOG = [
+    { id: "ward", icon: "🧿", name: "守りのお守り", price: 160, desc: "受けるダメージを常に20%軽減", fx: { dmgReduce: 0.2 } },
+    { id: "medic", icon: "💊", name: "薬師のお守り", price: 150, desc: "回復アイテムの効果+50%", fx: { healBoost: 0.5 } },
+    { id: "beast", icon: "🐾", name: "獣避けのお守り", price: 130, desc: "獣系(おおかみ/サメ)からの被ダメ-40%", fx: { cutBeast: 0.4 } },
+    { id: "holy", icon: "✝️", name: "退魔のお守り", price: 130, desc: "不死系(ゆうれい/ゾンビ)からの被ダメ-40%", fx: { cutUndead: 0.4 } },
+    { id: "lucky", icon: "🍀", name: "幸運のお守り", price: 140, desc: "獲得コイン+30%", fx: { coinBoost: 0.3 } },
+  ];
+
   /* --- 5属性システム --- */
   const ELEMENTS = {
     fire: { name: "火", emoji: "🔥", color: "#f87171" },
@@ -621,11 +639,23 @@
   let maouSummonTick = 0; // 魔王の召喚カウント
   let zombieRevived = false; // このゾンビがもう復活したか
   let swarmAdds = 0; // この階でねずみが乱入した回数
+  /* --- 道具（インベントリ）＆お守り（遺物） --- */
+  const inventory = []; // 消費アイテム（回復ポーション・巻物）
+  const relics = []; // お守り（パッシブ遺物・所持しているだけで効果）
+  let itemUsesThisBattle = 0; // この戦闘での道具使用回数
+  const MAX_ITEM_USES = 3; // 1戦闘の道具使用上限
+  const MAX_INVENTORY = 8; // 道具の最大所持数
+  let itemsCtx = "battle"; // 道具メニューを開いた文脈（battle / map）
+  function relicFx(key) {
+    return relics.reduce((s, r) => s + ((r.fx && r.fx[key]) || 0), 0);
+  }
+  function hasRelic(id) {
+    return relics.some((r) => r.id === id);
+  }
   let enemyHp = 0;
   let enemyMaxHp = 0;
   let currentEnemy = null;
   let battleIdiom = null;
-  let answerPeekOn = false; // テストモード：答えをのぞき見表示中か
 
   // パーク（敵撃破ごとの3択強化）
   let attackBonus = 0; // 攻撃ダメージに加算
@@ -828,7 +858,11 @@
     reviveUsed = false;
     for (const id in equipment) equipment[id] = null;
     backpack.length = 0;
+    inventory.length = 0;
+    relics.length = 0;
+    itemUsesThisBattle = 0;
     shopStock = [];
+    shopItems = [];
     splashDamage = 0;
     playerMaxHp = BASE_MAX_HP;
     playerHp = BASE_MAX_HP;
@@ -1049,6 +1083,10 @@
     for (const c of condList("damageReduceLowHp")) {
       if (playerHp / playerMaxHp <= c.th) reduce += c.pct;
     }
+    // お守り（遺物）の被ダメージ軽減
+    reduce += relicFx("dmgReduce");
+    if ((sp === "ookami" || sp === "same") && relicFx("cutBeast")) reduce += relicFx("cutBeast");
+    if ((sp === "yuurei" || sp === "zombie") && relicFx("cutUndead")) reduce += relicFx("cutUndead");
     reduce = Math.min(0.95, reduce);
     const reflectDmg = Math.round(raw * sumFx("reflect"));
     const incoming = Math.max(0, Math.round(raw * (1 - reduce)));
@@ -1123,7 +1161,7 @@
         battleMessage.textContent += ` ／ 💀 魔王に死の呪いをかけられた！`;
       } else {
         curseNext = true;
-        battleMessage.textContent += ` ／ 🔮 呪いをかけられた！次の攻撃は半減＆バリアを壊せない`;
+        battleMessage.textContent += ` ／ 🔮 呪いをかけられた！次の攻撃は威力ダウン`;
       }
     } else {
       ok = applyEnemyHit(enemyIntent === "strong" ? 2.5 : 1, INTENT_INFO[enemyIntent].icon + INTENT_INFO[enemyIntent].label);
@@ -1346,6 +1384,7 @@
     enemiesRemaining = count;
     splashDamage = 0; // マスが変わったら範囲ダメージはリセット
     swarmAdds = 0; // ねずみの乱入回数もリセット
+    itemUsesThisBattle = 0; // 道具の使用回数は1戦闘ごとにリセット
     spawnEnemy();
   }
 
@@ -1446,7 +1485,10 @@
       .join(" ");
     routeMapEl.innerHTML =
       `<div class="map-title">🗺️ ステージ${stageNum}　ルートマップ` +
+      `<button type="button" id="map-items" class="map-items-btn">🎒 道具（${inventory.length}）</button>` +
       `<span class="map-sub">道がつながっているマスだけ選べるよ　${legend}</span></div>`;
+    const itemsBtn = routeMapEl.querySelector("#map-items");
+    if (itemsBtn) itemsBtn.addEventListener("click", () => showItems("map"));
     const inner = document.createElement("div");
     inner.className = "map-inner";
     inner.innerHTML = `<svg class="map-lines" xmlns="http://www.w3.org/2000/svg"></svg>`;
@@ -1691,69 +1733,6 @@
     battleInput.value = "";
     battleInput.disabled = false;
     battleInput.focus();
-    renderAnswerPeek(); // 答え表示中なら新しい問題の答えに更新
-  }
-
-  /* --- テストモード：答えをのぞき見＆ワンタップでコピー＆入力 --- */
-  const peekBtn = document.getElementById("peek-answer");
-  const answerChip = document.getElementById("answer-chip");
-  const peekFeedback = document.getElementById("peek-feedback");
-
-  function renderAnswerPeek() {
-    if (!answerChip) return;
-    if (answerPeekOn && battleIdiom) {
-      answerChip.textContent = `📋 ${battleIdiom.phrase}`;
-      answerChip.classList.remove("is-hidden");
-      if (peekBtn) peekBtn.textContent = "🙈 答えをかくす";
-    } else {
-      answerChip.classList.add("is-hidden");
-      if (peekFeedback) peekFeedback.classList.add("is-hidden");
-      if (peekBtn) peekBtn.textContent = "🔑 答えを見る";
-    }
-  }
-
-  // クリップボードにコピー（失敗時はテキストエリア経由でフォールバック）
-  function copyText(text) {
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
-        return;
-      }
-    } catch (e) {}
-    fallbackCopy(text);
-  }
-  function fallbackCopy(text) {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand("copy"); } catch (e) {}
-    ta.remove();
-  }
-  function flashPeekFeedback() {
-    if (!peekFeedback) return;
-    peekFeedback.classList.remove("is-hidden");
-    clearTimeout(flashPeekFeedback._t);
-    flashPeekFeedback._t = setTimeout(() => peekFeedback.classList.add("is-hidden"), 1500);
-  }
-
-  if (peekBtn) {
-    peekBtn.addEventListener("click", () => {
-      answerPeekOn = !answerPeekOn;
-      renderAnswerPeek();
-    });
-  }
-  if (answerChip) {
-    // タップで答えをコピー＆入力欄へ自動入力（すぐ攻撃できる）
-    answerChip.addEventListener("click", () => {
-      if (!battleIdiom) return;
-      copyText(battleIdiom.phrase);
-      battleInput.value = battleIdiom.phrase;
-      battleInput.focus();
-      flashPeekFeedback();
-    });
   }
 
   function updateBars() {
@@ -1763,6 +1742,7 @@
     playerHpText.textContent = `${formatNum(Math.max(0, playerHp))} / ${formatNum(playerMaxHp)}`;
     renderStats();
     updateBombButton();
+    updateItemsButton();
     renderIntent();
   }
 
@@ -2013,24 +1993,25 @@
       return;
     }
 
-    // バリアがある間はHPに届かない（構えの枚数だけ破壊する）
+    // バリアがある間はHPに届かない（正解攻撃は必ず最低1枚は破壊できる）
     if (enemyBarrier > 0) {
+      // 構えの枚数だけ破壊。呪い中でも「壊せない(0)」にはせず、最低1枚は必ず削る
       let breakN = STANCES[stance].break;
       if (curseNext) {
-        breakN = 0;
+        breakN = Math.max(1, breakN - 1); // 呪いは効きを弱めるだけ（0にはしない）
         curseNext = false;
-        battleMessage.textContent = `🔮 呪い発動！「${phrase}」の攻撃はバリアを壊せなかった…`;
-      } else {
-        enemyBarrier = Math.max(0, enemyBarrier - breakN);
-        battleMessage.textContent =
-          enemyBarrier > 0
-            ? `⚔️ 「${phrase}」でバリアを${breakN}枚破壊！（残り${enemyBarrier}枚）`
-            : `💥 「${phrase}」でバリアを全て破壊！本体にダメージが通るぞ！`;
-        if (typeof Music !== "undefined") Music.hit(2, enemyBarrier === 0);
-        screenShake(enemyBarrier === 0 ? 5 : 2);
-        spawnBurst(enemyBarrier === 0 ? 24 : 10, { colors: ["#93c5fd", "#e0f2fe", "#38bdf8"] });
-        shakeEnemy();
       }
+      const before = enemyBarrier;
+      enemyBarrier = Math.max(0, enemyBarrier - breakN);
+      const broke = before - enemyBarrier;
+      battleMessage.textContent =
+        enemyBarrier > 0
+          ? `⚔️ 「${phrase}」でバリアを${broke}枚破壊！（残り${enemyBarrier}枚）`
+          : `💥 「${phrase}」でバリアを全て破壊！本体にダメージが通るぞ！`;
+      if (typeof Music !== "undefined") Music.hit(2, enemyBarrier === 0);
+      screenShake(enemyBarrier === 0 ? 5 : 2);
+      spawnBurst(enemyBarrier === 0 ? 24 : 10, { colors: ["#93c5fd", "#e0f2fe", "#38bdf8"] });
+      shakeEnemy();
       const alive = executeIntent(); // 敵のターン
       renderIntent();
       updateBars();
@@ -2089,6 +2070,7 @@
       hit = Math.round(hit * nf);
       nerfed = true;
     }
+    hit = Math.max(1, hit); // どんなに軽減されても正解攻撃は必ず1以上通る
 
     let hits = hasFx("extraHit") ? 2 : 1;
     if (hasFx("extraHitChance") && Math.random() < sumFx("extraHitChance")) hits += 1;
@@ -2229,7 +2211,7 @@
     let coinGain = randInt(25, 50) + Math.floor(floor * 10);
     if (enemyElite) coinGain = Math.round(coinGain * enemyElite.coinMult);
     else if (enemyIsBoss) coinGain = Math.round(coinGain * 3);
-    coinGain = Math.round(coinGain * (playerChar.coinMult || 1)); // キャラのコイン補正
+    coinGain = Math.round(coinGain * (playerChar.coinMult || 1) * (1 + relicFx("coinBoost"))); // キャラ＆お守りのコイン補正
     coins += coinGain;
     updateCoinDisplay();
 
@@ -2712,9 +2694,24 @@
   /* --- ショップ（コインで購入） --- */
   const SHOP_PRICE = { common: 15, uncommon: 35, rare: 80, epic: 180, legendary: 450 };
   let shopStock = [];
+  let shopItems = []; // ショップの道具枠（消費アイテム＋お守り）
   let shopReturnsToBattle = false;
 
+  function shuffled(arr) {
+    return arr.slice().sort(() => Math.random() - 0.5);
+  }
+  function generateShopItems() {
+    // 消費アイテム3種＋（未所持の）お守り1〜2種をランダムに陳列
+    const cons = shuffled(CONSUMABLES).slice(0, 3);
+    const rel = shuffled(RELICS_CATALOG.filter((r) => !hasRelic(r.id))).slice(0, randInt(1, 2));
+    shopItems = [
+      ...cons.map((c) => ({ data: c, price: c.price, bought: false, isRelic: false })),
+      ...rel.map((r) => ({ data: r, price: r.price, bought: false, isRelic: true })),
+    ];
+  }
+
   function generateShopStock() {
+    generateShopItems();
     shopStock = [makeItem(), makeItem(), makeItem()].map((it) => ({
       item: it,
       price: SHOP_PRICE[it.rarity] || 30,
@@ -2746,6 +2743,118 @@
   if (openShopBtn) openShopBtn.addEventListener("click", () => showShop(true));
   const openBackpackBtn = document.getElementById("open-backpack");
   if (openBackpackBtn) openBackpackBtn.addEventListener("click", () => showBackpack(true));
+
+  // 「🧪 道具」ボタン（バトル中いつでも。所持数をラベルに表示）
+  const openItemsBtn = document.getElementById("open-items");
+  if (openItemsBtn) openItemsBtn.addEventListener("click", () => showItems("battle"));
+  function updateItemsButton() {
+    if (openItemsBtn) openItemsBtn.textContent = `🧪 道具${inventory.length ? "（" + inventory.length + "）" : ""}`;
+  }
+
+  /* --- 道具メニュー（回復ポーション・巻物を使う／お守りを確認する） --- */
+  function showItems(ctx) {
+    itemsCtx = ctx; // "battle" or "map"
+    battleCard.classList.add("is-hidden");
+    if (routeMapEl) routeMapEl.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    battleMessage.textContent = ctx === "battle" ? "戦闘中：道具を使おう（1戦闘3回まで）" : "マップ：回復系の道具が使えるよ";
+    renderItems();
+  }
+
+  function renderItems() {
+    const uses = itemsCtx === "battle" ? `　使用 ${itemUsesThisBattle}/${MAX_ITEM_USES}` : "";
+    rewardTitle.textContent = `🎒 道具メニュー（${inventory.length}/${MAX_INVENTORY}）${uses}`;
+    rewardGrid.innerHTML = "";
+
+    if (inventory.length === 0) {
+      shopSection("道具を持っていません（ショップで買えるよ）");
+    } else {
+      shopSection("🧪 使える道具");
+      inventory.forEach((it, i) => {
+        const battleOnly = !!it.battleOnly;
+        const disabled =
+          (itemsCtx === "battle" && itemUsesThisBattle >= MAX_ITEM_USES) ||
+          (battleOnly && itemsCtx !== "battle");
+        const note = battleOnly && itemsCtx !== "battle" ? "（戦闘中のみ）" : "";
+        shopButton(it.icon, `${it.name} を使う`, `${it.desc}${note}`, disabled, () => useItem(i));
+      });
+    }
+    // お守り（パッシブ・確認だけ）
+    if (relics.length) {
+      shopSection("🧿 お守り（持っているだけで効果）");
+      relics.forEach((r) => shopButton(r.icon, r.name, r.desc, true, null));
+    }
+    // 戻る
+    if (itemsCtx === "battle") {
+      shopButton("⚔️", "バトルに戻る", "道具メニューを閉じる", false, () => resumeFromShop());
+    } else {
+      shopButton("🗺️", "マップに戻る", "道具メニューを閉じる", false, () => showMap());
+    }
+    updateBars();
+  }
+
+  function useItem(i) {
+    const it = inventory[i];
+    if (!it) return;
+    const inBattle = itemsCtx === "battle";
+    if (inBattle && itemUsesThisBattle >= MAX_ITEM_USES) return;
+    if (it.battleOnly && !inBattle) return;
+
+    let msg = "";
+    if (it.kind === "heal") {
+      const amt = Math.round(playerMaxHp * it.hpPct * (1 + relicFx("healBoost")));
+      playerHp = Math.min(playerMaxHp, playerHp + amt);
+      msg = `🧪 ${it.name}：HPを${formatNum(amt)}回復！`;
+    } else if (it.kind === "mp") {
+      const amt = Math.round(playerMaxMp * it.mpPct);
+      playerMp = Math.min(playerMaxMp, playerMp + amt);
+      msg = `🔷 ${it.name}：MPを${amt}回復！`;
+    } else if (it.kind === "scroll") {
+      msg = applyScroll(it);
+    }
+    inventory.splice(i, 1);
+    if (inBattle) itemUsesThisBattle++;
+    updateItemsButton();
+
+    // 巻物で敵を倒した場合は戦闘に戻して撃破処理
+    if (it.kind === "scroll" && inBattle && enemyHp <= 0) {
+      resumeFromShop();
+      battleMessage.textContent = msg;
+      onEnemyDefeated();
+      return;
+    }
+    battleMessage.textContent = msg;
+    updateBars();
+    renderItems(); // メニューに留まって続けて使える
+  }
+
+  // 巻物の効果（戦闘中に敵へ作用するものは battleOnly）
+  function applyScroll(it) {
+    if (it.sc === "shatter") {
+      const b = enemyBarrier;
+      enemyBarrier = 0;
+      renderIntent();
+      return b > 0 ? `📜 破魔の巻物！バリア${b}枚を全て破壊した！` : "📜 破魔の巻物（バリアは無かった）";
+    }
+    if (it.sc === "bomb") {
+      enemyBarrier = 0; // バリア貫通
+      const dmg = clampNum(Math.round(enemyMaxHp * 0.6 + effAttack() * 3));
+      enemyHp = clampNum(enemyHp - dmg);
+      recordDamage(dmg);
+      showDamage(dmg, true);
+      screenShake(6);
+      spawnBurst(30, { colors: ["#fb923c", "#f87171", "#fde68a"] });
+      shakeEnemy();
+      return `📜 爆炎の巻物！${formatNum(dmg)} の特大ダメージ！`;
+    }
+    if (it.sc === "purify") {
+      for (const k in playerStatus) delete playerStatus[k];
+      const amt = Math.round(playerMaxHp * 0.3 * (1 + relicFx("healBoost")));
+      playerHp = Math.min(playerMaxHp, playerHp + amt);
+      return `📜 浄化の巻物！状態異常を全回復＋HP${formatNum(amt)}回復！`;
+    }
+    return "📜 巻物を使った";
+  }
 
   // 「💣 爆弾を放出」ボタン（チンギスの騎馬靴を装備中のみ表示）
   const detonateBtn = document.getElementById("detonate-bomb");
@@ -2837,13 +2946,6 @@
   }
 
   const REROLL_COST = 10;
-  const STAT_UPGRADES = [
-    { icon: "⚔️", name: "攻撃 +15", price: 30, apply: () => (bonusAtk += 15) },
-    { icon: "🔥", name: "攻撃 +40", price: 70, apply: () => (bonusAtk += 40) },
-    { icon: "❤️", name: "最大HP +50", price: 30, apply: () => (perkMaxHpBonus += 50) },
-    { icon: "💥", name: "会心 +5%", price: 40, apply: () => (bonusCrit += 0.05) },
-    { icon: "🩸", name: "吸収 +3", price: 35, apply: () => (lifesteal += 3) },
-  ];
 
   function sellValue(item) {
     return Math.max(5, Math.floor((SHOP_PRICE[item.rarity] || 30) * 0.5));
@@ -2868,10 +2970,20 @@
     });
     shopButton("🔄", "在庫を引き直す", `🪙${REROLL_COST}`, coins < REROLL_COST, () => reroll());
 
-    // ステータス強化（永続）
-    shopSection("💪 ステータス強化（このプレイ中ずっと有効）");
-    STAT_UPGRADES.forEach((u) => {
-      shopButton(u.icon, u.name, `🪙${u.price}`, coins < u.price, () => buyUpgrade(u));
+    // 道具（消費アイテム＆お守り）を買う
+    shopSection("🧪 道具・お守りを買う（道具は手持ちに入る）");
+    shopItems.forEach((st, i) => {
+      const { data, price, bought, isRelic } = st;
+      const owned = isRelic && hasRelic(data.id);
+      const full = !isRelic && inventory.length >= MAX_INVENTORY;
+      const tag = isRelic ? "🧿お守り" : "🎒道具";
+      shopButton(
+        data.icon,
+        `${data.name}（${tag}）`,
+        bought || owned ? "✅入手済み" : full ? "🎒道具がいっぱい" : `🪙${price}・${data.desc}`,
+        bought || owned || full || coins < price,
+        () => buyItem(i),
+      );
     });
 
     // 装備を売る（装備中＋リュックの中身）
@@ -2910,16 +3022,14 @@
         });
     }
 
-    // その他（回復・退店）
+    // 手持ち道具（その場で使える）
+    if (inventory.length || relics.length) {
+      shopSection(`🎒 手持ち道具（${inventory.length}/${MAX_INVENTORY}）・お守り`);
+      shopButton("🎒", "道具メニューを開く", `使う・確認する`, false, () => showItems(shopReturnsToBattle ? "battle" : "map"));
+    }
+
+    // 退店
     shopSection("🛟 その他");
-    const healPrice = Math.max(20, floor * 4);
-    shopButton(
-      "🍖",
-      "HP全回復",
-      `🪙${healPrice}`,
-      coins < healPrice || playerHp >= playerMaxHp,
-      () => buyHeal(healPrice),
-    );
     if (shopReturnsToBattle) {
       shopButton("⚔️", "バトルに戻る", "ショップを閉じる", false, () => resumeFromShop());
     } else {
@@ -2939,30 +3049,31 @@
     renderShop();
   }
 
-  function buyHeal(price) {
-    if (coins < price) return;
-    coins -= price;
-    playerHp = playerMaxHp;
+  // 道具・お守りを買う（道具は手持ちへ、お守りは即パッシブ装備）
+  function buyItem(i) {
+    const st = shopItems[i];
+    if (!st || st.bought || coins < st.price) return;
+    if (!st.isRelic && inventory.length >= MAX_INVENTORY) return;
+    if (st.isRelic && hasRelic(st.data.id)) return;
+    coins -= st.price;
+    st.bought = true;
+    if (st.isRelic) {
+      relics.push({ ...st.data });
+      battleMessage.textContent = `🧿 お守り「${st.data.name}」を手に入れた！（${st.data.desc}）`;
+    } else {
+      inventory.push({ ...st.data });
+      battleMessage.textContent = `🎒 「${st.data.name}」を手に入れた！（道具 ${inventory.length}/${MAX_INVENTORY}）`;
+    }
     updateCoinDisplay();
-    updateBars();
+    updateItemsButton();
     renderShop();
   }
 
-  // 在庫を引き直す（手数料）
+  // 在庫を引き直す（手数料。道具枠も引き直す）
   function reroll() {
     if (coins < REROLL_COST) return;
     coins -= REROLL_COST;
     generateShopStock();
-    updateCoinDisplay();
-    renderShop();
-  }
-
-  // コインでステータスを永続強化
-  function buyUpgrade(u) {
-    if (coins < u.price) return;
-    coins -= u.price;
-    u.apply();
-    recomputeMaxHp();
     updateCoinDisplay();
     renderShop();
   }
