@@ -294,6 +294,14 @@
       startSet(setIndex); // 今学んでいたセットの未チェック単語だけで穴埋め開始
     });
   }
+  // 「このセットを英熟語で学ぶ」導線（穴埋め → フラッシュカード。同じセットへ）
+  const goLearnBtn = document.getElementById("quiz-to-learn");
+  if (goLearnBtn) {
+    goLearnBtn.addEventListener("click", () => {
+      currentMode = "flashcards";
+      startSet(setIndex); // 今解いていたセットをフラッシュカードで学ぶ
+    });
+  }
   // 穴埋め側の設定：「できた単語も出題する」切り替え（同じセットで出題しなおす）
   const includeChk = document.getElementById("include-mastered");
   if (includeChk) {
