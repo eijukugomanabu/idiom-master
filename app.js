@@ -482,34 +482,6 @@
     { id: "lucky", icon: "🍀", name: "幸運のお守り", price: 140, desc: "獲得コイン+30%", fx: { coinBoost: 0.3 } },
   ];
 
-  /* --- 5属性システム --- */
-  const ELEMENTS = {
-    fire: { name: "火", emoji: "🔥", color: "#f87171" },
-    water: { name: "水", emoji: "💧", color: "#38bdf8" },
-    wood: { name: "木", emoji: "🌳", color: "#4ade80" },
-    light: { name: "光", emoji: "✨", color: "#fde047" },
-    dark: { name: "闇", emoji: "🌑", color: "#c084fc" },
-  };
-  const ELEM_KEYS = ["fire", "water", "wood", "light", "dark"];
-  // aがbを攻撃する時の相性倍率（火→木 / 水→火 / 木→水 が有利。光と闇は互いに弱点）
-  function elemAdvantage(a, b) {
-    if (!a || !b) return 1;
-    const strong = { fire: "wood", water: "fire", wood: "water" };
-    if (strong[a] === b) return 1.5;
-    if (strong[b] === a) return 0.6;
-    if ((a === "light" && b === "dark") || (a === "dark" && b === "light")) return 1.5;
-    return 1;
-  }
-  // 装備名から属性を決める（同じ装備は必ず同じ属性になる）
-  function elementOf(name) {
-    let h = 0;
-    for (const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
-    return ELEM_KEYS[h % 5];
-  }
-  // 装備名の前に属性の絵文字を付ける（一覧表示用）
-  function nameWithElem(name) {
-    return `${ELEMENTS[elementOf(name)].emoji}${name}`;
-  }
 
   /* --- キャラクター --- */
   /* 5職業：HP/MP/ATK/DEF/SPD＋固有スキル
@@ -517,35 +489,35 @@
    *  magic:true の職業は攻撃が魔法扱い（ゆうれいに必中・サソリ/おにの物理カット無視） */
   const CHARS = [
     {
-      id: "knight", name: "ナイト", emoji: "🛡️", element: "wood",
+      id: "knight", name: "ナイト", emoji: "🛡️",
       desc: "HP極高・防御極高。スキルで敵を気絶させ大技を止める",
       stats: "HP:極高 MP:低 ATK:中 DEF:極高 SPD:低",
       hpPct: 0.6, def: 40, mp: 40, spd: 2,
       skill: { icon: "🛡️", name: "シールドバッシュ", cost: 30, desc: "防御力の5倍の物理ダメージ＋敵を1ターン気絶させる" },
     },
     {
-      id: "assassin", name: "アサシン", emoji: "🗡️", element: "dark",
+      id: "assassin", name: "アサシン", emoji: "🗡️",
       desc: "神速。攻撃+25%・会心+15%。スキルは必中の暗殺撃",
       stats: "HP:低 MP:中 ATK:高 DEF:低 SPD:極高",
       hpPct: -0.15, atkPct: 0.25, crit: 0.15, mp: 60, spd: 10,
       skill: { icon: "🗡️", name: "シャドウストライク", cost: 30, desc: "必中＆確定会心の一撃（回避の高い敵に有効）" },
     },
     {
-      id: "wizard", name: "ウィザード", emoji: "🔮", element: "fire",
+      id: "wizard", name: "ウィザード", emoji: "🔮",
       desc: "攻撃+35%（魔法）。物理カットや物理透過を無視して当たる",
       stats: "HP:中 MP:極高 ATK(魔):極高 DEF:低 SPD:中",
       atkPct: 0.35, mp: 120, spd: 5, magic: true,
       skill: { icon: "💥", name: "エクスプロージョン", cost: 40, desc: "炎の全体魔法。後ろの敵にも同じダメージ（ゾンビは復活できない）" },
     },
     {
-      id: "cleric", name: "クレリック", emoji: "✨", element: "light",
+      id: "cleric", name: "クレリック", emoji: "✨",
       desc: "聖なる魔法使い。HP高・撃破時に回復。状態異常に強い",
       stats: "HP:高 MP:高 ATK:中 DEF:高 SPD:中",
       hpPct: 0.3, def: 20, killHealPct: 0.05, mp: 90, spd: 5, magic: true,
       skill: { icon: "🌟", name: "セイント・ノヴァ", cost: 35, desc: "聖魔法ダメージ＋HP25%回復＋状態異常を1つ解除" },
     },
     {
-      id: "alchemist", name: "アルケミスト", emoji: "⚗️", element: "water",
+      id: "alchemist", name: "アルケミスト", emoji: "⚗️",
       desc: "バランス型・コイン+20%。酸で硬い敵の防御を溶かす",
       stats: "HP:中 MP:中 ATK:中 DEF:中 SPD:高",
       hpPct: 0.1, def: 15, atkPct: 0.1, coinMult: 1.2, mp: 80, spd: 7,
@@ -622,7 +594,6 @@
   let curseNext = false; // 呪い状態：次の攻撃が半減＆バリアを壊せない
   /* --- ルート選択型ローグライク --- */
   let playerChar = CHARS[0]; // 選択中のキャラクター
-  let enemyElement = "fire"; // 今の敵の属性
   let currentNodeType = "battle"; // 今いるマスの種類
   let routeMap = []; // ステージのマップ（レイヤーごとのマスの配列）
   let layerIdx = -1; // 今いるレイヤー（-1=出発前）
@@ -762,10 +733,6 @@
   }
   function baseDef() {
     return damageReduction + sumFx("def") + bonusDef + (playerChar.def || 0);
-  }
-  // 自分の攻撃属性（武器の属性。武器がなければキャラの属性）
-  function attackElement() {
-    return equipment.weapon ? elementOf(equipment.weapon.name) : playerChar.element;
   }
   // 会心率（基本＋装備＋変換＋条件）
   function critTotal() {
@@ -911,13 +878,12 @@
     if (routeMapEl) routeMapEl.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
     rewardTitle.textContent = "🧝 キャラクターを選ぼう";
-    battleMessage.textContent = "キャラごとに得意なことと属性がちがうよ";
+    battleMessage.textContent = "キャラごとに得意なことが違うよ";
     rewardGrid.innerHTML = "";
     CHARS.forEach((ch) => {
-      const el = ELEMENTS[ch.element];
       shopButton(
         ch.emoji,
-        `${ch.name}【${el.emoji}${el.name}属性】`,
+        ch.name,
         `${ch.desc}<br><span class="char-stats">${ch.stats}</span><br>${ch.skill.icon}【${ch.skill.name}】${ch.skill.desc}（MP${ch.skill.cost}）`,
         false,
         () => {
@@ -930,7 +896,6 @@
           battleReward.classList.add("is-hidden");
           showMap(`${ch.emoji} ${ch.name}で出発！🗺️ 最初のマスを選ぼう`);
         },
-        el.color,
       );
     });
     updateBars();
@@ -944,8 +909,6 @@
       bonusAtk = clampNum(bonusAtk + totalDamageDealt); // ボス戦開始時、累計ダメージを攻撃へ
     }
     currentEnemy = isFinal ? FINAL_BOSS : isBossNode ? BOSS : randomOf(ENEMIES);
-    // 敵の属性はランダム（相性を見て構え・装備を選ぼう）
-    enemyElement = ELEM_KEYS[randInt(0, 4)];
     // エリート：エリートマスでは確定。通常マスでも最後の敵が20%でエリート化
     enemyElite = null;
     if (!enemyIsBoss && currentNodeType === "elite") {
@@ -982,7 +945,6 @@
       enemyEmoji.textContent = enemyElite ? enemyElite.emoji + currentEnemy.emoji : currentEnemy.emoji;
     }
     enemyName.innerHTML =
-      `${ELEMENTS[enemyElement].emoji}` +
       (enemyElite ? `${enemyElite.name}` : "") +
       currentEnemy.name +
       (enemiesRemaining > 1 ? `（残り${enemiesRemaining}体）` : "") +
@@ -1077,7 +1039,6 @@
       spNote += "（🦂致命の一撃！）";
     }
     raw *= mult * STANCES[stance].take; // 強攻撃倍率と構え
-    raw *= elemAdvantage(enemyElement, playerChar.element); // 敵との属性相性
     raw *= playerChar.takeMult || 1; // キャラクターの被ダメ補正
     let reduce = sumFx("damageReducePct");
     for (const c of condList("damageReduceLowHp")) {
@@ -1292,7 +1253,7 @@
     return clampNum((randInt(16, 24) + effAttack()) * attackMultiplier() * atkStackMult);
   }
 
-  function dealSkillDamage(dmg, magicElem, label) {
+  function dealSkillDamage(dmg, purge, label) {
     if (enemyBarrier > 0) {
       enemyBarrier = Math.max(0, enemyBarrier - 1);
       battleMessage.textContent = `${label} バリアを1枚破壊！（残り${enemyBarrier}枚）`;
@@ -1309,17 +1270,16 @@
     battleMessage.textContent = `${label} ${formatNum(dmg)} のダメージ！`;
     updateBars();
     if (enemyHp <= 0) {
-      handleEnemyKilled(magicElem);
+      handleEnemyKilled(purge);
     }
   }
 
-  // 撃破処理（ゾンビの復活チェック付き）。magicElem=スキルの属性（火/光ならゾンビ焼却）
-  function handleEnemyKilled(magicElem) {
-    const ae = magicElem || attackElement();
-    if (currentEnemy.id === "zombie" && !zombieRevived && ae !== "fire" && ae !== "light") {
+  // 撃破処理（ゾンビの復活チェック付き）。purge=true（炎/聖のスキル等）ならゾンビは復活しない
+  function handleEnemyKilled(purge) {
+    if (currentEnemy.id === "zombie" && !zombieRevived && !purge) {
       zombieRevived = true;
       enemyHp = Math.round(enemyMaxHp * 0.5);
-      battleMessage.textContent += ` ／ 🧟 ゾンビが起き上がった！（火・光属性で倒せば復活しない）`;
+      battleMessage.textContent += ` ／ 🧟 ゾンビが起き上がった！（炎/聖のスキルで倒せば復活しない）`;
       updateBars();
       nextBattleQuestion();
       return;
@@ -1340,16 +1300,16 @@
       // シールドバッシュ：DEF依存ダメージ＋敵を1ターン気絶
       enemyStun = 1;
       const dmg = clampNum((effDefense() * 5 + 100) * atkStackMult);
-      dealSkillDamage(dmg, null, "🛡️ シールドバッシュ！敵を気絶させた！");
+      dealSkillDamage(dmg, false, "🛡️ シールドバッシュ！敵を気絶させた！");
     } else if (id === "assassin") {
       // シャドウストライク：必中＆確定会心
       const dmg = clampNum(skillBaseDamage() * 2 * critMultiplier());
-      dealSkillDamage(dmg, "dark", "🗡️ シャドウストライク！（必中・確定会心）");
+      dealSkillDamage(dmg, false, "🗡️ シャドウストライク！（必中・確定会心）");
     } else if (id === "wizard") {
       // エクスプロージョン：炎の全体魔法（後ろの敵にも同ダメージ）
       const dmg = clampNum(skillBaseDamage() * 1.5);
       if (enemiesRemaining > 1) splashDamage = clampNum(splashDamage + dmg);
-      dealSkillDamage(dmg, "fire", "💥 エクスプロージョン！（炎の全体魔法）");
+      dealSkillDamage(dmg, true, "💥 エクスプロージョン！（炎の全体魔法）");
     } else if (id === "cleric") {
       // セイント・ノヴァ：聖魔法＋回復＋状態異常1つ解除
       const heal = Math.round(playerMaxHp * 0.25);
@@ -1363,12 +1323,12 @@
         renderStatusRow();
       }
       const dmg = clampNum(skillBaseDamage() * 1.2);
-      dealSkillDamage(dmg, "light", `🌟 セイント・ノヴァ！HP${formatNum(heal)}回復${cureNote}／`);
+      dealSkillDamage(dmg, true, `🌟 セイント・ノヴァ！HP${formatNum(heal)}回復${cureNote}／`);
     } else if (id === "alchemist") {
       // アシッドボトル：防御特性を無効化＋毎ターン固定ダメージ
       enemyAcid = 3;
       const dmg = Math.round(enemyMaxHp * 0.08);
-      dealSkillDamage(dmg, null, "⚗️ アシッドボトル！敵の装甲が溶けた！（3ターン持続）");
+      dealSkillDamage(dmg, false, "⚗️ アシッドボトル！敵の装甲が溶けた！（3ターン持続）");
     }
     updateSkillButton();
     updateBars();
@@ -1749,14 +1709,12 @@
   // 今の自分のステータス（攻撃/防御/最大HP/会心）を表示
   function renderStats() {
     if (!playerStats) return;
-    const ae = ELEMENTS[attackElement()];
     playerStats.innerHTML =
       `<span title="攻撃力">⚔️ ${formatNum(effAttack())}</span>` +
       `<span title="防御力">🛡️ ${formatNum(effDefense())}</span>` +
       `<span title="最大HP">❤️ ${formatNum(playerMaxHp)}</span>` +
       `<span title="スキル用MP（正解で+10回復）" style="color:#7dd3fc">🔮 ${playerMp}/${playerMaxMp}</span>` +
-      `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>` +
-      `<span title="攻撃属性（武器の属性。火→木→水→火、光⇔闇が有利）" style="color:${ae.color}">${ae.emoji} ${ae.name}属性</span>`;
+      `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>`;
     updateSkillButton();
     renderStatusRow();
     if (damageStats) {
@@ -2039,11 +1997,6 @@
     // 割合ダメージ（最大HP/現在HP）
     hit += enemyMaxHp * sumFx("enemyMaxHpPct");
     hit += enemyHp * sumFx("enemyCurHpPct");
-    // 属性相性（有利×1.5 / 不利×0.6）＋同属性の装備をそろえた編成ボーナス（1つ+8%）
-    const atkElem = attackElement();
-    const elemMult = elemAdvantage(atkElem, enemyElement);
-    const elemMatch = equippedItems().filter((it) => elementOf(it.name) === atkElem).length;
-    hit *= elemMult * (1 + 0.08 * elemMatch);
     // 敵の防御特性（魔法職と酸は無視できる）
     let guardNote = "";
     if (!playerChar.magic && enemyAcid <= 0) {
@@ -2131,7 +2084,6 @@
       (combo >= 2 ? `🔥${combo}コンボ ` : "") +
       (crit ? "💥会心！ " : "") +
       (hits > 1 ? `${hits}回攻撃！ ` : "") +
-      (elemMult > 1 ? "🌟相性◎ " : elemMult < 1 ? "💦相性✕ " : "") +
       guardNote +
       (playerStatus.bind > 0 ? "🕸️束縛中 " : "") +
       (nerfed ? "⚖️ " : "");
@@ -2144,7 +2096,7 @@
     showDamage(dealt > 0 ? dealt : "⚡", crit);
     juiceHit(crit, dealt);
     if (enemyHp <= 0) {
-      handleEnemyKilled(playerChar.magic ? playerChar.element : null); // ゾンビの復活チェック付き
+      handleEnemyKilled(playerChar.id === "wizard" || playerChar.id === "cleric"); // 炎/聖の魔法職ならゾンビを焼却
     } else {
       // ボス・エリートは生きていれば毎ターン反撃してくる
       const alive = enemyActs ? executeIntent() : true;
@@ -2491,7 +2443,7 @@
         inSlot.forEach(({ item, idx }) => {
           shopButton(
             SLOT_META[item.slot].icon,
-            nameWithElem(item.name),
+            item.name,
             `【${item.rarityName}】${item.desc}`,
             false,
             () => equipFromBackpack(idx),
@@ -2588,7 +2540,7 @@
           card.style.borderColor = result.color;
           card.innerHTML =
             `<span class="reward-icon">${SLOT_META[result.slot].icon}</span>` +
-            `<span class="reward-name" style="color:${result.color}">${nameWithElem(result.name)}</span>` +
+            `<span class="reward-name" style="color:${result.color}">${result.name}</span>` +
             `<span class="reward-desc">【${result.rarityName}】${result.desc}</span>`;
           rewardGrid.appendChild(card);
         });
@@ -2738,9 +2690,8 @@
     battleInput.focus();
   }
 
-  // 「ショップ」「リュック」ボタン（バトル中いつでも）
-  const openShopBtn = document.getElementById("open-shop");
-  if (openShopBtn) openShopBtn.addEventListener("click", () => showShop(true));
+  // 「リュック」ボタン（バトル中でも装備の付け替えは可能）。
+  // ※ショップは戦闘中は開けない（マップのショップマスからのみ）ためボタン自体を撤去
   const openBackpackBtn = document.getElementById("open-backpack");
   if (openBackpackBtn) openBackpackBtn.addEventListener("click", () => showBackpack(true));
 
@@ -2961,7 +2912,7 @@
       const { item, price, bought } = stock;
       shopButton(
         SLOT_META[item.slot].icon,
-        nameWithElem(item.name),
+        item.name,
         bought ? "✅購入済み" : `🪙${price}・${item.desc}`,
         bought || coins < price,
         () => buyEquip(i),
@@ -3013,7 +2964,7 @@
         .forEach(({ item, idx }) => {
           shopButton(
             SLOT_META[item.slot].icon,
-            nameWithElem(item.name),
+            item.name,
             `🎒リュック・売る 🪙+${sellValue(item)}`,
             false,
             () => sellFromBackpack(idx),
