@@ -332,6 +332,7 @@
 
   // クイズを（現在のセットで）最初から始める
   function startQuiz() {
+    cards = shuffled(cards); // 出題順をランダムに（元データは変えずコピーを並べ替え）
     qIndex = 0;
     score = 0;
     quizCard.classList.remove("is-hidden");
