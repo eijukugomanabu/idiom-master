@@ -250,6 +250,9 @@
     const doneInSet = cards.filter((c) => mastered[c.phrase]).length;
     setProgressLabel(progressEl, `${index + 1} / ${cards.length}　✅ ${doneInSet}/${cards.length}`);
     cardNextSet.classList.remove("is-hidden"); // 「セット選択へ」は常に表示
+    // 「次の10問へ」は次のセットがある時だけ表示
+    const cardNextGo = document.getElementById("card-next-set-go");
+    if (cardNextGo) cardNextGo.classList.toggle("is-hidden", setIndex >= sets.length - 1);
     // 「できた」ボタンの見た目を今の単語に合わせる
     const doneBtn = document.getElementById("mark-done");
     if (doneBtn) {
@@ -269,6 +272,9 @@
     renderCard();
   });
   cardNextSet.addEventListener("click", () => showSetSelect("flashcards")); // セット選択にもどる
+  // 次の10問へ：ホーム/セット選択を経由せずダイレクトに次のセットのフラッシュカードへ
+  const cardNextGoBtn = document.getElementById("card-next-set-go");
+  if (cardNextGoBtn) cardNextGoBtn.addEventListener("click", () => startSet(setIndex + 1));
 
   // 「できた！」チェックの切り替え（保存される）
   const markDoneBtn = document.getElementById("mark-done");
@@ -389,12 +395,18 @@
     quizCard.classList.add("is-hidden");
     quizProgress.classList.add("is-hidden");
     quizResult.classList.remove("is-hidden");
+    const hasNext = setIndex < sets.length - 1; // 次のセットがあるか
+    const nextBtn = hasNext ? `<button id="quiz-next-set" class="primary-next">➡️ 次の10問へ</button>` : "";
     quizResult.innerHTML =
       `🎉 第${setIndex + 1}セット終了！<br>スコア: <strong>${score} / ${cards.length}</strong>` +
-      `<br><br><button id="quiz-restart">もう一度</button> ` +
+      `<br><br>${nextBtn}` +
+      `<br><br><button id="quiz-restart">🔁 もう一度</button> ` +
       `<button id="quiz-to-sets">📚 セット選択へ</button>`;
     document.getElementById("quiz-restart").addEventListener("click", startQuiz);
     document.getElementById("quiz-to-sets").addEventListener("click", () => showSetSelect("quiz"));
+    // 次の10問へ：ホーム/セット選択を経由せずダイレクトに次セットの未習得問題を開始
+    const nb = document.getElementById("quiz-next-set");
+    if (nb) nb.addEventListener("click", () => startSet(setIndex + 1));
   }
 
   /* ---------- 英熟語バトル（ローグライク） ---------- */
