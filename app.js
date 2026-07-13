@@ -1359,10 +1359,9 @@
   function beginFloorEnemies() {
     let count;
     if (currentNodeType === "boss" || currentNodeType === "elite") count = 1;
-    else if (floor >= 40) count = randInt(40, 100);
-    else if (floor >= 20) count = randInt(3, 6);
+    else if (floor >= 20) count = randInt(3, 5);
     else count = randInt(1, 3);
-    enemiesRemaining = count;
+    enemiesRemaining = count; // 通常マスは最大5体まで
     splashDamage = 0; // マスが変わったら範囲ダメージはリセット
     swarmAdds = 0; // ねずみの乱入回数もリセット
     itemUsesThisBattle = 0; // 道具の使用回数は1戦闘ごとにリセット
