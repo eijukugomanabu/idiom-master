@@ -889,7 +889,45 @@
     swarmAdds = 0;
     renderStanceButtons();
     if (hasFx("startAtkMult")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("startAtkMult"))); // ミシック：戦闘開始時に攻撃倍率（ジェネシス）
-    showCharSelect(); // まずキャラクターを選ぶ
+    showQuestionSourceSelect(); // まず出題する単語の範囲を選ぶ → キャラクター選択へ
+    updateBars();
+  }
+
+  /* --- 出題する単語の範囲を選ぶ（チェック無しだけ / 全部） --- */
+  function showQuestionSourceSelect() {
+    battleCard.classList.add("is-hidden");
+    battleOver.classList.add("is-hidden");
+    if (routeMapEl) routeMapEl.classList.add("is-hidden");
+    battleReward.classList.remove("is-hidden");
+    rewardTitle.textContent = "📖 Which words should appear?";
+    const levelWords = filterByLevel(IDIOMS, currentLevel);
+    const unchecked = levelWords.filter((w) => !mastered[w.phrase]);
+    battleMessage.textContent = `This level has ${levelWords.length} words (${unchecked.length} not checked yet)`;
+    rewardGrid.innerHTML = "";
+    // ✅チェックの無い（まだ覚えてない）単語だけを出題
+    shopButton(
+      "⬜",
+      "Unchecked words only",
+      unchecked.length
+        ? `Only the ${unchecked.length} words you haven't checked as done`
+        : "🎉 All words are checked — falls back to all words",
+      false,
+      () => {
+        pool = unchecked.length ? unchecked : levelWords;
+        showCharSelect();
+      },
+    );
+    // レベル内の全単語から出題
+    shopButton(
+      "📚",
+      "All words",
+      `Draw from all ${levelWords.length} words in this level`,
+      false,
+      () => {
+        pool = levelWords;
+        showCharSelect();
+      },
+    );
     updateBars();
   }
 
@@ -1708,7 +1746,14 @@
   }
 
   function nextBattleQuestion() {
-    battleIdiom = randomOf(pool);
+    // 同じ問題が2連続で出ないようにする（プールが2語以上あるとき）
+    const prevPhrase = battleIdiom && battleIdiom.phrase;
+    let next = randomOf(pool);
+    if (pool.length > 1) {
+      let guard = 0;
+      while (next.phrase === prevPhrase && guard++ < 20) next = randomOf(pool);
+    }
+    battleIdiom = next;
     battleHint.textContent = `Hint: ${battleIdiom.meaning}`;
     battleSentence.textContent = makeBlank(battleIdiom.example, battleIdiom.phrase);
     battleInput.value = "";
