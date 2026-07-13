@@ -428,79 +428,79 @@
    *  魔王     … 3ターンごとに手下を召喚して壁に＋「死の呪い」
    */
   const ENEMIES = [
-    { id: "nezumi", emoji: "🐀", name: "ねずみ", img: "img/enemies/nezumi.png", hp: 0.4, atk: 0.6, dodge: 0.2, trait: "群れ・病気" },
-    { id: "koumori", emoji: "🦇", name: "こうもり", img: "img/enemies/koumori.png", hp: 0.5, atk: 0.6, dodge: 0.35, trait: "超回避・吸血" },
-    { id: "kumo", emoji: "🕷️", name: "クモ", img: "img/enemies/kumo.png", hp: 1, atk: 1, dodge: 0.1, trait: "猛毒・束縛" },
-    { id: "hebi", emoji: "🐍", name: "ヘビ", img: "img/enemies/hebi.png", hp: 1, atk: 1.4, dodge: 0.15, trait: "カウンター・麻痺" },
-    { id: "sasori", emoji: "🦂", name: "サソリ", img: "img/enemies/sasori.png", hp: 1.1, atk: 1, dodge: 0, physCut: 0.3, trait: "硬い甲殻・致命の一撃" },
-    { id: "ookami", emoji: "🐺", name: "おおかみ", img: "img/enemies/ookami.png", hp: 1.1, atk: 1.3, dodge: 0.1, trait: "群れ強化・遠吠え" },
-    { id: "yuurei", emoji: "👻", name: "ゆうれい", img: "img/enemies/yuurei.png", hp: 0.6, atk: 1, dodge: 0.55, trait: "物理透過・MP吸収" },
-    { id: "zombie", emoji: "🧟", name: "ゾンビ", img: "img/enemies/zombie.png", hp: 2.5, atk: 0.9, dodge: 0, trait: "復活・防具半減" },
-    { id: "oni", emoji: "👹", name: "おに", img: "img/enemies/oni.png", hp: 3, atk: 2, dodge: 0, physCut: 0.25, trait: "金棒ガード・気絶" },
-    { id: "tengu", emoji: "👺", name: "てんぐ", img: "img/enemies/tengu.png", hp: 1.8, atk: 1.5, dodge: 0.2, trait: "先制・かく乱" },
-    { id: "same", emoji: "🦈", name: "サメ", img: "img/enemies/same.png", hp: 1.5, atk: 1.8, dodge: 0, trait: "手負い特効・3連撃" },
+    { id: "nezumi", emoji: "🐀", name: "Rat", img: "img/enemies/nezumi.png", hp: 0.4, atk: 0.6, dodge: 0.2, trait: "Swarm / Disease" },
+    { id: "koumori", emoji: "🦇", name: "Bat", img: "img/enemies/koumori.png", hp: 0.5, atk: 0.6, dodge: 0.35, trait: "Evasive / Lifesteal" },
+    { id: "kumo", emoji: "🕷️", name: "Spider", img: "img/enemies/kumo.png", hp: 1, atk: 1, dodge: 0.1, trait: "Poison / Bind" },
+    { id: "hebi", emoji: "🐍", name: "Snake", img: "img/enemies/hebi.png", hp: 1, atk: 1.4, dodge: 0.15, trait: "Counter / Paralyze" },
+    { id: "sasori", emoji: "🦂", name: "Scorpion", img: "img/enemies/sasori.png", hp: 1.1, atk: 1, dodge: 0, physCut: 0.3, trait: "Hard Shell / Critical" },
+    { id: "ookami", emoji: "🐺", name: "Wolf", img: "img/enemies/ookami.png", hp: 1.1, atk: 1.3, dodge: 0.1, trait: "Pack Boost / Howl" },
+    { id: "yuurei", emoji: "👻", name: "Ghost", img: "img/enemies/yuurei.png", hp: 0.6, atk: 1, dodge: 0.55, trait: "Phase / MP Drain" },
+    { id: "zombie", emoji: "🧟", name: "Zombie", img: "img/enemies/zombie.png", hp: 2.5, atk: 0.9, dodge: 0, trait: "Revive / Armor Break" },
+    { id: "oni", emoji: "👹", name: "Ogre", img: "img/enemies/oni.png", hp: 3, atk: 2, dodge: 0, physCut: 0.25, trait: "Club Guard / Stun" },
+    { id: "tengu", emoji: "👺", name: "Tengu", img: "img/enemies/tengu.png", hp: 1.8, atk: 1.5, dodge: 0.2, trait: "First Strike / Disrupt" },
+    { id: "same", emoji: "🦈", name: "Shark", img: "img/enemies/same.png", hp: 1.5, atk: 1.8, dodge: 0, trait: "Bloodlust / Triple Hit" },
   ];
-  const BOSS = { id: "dragon", emoji: "🐉", name: "ドラゴン", img: "img/enemies/dragon.png", hp: 1, atk: 1.2, dodge: 0, trait: "炎のブレス・炎上フィールド" };
-  const FINAL_BOSS = { id: "maou", emoji: "🐲", name: "魔王", img: "img/enemies/maou.png", hp: 1, atk: 1.5, dodge: 0.1, trait: "手下召喚・死の呪い" };
+  const BOSS = { id: "dragon", emoji: "🐉", name: "Dragon", img: "img/enemies/dragon.png", hp: 1, atk: 1.2, dodge: 0, trait: "Fire Breath / Burn Field" };
+  const FINAL_BOSS = { id: "maou", emoji: "🐲", name: "Demon King", img: "img/enemies/maou.png", hp: 1, atk: 1.5, dodge: 0.1, trait: "Summon / Death Curse" };
 
   // 装備スロット
   const SLOTS = [
-    { id: "weapon", icon: "⚔️", name: "剣" },
-    { id: "head", icon: "🪖", name: "兜" },
-    { id: "body", icon: "👕", name: "鎧" },
-    { id: "legs", icon: "👖", name: "ズボン" },
-    { id: "shoes", icon: "👟", name: "靴" },
+    { id: "weapon", icon: "⚔️", name: "Weapon" },
+    { id: "head", icon: "🪖", name: "Helmet" },
+    { id: "body", icon: "👕", name: "Armor" },
+    { id: "legs", icon: "👖", name: "Legs" },
+    { id: "shoes", icon: "👟", name: "Boots" },
   ];
   const SLOT_META = {};
   SLOTS.forEach((s) => (SLOT_META[s.id] = s));
   // レア度（5段階。深い階ほど高レアが出やすい）
   const RARITIES = [
-    { id: "common", name: "コモン", color: "#94a3b8" },
-    { id: "uncommon", name: "アンコモン", color: "#4ade80" },
-    { id: "rare", name: "レア", color: "#38bdf8" },
-    { id: "epic", name: "エピック", color: "#a78bfa" },
-    { id: "legendary", name: "レジェンダリー", color: "#fbbf24" },
-    { id: "mythic", name: "ミシック", color: "#f43f5e" }, // ガチャ限定
+    { id: "common", name: "Common", color: "#94a3b8" },
+    { id: "uncommon", name: "Uncommon", color: "#4ade80" },
+    { id: "rare", name: "Rare", color: "#38bdf8" },
+    { id: "epic", name: "Epic", color: "#a78bfa" },
+    { id: "legendary", name: "Legendary", color: "#fbbf24" },
+    { id: "mythic", name: "Mythic", color: "#f43f5e" }, // ガチャ限定
   ];
 
   /* --- 戦略システムの定義 --- */
   // 構え：ダメージ倍率／被ダメージ倍率／バリアを壊せる枚数
   const STANCES = {
-    attack: { icon: "⚔️", name: "攻めの構え", deal: 1.5, take: 1.7, break: 2, desc: "与ダメ1.5倍・バリア2枚破壊、でも被ダメ1.7倍" },
-    normal: { icon: "⚖️", name: "自然体", deal: 1, take: 1, break: 1, desc: "バランス型" },
-    guard: { icon: "🛡️", name: "守りの構え", deal: 0.5, take: 0.3, break: 1, desc: "被ダメ0.3倍、でも与ダメ半減" },
+    attack: { icon: "⚔️", name: "Attack Stance", deal: 1.5, take: 1.7, break: 2, desc: "Deal x1.5, break 2 barriers, but take x1.7" },
+    normal: { icon: "⚖️", name: "Neutral", deal: 1, take: 1, break: 1, desc: "Balanced" },
+    guard: { icon: "🛡️", name: "Guard Stance", deal: 0.5, take: 0.3, break: 1, desc: "Take x0.3, but deal x0.5" },
   };
   // エリート敵（階の最後の敵として出現。バリア持ちで毎ターン行動）
   const ELITES = [
-    { id: "iron", name: "鉄壁の", emoji: "💠", barrier: 3, coinMult: 3, desc: "バリア3枚" },
-    { id: "berserk", name: "狂暴な", emoji: "💢", barrier: 2, atkMult: 2, coinMult: 3, desc: "攻撃2倍" },
-    { id: "gold", name: "黄金の", emoji: "👑", barrier: 2, coinMult: 6, desc: "コイン6倍" },
-    { id: "hex", name: "呪術師の", emoji: "🔮", barrier: 2, cursey: true, coinMult: 3, desc: "呪いを多用" },
+    { id: "iron", name: "Ironclad ", emoji: "💠", barrier: 3, coinMult: 3, desc: "3 barriers" },
+    { id: "berserk", name: "Savage ", emoji: "💢", barrier: 2, atkMult: 2, coinMult: 3, desc: "x2 attack" },
+    { id: "gold", name: "Golden ", emoji: "👑", barrier: 2, coinMult: 6, desc: "x6 coins" },
+    { id: "hex", name: "Hexing ", emoji: "🔮", barrier: 2, cursey: true, coinMult: 3, desc: "Frequent curses" },
   ];
   // 敵の行動予告
   const INTENT_INFO = {
-    attack: { icon: "🗡️", label: "攻撃" },
-    strong: { icon: "😤", label: "強攻撃（2.5倍）" },
-    heal: { icon: "💚", label: "回復" },
-    curse: { icon: "🔮", label: "呪い" },
+    attack: { icon: "🗡️", label: "Attack" },
+    strong: { icon: "😤", label: "Heavy Attack (x2.5)" },
+    heal: { icon: "💚", label: "Heal" },
+    curse: { icon: "🔮", label: "Curse" },
   };
 
   /* --- 道具カタログ（消費アイテム）＆お守りカタログ（パッシブ遺物） --- */
   // kind: heal(HP回復) / mp(MP回復) / scroll(使い捨ての戦術) ／ battleOnly: 戦闘中のみ使用可
   const CONSUMABLES = [
-    { id: "potion", icon: "🧪", name: "HPポーション", price: 60, kind: "heal", hpPct: 0.5, desc: "HPを50%回復" },
-    { id: "hipotion", icon: "🍶", name: "上級ポーション", price: 130, kind: "heal", hpPct: 1.0, desc: "HPを全回復" },
-    { id: "ether", icon: "🔷", name: "エーテル", price: 70, kind: "mp", mpPct: 0.6, desc: "MPを60%回復" },
-    { id: "sc_bomb", icon: "📜", name: "爆炎の巻物", price: 100, kind: "scroll", sc: "bomb", battleOnly: true, desc: "敵に特大ダメージ（バリア貫通）" },
-    { id: "sc_shatter", icon: "📜", name: "破魔の巻物", price: 80, kind: "scroll", sc: "shatter", battleOnly: true, desc: "敵のバリアを全て破壊する" },
-    { id: "sc_purify", icon: "📜", name: "浄化の巻物", price: 80, kind: "scroll", sc: "purify", desc: "状態異常を全回復＋HP30%回復" },
+    { id: "potion", icon: "🧪", name: "HP Potion", price: 60, kind: "heal", hpPct: 0.5, desc: "Restore 50% HP" },
+    { id: "hipotion", icon: "🍶", name: "Super Potion", price: 130, kind: "heal", hpPct: 1.0, desc: "Restore full HP" },
+    { id: "ether", icon: "🔷", name: "Ether", price: 70, kind: "mp", mpPct: 0.6, desc: "Restore 60% MP" },
+    { id: "sc_bomb", icon: "📜", name: "Blast Scroll", price: 100, kind: "scroll", sc: "bomb", battleOnly: true, desc: "Huge damage (pierces barrier)" },
+    { id: "sc_shatter", icon: "📜", name: "Break Scroll", price: 80, kind: "scroll", sc: "shatter", battleOnly: true, desc: "Destroy all enemy barriers" },
+    { id: "sc_purify", icon: "📜", name: "Purify Scroll", price: 80, kind: "scroll", sc: "purify", desc: "Cure all ailments + heal 30% HP" },
   ];
   const RELICS_CATALOG = [
-    { id: "ward", icon: "🧿", name: "守りのお守り", price: 160, desc: "受けるダメージを常に20%軽減", fx: { dmgReduce: 0.2 } },
-    { id: "medic", icon: "💊", name: "薬師のお守り", price: 150, desc: "回復アイテムの効果+50%", fx: { healBoost: 0.5 } },
-    { id: "beast", icon: "🐾", name: "獣避けのお守り", price: 130, desc: "獣系(おおかみ/サメ)からの被ダメ-40%", fx: { cutBeast: 0.4 } },
-    { id: "holy", icon: "✝️", name: "退魔のお守り", price: 130, desc: "不死系(ゆうれい/ゾンビ)からの被ダメ-40%", fx: { cutUndead: 0.4 } },
-    { id: "lucky", icon: "🍀", name: "幸運のお守り", price: 140, desc: "獲得コイン+30%", fx: { coinBoost: 0.3 } },
+    { id: "ward", icon: "🧿", name: "Ward Charm", price: 160, desc: "Always take 20% less damage", fx: { dmgReduce: 0.2 } },
+    { id: "medic", icon: "💊", name: "Medic Charm", price: 150, desc: "Healing items +50%", fx: { healBoost: 0.5 } },
+    { id: "beast", icon: "🐾", name: "Beast Charm", price: 130, desc: "-40% damage from beasts (Wolf/Shark)", fx: { cutBeast: 0.4 } },
+    { id: "holy", icon: "✝️", name: "Holy Charm", price: 130, desc: "-40% damage from undead (Ghost/Zombie)", fx: { cutUndead: 0.4 } },
+    { id: "lucky", icon: "🍀", name: "Lucky Charm", price: 140, desc: "+30% coins", fx: { coinBoost: 0.3 } },
   ];
 
 
@@ -510,51 +510,51 @@
    *  magic:true の職業は攻撃が魔法扱い（ゆうれいに必中・サソリ/おにの物理カット無視） */
   const CHARS = [
     {
-      id: "knight", name: "ナイト", emoji: "🛡️",
-      desc: "HP極高・防御極高。スキルで敵を気絶させ大技を止める",
-      stats: "HP:極高 MP:低 ATK:中 DEF:極高 SPD:低",
+      id: "knight", name: "Knight", emoji: "🛡️",
+      desc: "Very high HP & defense. Skill stuns enemies to stop big moves.",
+      stats: "HP:Max MP:Low ATK:Mid DEF:Max SPD:Low",
       hpPct: 0.6, def: 40, mp: 40, spd: 2,
-      skill: { icon: "🛡️", name: "シールドバッシュ", cost: 30, desc: "防御力の5倍の物理ダメージ＋敵を1ターン気絶させる" },
+      skill: { icon: "🛡️", name: "Shield Bash", cost: 30, desc: "Physical damage = 5x DEF + stun enemy 1 turn" },
     },
     {
-      id: "assassin", name: "アサシン", emoji: "🗡️",
-      desc: "神速。攻撃+25%・会心+15%。スキルは必中の暗殺撃",
-      stats: "HP:低 MP:中 ATK:高 DEF:低 SPD:極高",
+      id: "assassin", name: "Assassin", emoji: "🗡️",
+      desc: "Lightning fast. ATK+25%, Crit+15%. Skill never misses.",
+      stats: "HP:Low MP:Mid ATK:High DEF:Low SPD:Max",
       hpPct: -0.15, atkPct: 0.25, crit: 0.15, mp: 60, spd: 10,
-      skill: { icon: "🗡️", name: "シャドウストライク", cost: 30, desc: "必中＆確定会心の一撃（回避の高い敵に有効）" },
+      skill: { icon: "🗡️", name: "Shadow Strike", cost: 30, desc: "Guaranteed hit & crit (great vs evasive foes)" },
     },
     {
-      id: "wizard", name: "ウィザード", emoji: "🔮",
-      desc: "攻撃+35%（魔法）。物理カットや物理透過を無視して当たる",
-      stats: "HP:中 MP:極高 ATK(魔):極高 DEF:低 SPD:中",
+      id: "wizard", name: "Wizard", emoji: "🔮",
+      desc: "ATK+35% (magic). Ignores phys-cut & phase.",
+      stats: "HP:Mid MP:Max ATK(mag):Max DEF:Low SPD:Mid",
       atkPct: 0.35, mp: 120, spd: 5, magic: true,
-      skill: { icon: "💥", name: "エクスプロージョン", cost: 40, desc: "炎の全体魔法。後ろの敵にも同じダメージ（ゾンビは復活できない）" },
+      skill: { icon: "💥", name: "Explosion", cost: 40, desc: "Fiery AoE. Hits back rows too (zombies can't revive)" },
     },
     {
-      id: "cleric", name: "クレリック", emoji: "✨",
-      desc: "聖なる魔法使い。HP高・撃破時に回復。状態異常に強い",
-      stats: "HP:高 MP:高 ATK:中 DEF:高 SPD:中",
+      id: "cleric", name: "Cleric", emoji: "✨",
+      desc: "Holy caster. High HP, heals on kill, strong vs ailments.",
+      stats: "HP:High MP:High ATK:Mid DEF:High SPD:Mid",
       hpPct: 0.3, def: 20, killHealPct: 0.05, mp: 90, spd: 5, magic: true,
-      skill: { icon: "🌟", name: "セイント・ノヴァ", cost: 35, desc: "聖魔法ダメージ＋HP25%回復＋状態異常を1つ解除" },
+      skill: { icon: "🌟", name: "Saint Nova", cost: 35, desc: "Holy damage + heal 25% HP + cure 1 ailment" },
     },
     {
-      id: "alchemist", name: "アルケミスト", emoji: "⚗️",
-      desc: "バランス型・コイン+20%。酸で硬い敵の防御を溶かす",
-      stats: "HP:中 MP:中 ATK:中 DEF:中 SPD:高",
+      id: "alchemist", name: "Alchemist", emoji: "⚗️",
+      desc: "Balanced. Coins+20%. Acid melts tough defenses.",
+      stats: "HP:Mid MP:Mid ATK:Mid DEF:Mid SPD:High",
       hpPct: 0.1, def: 15, atkPct: 0.1, coinMult: 1.2, mp: 80, spd: 7,
-      skill: { icon: "⚗️", name: "アシッドボトル", cost: 25, desc: "3ターンの間、敵の防御特性を無効化＋毎ターン最大HP8%の固定ダメージ" },
+      skill: { icon: "⚗️", name: "Acid Bottle", cost: 25, desc: "Nullify enemy defense 3 turns + 8% max HP DoT" },
     },
   ];
 
   /* --- ルートマップ（分岐型ローグライク） --- */
   const MAP_LAYERS = 15; // 1ステージのマス数（最後はボス）
   const NODE_TYPES = {
-    battle: { icon: "⚔️", name: "敵遭遇", img: "img/nodes/battle.png" },
-    elite: { icon: "💠", name: "エリート", img: "img/nodes/elite.png" },
-    event: { icon: "❓", name: "イベント", img: "img/nodes/event.png" },
-    shop: { icon: "🛒", name: "ショップ", img: "img/nodes/shop.png" },
-    gacha: { icon: "🎲", name: "ガチャ", img: "img/nodes/gacha.png" },
-    boss: { icon: "👹", name: "ボス", img: "img/nodes/boss.png" },
+    battle: { icon: "⚔️", name: "Battle", img: "img/nodes/battle.png" },
+    elite: { icon: "💠", name: "Elite", img: "img/nodes/elite.png" },
+    event: { icon: "❓", name: "Event", img: "img/nodes/event.png" },
+    shop: { icon: "🛒", name: "Shop", img: "img/nodes/shop.png" },
+    gacha: { icon: "🎲", name: "Gacha", img: "img/nodes/gacha.png" },
+    boss: { icon: "👹", name: "Boss", img: "img/nodes/boss.png" },
   };
 
   const floorLabel = document.getElementById("floor-label");
@@ -668,12 +668,12 @@
   const equipment = { weapon: null, head: null, body: null, legs: null, shoes: null };
 
   const PERKS = [
-    { icon: "⚔️", name: "攻撃アップ", desc: "攻撃ダメージ +8", apply: () => (attackBonus += 8) },
-    { icon: "🔥", name: "渾身の一撃", desc: "攻撃ダメージ +15", apply: () => (attackBonus += 15) },
-    { icon: "💥", name: "会心の一撃", desc: "25%の確率でダメージ2倍", apply: () => (critChance += 0.25) },
-    { icon: "❤️", name: "最大HP+25", desc: "最大HPが25増えて回復", apply: () => (perkMaxHpBonus += 25) },
-    { icon: "✨", name: "回復", desc: "HPを40回復", apply: () => (playerHp = Math.min(playerMaxHp, playerHp + 40)) },
-    { icon: "🩸", name: "吸収", desc: "攻撃するたびHP+4", apply: () => (lifesteal += 4) },
+    { icon: "⚔️", name: "Attack Up", desc: "Attack damage +8", apply: () => (attackBonus += 8) },
+    { icon: "🔥", name: "Power Strike", desc: "Attack damage +15", apply: () => (attackBonus += 15) },
+    { icon: "💥", name: "Critical Hit", desc: "25% chance to deal x2 damage", apply: () => (critChance += 0.25) },
+    { icon: "❤️", name: "Max HP +25", desc: "Max HP +25 and heal", apply: () => (perkMaxHpBonus += 25) },
+    { icon: "✨", name: "Heal", desc: "Restore 40 HP", apply: () => (playerHp = Math.min(playerMaxHp, playerHp + 40)) },
+    { icon: "🩸", name: "Lifesteal", desc: "Heal 4 HP on every attack", apply: () => (lifesteal += 4) },
   ];
 
   function randInt(min, max) {
@@ -723,18 +723,19 @@
     return i < 0 ? 0 : i;
   }
   // 大きな数を読みやすく
-  // 巨大数を日本語の単位（万・億・兆・京…無量大数）で短く表示する
+  // 巨大数を英語の短縮単位（Qa=quadrillion … Vg=vigintillion）で短く表示する
   const BIG_UNITS = [
-    [1e68, "無量大数"], [1e64, "不可思議"], [1e60, "那由他"], [1e56, "阿僧祇"],
-    [1e52, "恒河沙"], [1e48, "極"], [1e44, "載"], [1e40, "正"], [1e36, "澗"],
-    [1e32, "溝"], [1e28, "穣"], [1e24, "𥝱"], [1e20, "垓"], [1e16, "京"],
+    [1e63, "Vg"], [1e60, "Nod"], [1e57, "Ocd"], [1e54, "Spd"], [1e51, "Sxd"],
+    [1e48, "Qid"], [1e45, "Qad"], [1e42, "Td"], [1e39, "Dd"], [1e36, "Ud"],
+    [1e33, "Dc"], [1e30, "No"], [1e27, "Oc"], [1e24, "Sp"], [1e21, "Sx"],
+    [1e18, "Qi"], [1e15, "Qa"],
   ];
   function formatNum(n) {
     if (!isFinite(n)) return "∞";
     n = Math.round(n);
     const abs = Math.abs(n);
-    if (abs < 1e16) return n.toLocaleString("en-US"); // 1京未満は今まで通りカンマ区切り
-    if (abs >= 1e72) return n.toExponential(2); // 無量大数を超えたら指数表記
+    if (abs < 1e15) return n.toLocaleString("en-US"); // 1 quadrillion 未満はカンマ区切り
+    if (abs >= 1e66) return n.toExponential(2); // vigintillion を超えたら指数表記
     for (const [v, name] of BIG_UNITS) {
       if (abs >= v) return (n / v).toFixed(2).replace(/\.?0+$/, "") + name;
     }
@@ -857,7 +858,7 @@
     battleOver.classList.add("is-hidden");
     battleReward.classList.add("is-hidden");
     battleCard.classList.remove("is-hidden");
-    battleMessage.textContent = "クイズに正解して攻撃しよう！";
+    battleMessage.textContent = "Answer correctly to attack!";
     renderEquipPanel();
     updateComboDisplay();
     updateCoinDisplay();
@@ -898,14 +899,14 @@
     battleOver.classList.add("is-hidden");
     if (routeMapEl) routeMapEl.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    rewardTitle.textContent = "🧝 キャラクターを選ぼう";
-    battleMessage.textContent = "キャラごとに得意なことが違うよ";
+    rewardTitle.textContent = "🧝 Choose your character";
+    battleMessage.textContent = "Each character is good at different things";
     rewardGrid.innerHTML = "";
     CHARS.forEach((ch) => {
       shopButton(
         ch.emoji,
         ch.name,
-        `${ch.desc}<br><span class="char-stats">${ch.stats}</span><br>${ch.skill.icon}【${ch.skill.name}】${ch.skill.desc}（MP${ch.skill.cost}）`,
+        `${ch.desc}<br><span class="char-stats">${ch.stats}</span><br>${ch.skill.icon}[${ch.skill.name}] ${ch.skill.desc} (MP${ch.skill.cost})`,
         false,
         () => {
           playerChar = ch;
@@ -915,7 +916,7 @@
           playerHp = playerMaxHp;
           genMap();
           battleReward.classList.add("is-hidden");
-          showMap(`${ch.emoji} ${ch.name}で出発！🗺️ 最初のマスを選ぼう`);
+          showMap(`${ch.emoji} Starting as ${ch.name}! 🗺️ Choose your first node`);
         },
       );
     });
@@ -955,7 +956,7 @@
     );
     enemyHp = enemyMaxHp;
     floorLabel.textContent =
-      `ステージ${stageNum}・${Math.max(1, layerIdx + 1)}/${MAP_LAYERS}マス` + (isBossNode ? "（ボス）" : "");
+      `Stage ${stageNum} · ${Math.max(1, layerIdx + 1)}/${MAP_LAYERS}` + (isBossNode ? " (Boss)" : "");
     enemyEmoji.classList.remove("defeated", "shake");
     // 敵の画像（エリートは特性の絵文字バッジを重ねる）
     if (currentEnemy.img) {
@@ -968,14 +969,14 @@
     enemyName.innerHTML =
       (enemyElite ? `${enemyElite.name}` : "") +
       currentEnemy.name +
-      (enemiesRemaining > 1 ? `（残り${enemiesRemaining}体）` : "") +
+      (enemiesRemaining > 1 ? ` (${enemiesRemaining} left)` : "") +
       (currentEnemy.trait ? `<span class="trait-badge">${currentEnemy.trait}</span>` : "");
     enemyName.title = currentEnemy.trait || "";
     rollIntent();
     // てんぐ：出会いがしらに先制攻撃してくる
     if (currentEnemy.id === "tengu" && playerHp > 0) {
-      battleMessage.textContent = "👺 てんぐの先制攻撃！";
-      applyEnemyHit(0.6, "先制の一撃");
+      battleMessage.textContent = "👺 Tengu's first strike!";
+      applyEnemyHit(0.6, "First strike");
       updateBars();
     }
   }
@@ -1008,8 +1009,8 @@
     const info = INTENT_INFO[enemyIntent];
     enemyIntentEl.classList.remove("is-hidden");
     enemyIntentEl.innerHTML =
-      (enemyBarrier > 0 ? `<span class="barrier-badge">🛡️ バリア×${enemyBarrier}</span>` : "") +
-      `<span class="intent-badge">次の行動：${info.icon} ${info.label}</span>`;
+      (enemyBarrier > 0 ? `<span class="barrier-badge">🛡️ Barrier x${enemyBarrier}</span>` : "") +
+      `<span class="intent-badge">Next: ${info.icon} ${info.label}</span>`;
   }
 
   // 敵の1回分のダメージを自分に適用（無敵・回避・軽減・反射・復活も処理）
@@ -1019,7 +1020,7 @@
       immuneLeft--;
       const im = sumFx("immuneAtkMult");
       if (im) atkStackMult = clampNum(atkStackMult * Math.max(1, im));
-      battleMessage.textContent += ` ／ ${label}を無敵で無効化！（残り${immuneLeft}回）`;
+      battleMessage.textContent += ` / Blocked ${label} with immunity! (${immuneLeft} left)`;
       noHitStreak = 0;
       return true;
     }
@@ -1027,7 +1028,7 @@
     if (dodgeP > 0 && Math.random() < dodgeP) {
       const das = sumFx("dodgeAtkStack");
       if (das) atkStackMult = clampNum(atkStackMult * Math.max(1, das));
-      battleMessage.textContent += ` ／ ${label}を回避！`;
+      battleMessage.textContent += ` / Dodged ${label}!`;
       return true;
     }
     // 基本ダメージ＋（ボス/エリートは防御を貫通する割合ダメージ）
@@ -1045,19 +1046,19 @@
       if (wolfHowl) {
         raw *= 2;
         wolfHowl = false;
-        spNote += "（遠吠えの集中攻撃！）";
+        spNote += " (Howl focus attack!)";
       }
     }
     if (sp === "same" && playerHp < playerMaxHp) {
       raw *= 1.5; // 手負い特効
       if (Math.random() < 0.3) {
         raw *= 1.8;
-        spNote += "（🦈3連続攻撃！）";
+        spNote += " (🦈 Triple hit!)";
       }
     }
     if (sp === "sasori" && playerHp / playerMaxHp <= 0.3) {
       raw *= 3;
-      spNote += "（🦂致命の一撃！）";
+      spNote += " (🦂 Critical strike!)";
     }
     raw *= mult * STANCES[stance].take; // 強攻撃倍率と構え
     raw *= playerChar.takeMult || 1; // キャラクターの被ダメ補正
@@ -1077,20 +1078,20 @@
     noHitStreak = 0;
     tempAtkBuffPct = Math.max(tempAtkBuffPct, sumFx("onHitBuffAtkPct"));
     battleMessage.textContent +=
-      ` ／ ${label}で ${formatNum(incoming)} のダメージ！${spNote}` +
-      (reflectDmg > 0 ? `（${formatNum(reflectDmg)} 反射）` : "");
+      ` / ${label} deals ${formatNum(incoming)} damage!${spNote}` +
+      (reflectDmg > 0 ? ` (${formatNum(reflectDmg)} reflected)` : "");
     // 攻撃後の種族特性（吸血・MP吸収・状態異常・遠吠えなど）
     if (sp === "koumori" && incoming > 0) {
       enemyHp = Math.min(enemyMaxHp, enemyHp + incoming);
-      battleMessage.textContent += "（🦇 HPを吸収された！）";
+      battleMessage.textContent += " (🦇 HP drained!)";
     }
     if (sp === "yuurei" && playerMp > 0) {
       playerMp = Math.max(0, playerMp - 15);
-      battleMessage.textContent += "（👻 MPを15吸い取られた！）";
+      battleMessage.textContent += " (👻 15 MP drained!)";
     }
     if (sp === "ookami" && !wolfHowl && Math.random() < 0.25) {
       wolfHowl = true;
-      battleMessage.textContent += "（🐺 遠吠え！次の攻撃が2倍になる）";
+      battleMessage.textContent += " (🐺 Howl! Next attack doubles)";
     }
     if (sp === "nezumi" && Math.random() < 0.3) applyStatus("sick", 3);
     if (sp === "kumo") {
@@ -1104,7 +1105,7 @@
       const keys = Object.keys(STANCES);
       stance = keys[randInt(0, keys.length - 1)];
       renderStanceButtons();
-      battleMessage.textContent += `（👺 かく乱！構えが${STANCES[stance].name}に乱された）`;
+      battleMessage.textContent += ` (👺 Disrupt! Stance shifted to ${STANCES[stance].name})`;
     }
     if (sp === "dragon" && mult >= 2) applyStatus("burn", 3); // ブレスで炎上フィールド
     if (playerHp <= 0) {
@@ -1112,7 +1113,7 @@
       if (revivePct > 0 && !reviveUsed) {
         reviveUsed = true;
         playerHp = Math.max(1, Math.round(playerMaxHp * revivePct));
-        battleMessage.textContent += ` 💫復活！ HP ${formatNum(playerHp)}`;
+        battleMessage.textContent += ` 💫 Revived! HP ${formatNum(playerHp)}`;
         return true;
       }
       onGameOver();
@@ -1128,7 +1129,7 @@
     // 気絶中は動けない（シールドバッシュ）
     if (enemyStun > 0) {
       enemyStun--;
-      battleMessage.textContent += ` ／ 💫 ${currentEnemy.name}は気絶して動けない！`;
+      battleMessage.textContent += ` / 💫 ${currentEnemy.name} is stunned and can't move!`;
       rollIntent();
       return true;
     }
@@ -1136,14 +1137,14 @@
     if (enemyIntent === "heal") {
       const h = Math.round(enemyMaxHp * 0.2);
       enemyHp = Math.min(enemyMaxHp, enemyHp + h);
-      battleMessage.textContent += ` ／ 💚 ${currentEnemy.name}はHPを${formatNum(h)}回復！`;
+      battleMessage.textContent += ` / 💚 ${currentEnemy.name} heals ${formatNum(h)} HP!`;
     } else if (enemyIntent === "curse") {
       if (currentEnemy.id === "maou") {
         applyStatus("doom", 4); // 死の呪い：カウント0で即死（クレリックで解除／魔王撃破で解除）
-        battleMessage.textContent += ` ／ 💀 魔王に死の呪いをかけられた！`;
+        battleMessage.textContent += ` / 💀 The Demon King casts a death curse!`;
       } else {
         curseNext = true;
-        battleMessage.textContent += ` ／ 🔮 呪いをかけられた！次の攻撃は威力ダウン`;
+        battleMessage.textContent += ` / 🔮 Cursed! Your next attack is weakened`;
       }
     } else {
       ok = applyEnemyHit(enemyIntent === "strong" ? 2.5 : 1, INTENT_INFO[enemyIntent].icon + INTENT_INFO[enemyIntent].label);
@@ -1153,7 +1154,7 @@
       maouSummonTick++;
       if (maouSummonTick % 3 === 0) {
         enemyBarrier += 2;
-        battleMessage.textContent += ` ／ 🐲 倒された魔物を2体召喚して壁にした！（バリア+2）`;
+        battleMessage.textContent += ` / 🐲 Summoned 2 fallen monsters as a wall! (Barrier +2)`;
       }
     }
     rollIntent();
@@ -1184,21 +1185,21 @@
    * 🧪 状態異常＆職業スキル
    * ============================================================ */
   const STATUS_INFO = {
-    poison: { icon: "☠️", name: "猛毒", desc: "毎ターン最大HPの5%ダメージ" },
-    sick: { icon: "🤢", name: "病気", desc: "毎ターン最大HPの3%ダメージ" },
-    para: { icon: "⚡", name: "麻痺", desc: "スキルが使えない" },
-    bind: { icon: "🕸️", name: "束縛", desc: "与えるダメージ-30%" },
-    stun: { icon: "💫", name: "気絶", desc: "次の攻撃が不発になる" },
-    doom: { icon: "💀", name: "死の呪い", desc: "0になると即死！クレリックで解除可" },
-    burn: { icon: "🔥", name: "炎上", desc: "毎ターン最大HPの5%ダメージ" },
-    armor: { icon: "🩻", name: "防具半減", desc: "防御力が半分になる" },
+    poison: { icon: "☠️", name: "Poison", desc: "5% max HP damage each turn" },
+    sick: { icon: "🤢", name: "Disease", desc: "3% max HP damage each turn" },
+    para: { icon: "⚡", name: "Paralyze", desc: "Cannot use skills" },
+    bind: { icon: "🕸️", name: "Bind", desc: "Deal 30% less damage" },
+    stun: { icon: "💫", name: "Stun", desc: "Next attack fizzles" },
+    doom: { icon: "💀", name: "Death Curse", desc: "Instant death at 0! Cleric can cure" },
+    burn: { icon: "🔥", name: "Burn", desc: "5% max HP damage each turn" },
+    armor: { icon: "🩻", name: "Armor Break", desc: "Defense halved" },
   };
   const statusRowEl = document.getElementById("status-row");
 
   function applyStatus(key, turns) {
     playerStatus[key] = Math.max(playerStatus[key] || 0, turns);
     const info = STATUS_INFO[key];
-    battleMessage.textContent += `（${info.icon} ${info.name}になった！）`;
+    battleMessage.textContent += ` (${info.icon} ${info.name}!)`;
     renderStatusRow();
   }
 
@@ -1222,7 +1223,7 @@
     if (playerStatus.burn > 0) dot += Math.round(playerMaxHp * 0.05);
     if (dot > 0) {
       playerHp -= dot;
-      battleMessage.textContent = `🩸 状態異常で ${formatNum(dot)} のダメージ…`;
+      battleMessage.textContent = `🩸 Status effect deals ${formatNum(dot)} damage…`;
     }
     for (const k of Object.keys(playerStatus)) {
       if (k === "stun") continue; // 気絶は攻撃時に消費する
@@ -1232,7 +1233,7 @@
     if (playerStatus.doom === 0 && "doom" in playerStatus) {
       delete playerStatus.doom;
       playerHp = 0;
-      battleMessage.textContent = "💀 死の呪いが完成してしまった…！";
+      battleMessage.textContent = "💀 The death curse has taken hold…!";
     }
     renderStatusRow();
     if (playerHp <= 0) {
@@ -1240,7 +1241,7 @@
       if (revivePct > 0 && !reviveUsed) {
         reviveUsed = true;
         playerHp = Math.max(1, Math.round(playerMaxHp * revivePct));
-        battleMessage.textContent += ` 💫復活！`;
+        battleMessage.textContent += ` 💫 Revived!`;
         updateBars();
         return true;
       }
@@ -1264,7 +1265,7 @@
     }
     skillBtn.classList.remove("is-hidden");
     const para = playerStatus.para > 0;
-    skillBtn.textContent = para ? `⚡ 麻痺中…` : `${sk.icon} ${sk.name}（MP${sk.cost}）`;
+    skillBtn.textContent = para ? `⚡ Paralyzed…` : `${sk.icon} ${sk.name} (MP${sk.cost})`;
     skillBtn.disabled = para || playerMp < sk.cost || battleInput.disabled || enemyHp <= 0;
     skillBtn.title = sk.desc;
   }
@@ -1277,7 +1278,7 @@
   function dealSkillDamage(dmg, purge, label) {
     if (enemyBarrier > 0) {
       enemyBarrier = Math.max(0, enemyBarrier - 1);
-      battleMessage.textContent = `${label} バリアを1枚破壊！（残り${enemyBarrier}枚）`;
+      battleMessage.textContent = `${label} Destroyed 1 barrier! (${enemyBarrier} left)`;
       renderIntent();
       updateBars();
       return;
@@ -1288,7 +1289,7 @@
     showDamage(dmg, true);
     shakeEnemy();
     juiceHit(true, dmg);
-    battleMessage.textContent = `${label} ${formatNum(dmg)} のダメージ！`;
+    battleMessage.textContent = `${label} ${formatNum(dmg)} damage!`;
     updateBars();
     if (enemyHp <= 0) {
       handleEnemyKilled(purge);
@@ -1300,7 +1301,7 @@
     if (currentEnemy.id === "zombie" && !zombieRevived && !purge) {
       zombieRevived = true;
       enemyHp = Math.round(enemyMaxHp * 0.5);
-      battleMessage.textContent += ` ／ 🧟 ゾンビが起き上がった！（炎/聖のスキルで倒せば復活しない）`;
+      battleMessage.textContent += ` / 🧟 The zombie rises again! (Defeat it with a fire/holy skill to stop the revival)`;
       updateBars();
       nextBattleQuestion();
       return;
@@ -1312,7 +1313,7 @@
     const sk = playerChar.skill;
     if (!sk || playerMp < sk.cost || battleInput.disabled || enemyHp <= 0) return;
     if (playerStatus.para > 0) {
-      battleMessage.textContent = "⚡ 麻痺していてスキルが使えない！";
+      battleMessage.textContent = "⚡ Paralyzed — can't use a skill!";
       return;
     }
     playerMp -= sk.cost;
@@ -1321,16 +1322,16 @@
       // シールドバッシュ：DEF依存ダメージ＋敵を1ターン気絶
       enemyStun = 1;
       const dmg = clampNum((effDefense() * 5 + 100) * atkStackMult);
-      dealSkillDamage(dmg, false, "🛡️ シールドバッシュ！敵を気絶させた！");
+      dealSkillDamage(dmg, false, "🛡️ Shield Bash! The enemy is stunned!");
     } else if (id === "assassin") {
       // シャドウストライク：必中＆確定会心
       const dmg = clampNum(skillBaseDamage() * 2 * critMultiplier());
-      dealSkillDamage(dmg, false, "🗡️ シャドウストライク！（必中・確定会心）");
+      dealSkillDamage(dmg, false, "🗡️ Shadow Strike! (Never misses · guaranteed crit)");
     } else if (id === "wizard") {
       // エクスプロージョン：炎の全体魔法（後ろの敵にも同ダメージ）
       const dmg = clampNum(skillBaseDamage() * 1.5);
       if (enemiesRemaining > 1) splashDamage = clampNum(splashDamage + dmg);
-      dealSkillDamage(dmg, true, "💥 エクスプロージョン！（炎の全体魔法）");
+      dealSkillDamage(dmg, true, "💥 Explosion! (Fire spell hits all enemies)");
     } else if (id === "cleric") {
       // セイント・ノヴァ：聖魔法＋回復＋状態異常1つ解除
       const heal = Math.round(playerMaxHp * 0.25);
@@ -1340,16 +1341,16 @@
       let cureNote = "";
       if (cured) {
         delete playerStatus[cured];
-        cureNote = `＋${STATUS_INFO[cured].icon}${STATUS_INFO[cured].name}を解除`;
+        cureNote = ` +Cured ${STATUS_INFO[cured].icon}${STATUS_INFO[cured].name}`;
         renderStatusRow();
       }
       const dmg = clampNum(skillBaseDamage() * 1.2);
-      dealSkillDamage(dmg, true, `🌟 セイント・ノヴァ！HP${formatNum(heal)}回復${cureNote}／`);
+      dealSkillDamage(dmg, true, `🌟 Saint Nova! Healed ${formatNum(heal)} HP${cureNote} / `);
     } else if (id === "alchemist") {
       // アシッドボトル：防御特性を無効化＋毎ターン固定ダメージ
       enemyAcid = 3;
       const dmg = Math.round(enemyMaxHp * 0.08);
-      dealSkillDamage(dmg, false, "⚗️ アシッドボトル！敵の装甲が溶けた！（3ターン持続）");
+      dealSkillDamage(dmg, false, "⚗️ Acid Bottle! The enemy's armor melts! (Lasts 3 turns)");
     }
     updateSkillButton();
     updateBars();
@@ -1461,12 +1462,12 @@
   function renderMap() {
     if (!routeMapEl) return;
     const legend = ["battle", "elite", "event", "shop", "gacha", "boss"]
-      .map((t) => `<span class="legend-item"><img src="${NODE_TYPES[t].img}" alt="">${NODE_TYPES[t].name.replace("敵遭遇", "敵")}</span>`)
+      .map((t) => `<span class="legend-item"><img src="${NODE_TYPES[t].img}" alt="">${NODE_TYPES[t].name}</span>`)
       .join(" ");
     routeMapEl.innerHTML =
-      `<div class="map-title">🗺️ ステージ${stageNum}　ルートマップ` +
-      `<button type="button" id="map-items" class="map-items-btn">🎒 道具（${inventory.length}）</button>` +
-      `<span class="map-sub">道がつながっているマスだけ選べるよ　${legend}</span></div>`;
+      `<div class="map-title">🗺️ Stage ${stageNum} Route Map` +
+      `<button type="button" id="map-items" class="map-items-btn">🎒 Items (${inventory.length})</button>` +
+      `<span class="map-sub">You can only pick connected nodes　${legend}</span></div>`;
     const itemsBtn = routeMapEl.querySelector("#map-items");
     if (itemsBtn) itemsBtn.addEventListener("click", () => showItems("map"));
     const inner = document.createElement("div");
@@ -1574,13 +1575,13 @@
     routeMapEl.classList.add("is-hidden");
     const t = currentNodeType;
     if (t === "shop") {
-      battleMessage.textContent = "🛒 ショップを見つけた！";
+      battleMessage.textContent = "🛒 You found a shop!";
       showShop(false, true);
       updateBars();
       return;
     }
     if (t === "gacha") {
-      battleMessage.textContent = "🎲 ガチャ台を見つけた！";
+      battleMessage.textContent = "🎲 You found a gacha machine!";
       showGacha(null);
       updateBars();
       return;
@@ -1594,7 +1595,7 @@
     beginFloorEnemies();
     nextBattleQuestion();
     battleMessage.textContent =
-      t === "boss" ? "👹 ボス戦！バリアを壊して倒せ！" : t === "elite" ? "💠 エリートが立ちふさがる！" : "⚔️ 敵と遭遇！";
+      t === "boss" ? "👹 Boss fight! Break the barrier and defeat it!" : t === "elite" ? "💠 An elite blocks your path!" : "⚔️ An enemy appears!";
     updateBars();
   }
 
@@ -1603,82 +1604,82 @@
     battleInput.disabled = true;
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    rewardTitle.textContent = `👑 ステージ${stageNum} クリア！`;
-    battleMessage.textContent = "🎉 ボスを倒した！さらに深く潜る？それとも勝利でしめくくる？";
+    rewardTitle.textContent = `👑 Stage ${stageNum} clear!`;
+    battleMessage.textContent = "🎉 You beat the boss! Go deeper, or finish in victory?";
     rewardGrid.innerHTML = "";
-    shopButton("⬇️", `ステージ${stageNum + 1}へ挑む`, "敵はもっと強くなる（装備・コインは持ち越し）", false, () => {
+    shopButton("⬇️", `Take on Stage ${stageNum + 1}`, "Enemies get stronger (gear & coins carry over)", false, () => {
       stageNum++;
       overkillStreak = 0;
       genMap();
-      showMap(`⬇️ ステージ${stageNum}に突入！🗺️ 最初のマスを選ぼう`);
+      showMap(`⬇️ Entering Stage ${stageNum}! 🗺️ Choose your first node`);
     });
-    shopButton("🏆", "勝利でおわる", "結果を見る", false, () => onGameClear());
+    shopButton("🏆", "Finish in victory", "See your results", false, () => onGameClear());
     updateBars();
   }
 
   /* --- ❓ イベントマス（ランダムな選択イベント） --- */
   const EVENTS = [
     {
-      name: "回復の泉",
-      text: "✨ 澄んだ泉が湧いている。どうする？",
+      name: "Spring of Healing",
+      text: "✨ A clear spring bubbles up. What do you do?",
       choices: [
-        { icon: "💧", name: "泉の水を飲む", desc: "HPを全回復する", run: () => { playerHp = playerMaxHp; return "💧 HPが全回復した！"; } },
-        { icon: "🫗", name: "泉の力を浴びる", desc: "最大HP+20%（今のHPは変わらない）", run: () => { bonusMaxHp += Math.round(playerMaxHp * 0.2); recomputeMaxHp(); return "🫗 最大HPが増えた！"; } },
+        { icon: "💧", name: "Drink the water", desc: "Fully restore HP", run: () => { playerHp = playerMaxHp; return "💧 HP fully restored!"; } },
+        { icon: "🫗", name: "Bathe in its power", desc: "Max HP +20% (current HP unchanged)", run: () => { bonusMaxHp += Math.round(playerMaxHp * 0.2); recomputeMaxHp(); return "🫗 Max HP increased!"; } },
       ],
     },
     {
-      name: "謎の商人",
-      text: "🧙 「ふっふっふ…良い物があるよ」",
+      name: "Mysterious Merchant",
+      text: "🧙 \"Heh heh... I've got good stuff.\"",
       choices: [
-        { icon: "💰", name: "🪙300で装備を買う", desc: "レジェンダリー装備をランダムで1つもらえる", run: () => {
-          if (coins < 300) return "🪙が足りなかった…（300必要）";
+        { icon: "💰", name: "Buy gear for 🪙300", desc: "Get a random legendary item", run: () => {
+          if (coins < 300) return "Not enough 🪙... (300 needed)";
           coins -= 300;
           const cands = EQUIPMENT.filter((e) => e.rarity === "legendary");
           const tmpl = randomOf(cands);
           const info = rarityInfo("legendary");
           backpack.push({ slot: tmpl.slot, name: tmpl.name, desc: tmpl.desc, fx: tmpl.fx, rarity: "legendary", rarityName: info.name, color: info.color });
           updateCoinDisplay();
-          return `✨「${tmpl.name}」を手に入れた！🎒リュックへ`;
+          return `✨ Got "${tmpl.name}"! 🎒 Added to backpack`;
         } },
-        { icon: "🚶", name: "立ち去る", desc: "何もしない", run: () => "🚶 商人に別れを告げた" },
+        { icon: "🚶", name: "Leave", desc: "Do nothing", run: () => "🚶 You bid the merchant farewell" },
       ],
     },
     {
-      name: "運だめしの賭け",
-      text: "🎲 怪しいサイコロ勝負に誘われた。コインを賭ける？",
+      name: "Game of Chance",
+      text: "🎲 You're invited to a shady dice game. Bet your coins?",
       choices: [
-        { icon: "🎲", name: "全部賭ける", desc: "50%でコイン2倍、50%で半分になる", run: () => {
-          if (Math.random() < 0.5) { coins *= 2; updateCoinDisplay(); return "🎉 大当たり！コインが2倍になった！"; }
-          coins = Math.floor(coins / 2); updateCoinDisplay(); return "😱 負けた…コインが半分になった";
+        { icon: "🎲", name: "Bet it all", desc: "50% to double coins, 50% to halve them", run: () => {
+          if (Math.random() < 0.5) { coins *= 2; updateCoinDisplay(); return "🎉 Jackpot! Coins doubled!"; }
+          coins = Math.floor(coins / 2); updateCoinDisplay(); return "😱 You lost... coins halved";
         } },
-        { icon: "🙅", name: "賭けない", desc: "何もしない", run: () => "🙅 賭けはやめておいた" },
+        { icon: "🙅", name: "Don't bet", desc: "Do nothing", run: () => "🙅 You passed on the bet" },
       ],
     },
     {
-      name: "呪われた祭壇",
-      text: "🗿 不気味な祭壇がある。血を捧げると力を得られるらしい…",
+      name: "Cursed Altar",
+      text: "🗿 An eerie altar stands here. Offering blood grants power...",
       choices: [
-        { icon: "🩸", name: "血を捧げる", desc: "HPの40%を失い、攻撃倍率×1.5（この冒険の間ずっと）", run: () => {
+        { icon: "🩸", name: "Offer blood", desc: "Lose 40% HP, attack x1.5 (rest of the run)", run: () => {
           playerHp = Math.max(1, playerHp - Math.round(playerHp * 0.4));
           atkStackMult = clampNum(atkStackMult * 1.5);
-          return "🩸 体が軽い…攻撃倍率×1.5を得た！";
+          return "🩸 You feel lighter... attack x1.5 gained!";
         } },
-        { icon: "🚶", name: "近寄らない", desc: "何もしない", run: () => "🚶 そっと通り過ぎた" },
+        { icon: "🚶", name: "Stay away", desc: "Do nothing", run: () => "🚶 You slip quietly past" },
       ],
     },
     {
-      name: "旅の鍛冶屋",
-      text: "🔨 「鍛えてやろうか？」",
+      name: "Wandering Smith",
+      text: "🔨 \"Want me to forge for you?\"",
       choices: [
-        { icon: "⚔️", name: "武器を鍛える", desc: "攻撃力+今の20%（永続）", run: () => { bonusAtk = clampNum(bonusAtk + Math.round(effAttack() * 0.2)); return "⚔️ 攻撃力が上がった！"; } },
-        { icon: "🛡️", name: "防具を鍛える", desc: "防御力+今の30%＋最大HP+10%", run: () => { bonusDef += Math.round(effDefense() * 0.3); bonusMaxHp += Math.round(playerMaxHp * 0.1); recomputeMaxHp(); return "🛡️ 守りが固くなった！"; } },
+        { icon: "⚔️", name: "Forge weapon", desc: "Attack +20% of current (permanent)", run: () => { bonusAtk = clampNum(bonusAtk + Math.round(effAttack() * 0.2)); return "⚔️ Attack increased!"; } },
+        { icon: "🛡️", name: "Forge armor", desc: "Defense +30% of current + Max HP +10%", run: () => { bonusDef += Math.round(effDefense() * 0.3); bonusMaxHp += Math.round(playerMaxHp * 0.1); recomputeMaxHp(); return "🛡️ Your defense hardened!"; } },
       ],
     },
     {
-      name: "ステータスの妖精",
-      text: "🧚 妖精が現れた！「ごほうびを2回あげる！」",
+      name: "Stat Fairy",
+      text: "🧚 A fairy appears! \"I'll give you two rewards!\"",
       choices: [
-        { icon: "🧚", name: "ありがとう！", desc: "パーク（ごほうび）を2回選べる", runView: "perks" },
+        { icon: "🧚", name: "Thank you!", desc: "Pick perks (rewards) twice", runView: "perks" },
       ],
     },
   ];
@@ -1687,7 +1688,7 @@
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
     const ev = randomOf(EVENTS);
-    rewardTitle.textContent = `❓ イベント：${ev.name}`;
+    rewardTitle.textContent = `❓ Event: ${ev.name}`;
     battleMessage.textContent = ev.text;
     rewardGrid.innerHTML = "";
     ev.choices.forEach((c) => {
@@ -1700,7 +1701,7 @@
         }
         const msg = c.run();
         updateBars();
-        showMap(`${msg}　🗺️ 次のマスを選ぼう`);
+        showMap(`${msg}　🗺️ Choose your next node`);
       });
     });
     updateBars();
@@ -1708,7 +1709,7 @@
 
   function nextBattleQuestion() {
     battleIdiom = randomOf(pool);
-    battleHint.textContent = `ヒント: ${battleIdiom.meaning}`;
+    battleHint.textContent = `Hint: ${battleIdiom.meaning}`;
     battleSentence.textContent = makeBlank(battleIdiom.example, battleIdiom.phrase);
     battleInput.value = "";
     battleInput.disabled = false;
@@ -1730,17 +1731,17 @@
   function renderStats() {
     if (!playerStats) return;
     playerStats.innerHTML =
-      `<span title="攻撃力">⚔️ ${formatNum(effAttack())}</span>` +
-      `<span title="防御力">🛡️ ${formatNum(effDefense())}</span>` +
-      `<span title="最大HP">❤️ ${formatNum(playerMaxHp)}</span>` +
-      `<span title="スキル用MP（正解で+10回復）" style="color:#7dd3fc">🔮 ${playerMp}/${playerMaxMp}</span>` +
-      `<span title="会心率">💥 ${Math.round(critTotal() * 100)}%</span>`;
+      `<span title="Attack">⚔️ ${formatNum(effAttack())}</span>` +
+      `<span title="Defense">🛡️ ${formatNum(effDefense())}</span>` +
+      `<span title="Max HP">❤️ ${formatNum(playerMaxHp)}</span>` +
+      `<span title="Skill MP (+10 on correct answer)" style="color:#7dd3fc">🔮 ${playerMp}/${playerMaxMp}</span>` +
+      `<span title="Crit rate">💥 ${Math.round(critTotal() * 100)}%</span>`;
     updateSkillButton();
     renderStatusRow();
     if (damageStats) {
       damageStats.innerHTML =
-        `<span title="直近の攻撃で与えたダメージ">💢 攻撃 ${formatNum(lastAttackDamage)}</span>` +
-        `<span title="今までに出した最大ダメージ">🏆 最大 ${formatNum(maxAttackDamage)}</span>`;
+        `<span title="Damage dealt on your last attack">💢 Last ${formatNum(lastAttackDamage)}</span>` +
+        `<span title="Highest damage so far">🏆 Best ${formatNum(maxAttackDamage)}</span>`;
     }
   }
 
@@ -1771,7 +1772,7 @@
     return 7; // 京以上＝脳が溶ける
   }
   const TIER_LABEL = {
-    3: "GREAT!!", 4: "EXCELLENT!!", 5: "INSANE!!!", 6: "GODLIKE!!!", 7: "💥脳が溶ける💥",
+    3: "GREAT!!", 4: "EXCELLENT!!", 5: "INSANE!!!", 6: "GODLIKE!!!", 7: "💥BRAIN MELT💥",
   };
 
   // 画面フラッシュ
@@ -1899,7 +1900,7 @@
   function updateComboDisplay() {
     if (combo >= 1) {
       comboBadge.classList.remove("is-hidden");
-      comboBadge.textContent = `🔥 ${combo} コンボ`;
+      comboBadge.textContent = `🔥 ${combo} Combo`;
       comboBadge.classList.remove("fx-combo-pop");
       void comboBadge.offsetWidth;
       comboBadge.classList.add("fx-combo-pop");
@@ -1931,7 +1932,7 @@
     if (playerStatus.stun > 0) {
       delete playerStatus.stun;
       renderStatusRow();
-      battleMessage.textContent = `💫 気絶していて攻撃できなかった…！（正解は合ってたよ）`;
+      battleMessage.textContent = `💫 Stunned — couldn't attack…! (Your answer was correct)`;
       const alive = enemyActs ? executeIntent() : true;
       updateBars();
       if (alive) nextBattleQuestion();
@@ -1958,12 +1959,12 @@
     if (enemyBarrier <= 0 && missP > 0 && Math.random() < missP) {
       combo = 0;
       updateComboDisplay();
-      battleMessage.textContent = `💨 ${currentEnemy.name}に攻撃をかわされた！`;
+      battleMessage.textContent = `💨 ${currentEnemy.name} dodged your attack!`;
       // ヘビ：ミスに即カウンター
       let alive = true;
       if (currentEnemy.id === "hebi") {
         battleMessage.textContent += "";
-        alive = applyEnemyHit(1, "🐍カウンター");
+        alive = applyEnemyHit(1, "🐍Counter");
       }
       if (alive && enemyActs) alive = executeIntent();
       updateBars();
@@ -1984,8 +1985,8 @@
       const broke = before - enemyBarrier;
       battleMessage.textContent =
         enemyBarrier > 0
-          ? `⚔️ 「${phrase}」でバリアを${broke}枚破壊！（残り${enemyBarrier}枚）`
-          : `💥 「${phrase}」でバリアを全て破壊！本体にダメージが通るぞ！`;
+          ? `⚔️ "${phrase}" destroyed ${broke} barrier(s)! (${enemyBarrier} left)`
+          : `💥 "${phrase}" destroyed all barriers! Now your attacks land!`;
       if (typeof Music !== "undefined") Music.hit(2, enemyBarrier === 0);
       screenShake(enemyBarrier === 0 ? 5 : 2);
       spawnBurst(enemyBarrier === 0 ? 24 : 10, { colors: ["#93c5fd", "#e0f2fe", "#38bdf8"] });
@@ -2023,7 +2024,7 @@
       if (currentEnemy.physCut) hit *= 1 - currentEnemy.physCut; // サソリ・おにの硬い装甲
       if (currentEnemy.id === "oni" && Math.random() < 0.4) {
         hit *= 0.5;
-        guardNote = "👹金棒ガード！ ";
+        guardNote = "👹Club Guard! ";
       }
     }
     // 束縛：与ダメージ-30%
@@ -2055,7 +2056,7 @@
     const ikChance = sumFx("instakill") + (playerChar.instakill || 0);
     if (ikChance > 0 && Math.random() < ikChance) {
       enemyHp = 0;
-      note = "⚡即死！ ";
+      note = "⚡Instakill! ";
     } else {
       for (let h = 0; h < hits; h++) {
         enemyHp -= hit;
@@ -2064,7 +2065,7 @@
       const execTh = maxFx("execute");
       if (execTh > 0 && enemyHp > 0 && enemyHp <= enemyMaxHp * execTh) {
         enemyHp = 0;
-        note = "☠️処刑！ ";
+        note = "☠️Execute! ";
       }
     }
     // ミシック：オーバーキル分を次の敵へ持ち越す（アポカリオン）
@@ -2101,15 +2102,15 @@
     else overkillStreak = Math.max(0, overkillStreak - 1);
 
     const flair =
-      (combo >= 2 ? `🔥${combo}コンボ ` : "") +
-      (crit ? "💥会心！ " : "") +
-      (hits > 1 ? `${hits}回攻撃！ ` : "") +
+      (combo >= 2 ? `🔥${combo} Combo ` : "") +
+      (crit ? "💥Crit! " : "") +
+      (hits > 1 ? `${hits} hits! ` : "") +
       guardNote +
-      (playerStatus.bind > 0 ? "🕸️束縛中 " : "") +
+      (playerStatus.bind > 0 ? "🕸️Bound " : "") +
       (nerfed ? "⚖️ " : "");
     battleMessage.textContent = note
-      ? `${note}「${phrase}」で敵を倒した！`
-      : `⚔️ ${flair}「${phrase}」で ${formatNum(dealt)} のダメージ！`;
+      ? `${note}"${phrase}" defeated the enemy!`
+      : `⚔️ ${flair}"${phrase}" deals ${formatNum(dealt)} damage!`;
     if (enemyAcid > 0) enemyAcid--; // 酸の残りターンを消費
     updateBars();
     shakeEnemy();
@@ -2130,9 +2131,9 @@
     wrongCount++;
     combo = 0; // 間違えるとコンボはリセット
     updateComboDisplay();
-    battleMessage.textContent = `❌ 正解は「${phrase}」。`;
+    battleMessage.textContent = `❌ The answer was "${phrase}".`;
     // ボス・エリートは予告していた行動を実行、通常敵はふつうの反撃
-    const alive = enemyActs ? executeIntent() : applyEnemyHit(1, `${currentEnemy.name}の反撃`);
+    const alive = enemyActs ? executeIntent() : applyEnemyHit(1, `${currentEnemy.name}'s counter`);
     renderIntent();
     updateBars();
     if (!alive) return; // ゲームオーバー
@@ -2148,14 +2149,14 @@
     // 魔王を倒すと死の呪いが解ける
     if (currentEnemy.id === "maou" && "doom" in playerStatus) {
       delete playerStatus.doom;
-      battleMessage.textContent += " 💀→✨ 死の呪いが解けた！";
+      battleMessage.textContent += " 💀→✨ The death curse is broken!";
       renderStatusRow();
     }
     // ねずみ：倒しても仲間が乱入してくることがある（1つの階で最大2回）
     if (currentEnemy.id === "nezumi" && swarmAdds < 2 && Math.random() < 0.4) {
       enemiesRemaining++;
       swarmAdds++;
-      battleMessage.textContent += " 🐀 新たなねずみが乱入してきた！";
+      battleMessage.textContent += " 🐀 Another rat joins the fight!";
     }
     // ミシック：撃破ごとに攻撃倍率を乗算で増やす／追加攻撃回数を増やす
     if (hasFx("atkMultPerKill")) atkStackMult = clampNum(atkStackMult * Math.max(1, sumFx("atkMultPerKill")));
@@ -2201,7 +2202,7 @@
         let splashNote = "";
         if (splashDamage > 0 && enemyBarrier > 0) {
           splashDamage = 0; // バリアが範囲ダメージを吸収する
-          splashNote = " 🛡️バリアが範囲ダメージを防いだ！";
+          splashNote = " 🛡️The barrier blocked the splash damage!";
         }
         if (splashDamage > 0) {
           const before = enemyHp;
@@ -2211,17 +2212,17 @@
             // 範囲ダメージで撃破 → オーバーキル分を次の敵へ持ち越して連鎖
             splashDamage = clampNum(splashDamage - before);
             enemyHp = 0;
-            battleMessage.textContent = `🌪️ 範囲ダメージで ${currentEnemy.name} も撃破！（残り${enemiesRemaining - 1}体）`;
+            battleMessage.textContent = `🌪️ Splash damage also defeats ${currentEnemy.name}! (${enemiesRemaining - 1} left)`;
             updateBars();
             onEnemyDefeated(true);
             return;
           }
           enemyHp = clampNum(enemyHp - splashDamage);
           splashDamage = 0;
-          splashNote = ` 🌪️範囲ダメージ ${formatNum(applied)}！`;
+          splashNote = ` 🌪️Splash damage ${formatNum(applied)}!`;
         }
         battleMessage.textContent =
-          `🗡️ ${beatenName}を倒した！次の敵（残り${enemiesRemaining}体）${splashNote}`;
+          `🗡️ Defeated ${beatenName}! Next enemy (${enemiesRemaining} left)${splashNote}`;
         updateBars();
         nextBattleQuestion();
         return;
@@ -2264,11 +2265,11 @@
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
     if (bonusActive) {
-      battleMessage.textContent = `🧚 ステータスの妖精が現れた！ ${perkPicksLeft}回も選べる！`;
-      rewardTitle.textContent = `🧚 妖精のごほうび（あと${perkPicksLeft}回）`;
+      battleMessage.textContent = `🧚 A stat fairy appeared! You get ${perkPicksLeft} picks!`;
+      rewardTitle.textContent = `🧚 Fairy's reward (${perkPicksLeft} left)`;
     } else {
-      battleMessage.textContent = `🎉 ${beatenName ? beatenName + "を倒した！" : ""}ごほうびを選ぼう`;
-      rewardTitle.textContent = "🎁 ごほうびを1つ選ぼう";
+      battleMessage.textContent = `🎉 ${beatenName ? "Defeated " + beatenName + "! " : ""}Choose a reward`;
+      rewardTitle.textContent = "🎁 Choose a reward";
     }
     const choices = PERKS.slice().sort(() => Math.random() - 0.5).slice(0, 3);
     rewardGrid.innerHTML = "";
@@ -2293,7 +2294,7 @@
       showPerks(); // 妖精のおかげでもう一度選べる
     } else {
       bonusActive = false;
-      advanceFloor(`${perk.icon} ${perk.name}を獲得！`);
+      advanceFloor(`${perk.icon} Gained ${perk.name}!`);
     }
   }
 
@@ -2334,8 +2335,8 @@
   function showTreasure(beatenName) {
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    battleMessage.textContent = `🎁 ${beatenName}を倒した！宝箱を発見！`;
-    rewardTitle.textContent = "🎁 宝箱！装備を1つ選ぼう";
+    battleMessage.textContent = `🎁 Defeated ${beatenName}! You found a treasure chest!`;
+    rewardTitle.textContent = "🎁 Treasure! Choose one piece of gear";
     const items = [makeItem(), makeItem(), makeItem()];
     rewardGrid.innerHTML = "";
     items.forEach((item) => {
@@ -2395,7 +2396,7 @@
 
   function chooseEquip(item) {
     equipItem(item);
-    advanceFloor(`${item.name}を装備！`);
+    advanceFloor(`Equipped ${item.name}!`);
   }
 
   /* --- リュック（外した装備の保管＆付け替え）--- */
@@ -2411,7 +2412,7 @@
   function renderBackpackFilter() {
     const bar = document.createElement("div");
     bar.className = "backpack-filter";
-    const tabs = [{ id: "all", icon: "📦", name: "全部" }].concat(
+    const tabs = [{ id: "all", icon: "📦", name: "All" }].concat(
       SLOTS.map((s) => ({ id: s.id, icon: s.icon, name: s.name })),
     );
     tabs.forEach((t) => {
@@ -2429,8 +2430,8 @@
   }
 
   function renderBackpack() {
-    rewardTitle.textContent = `🎒 リュック（保管中：${backpack.length}個）`;
-    battleMessage.textContent = "装備中をタップで外す／リュックの装備をタップで付け替え";
+    rewardTitle.textContent = `🎒 Backpack (${backpack.length} stored)`;
+    battleMessage.textContent = "Tap equipped gear to remove it / tap a backpack item to swap it in";
     rewardGrid.innerHTML = "";
 
     // 振り分け（スロット別フィルタ）
@@ -2439,16 +2440,16 @@
     // 装備中（タップで外せる）
     const equippedNow = SLOTS.filter((s) => equipment[s.id]);
     if (equippedNow.length) {
-      shopSection("🧷 装備中（タップで外す）");
+      shopSection("🧷 Equipped (tap to remove)");
       equippedNow.forEach((s) => {
         const it = equipment[s.id];
-        shopButton(s.icon, it.name, `【${it.rarityName}】タップで外す`, false, () => unequip(s.id), it.color);
+        shopButton(s.icon, it.name, `[${it.rarityName}] Tap to remove`, false, () => unequip(s.id), it.color);
       });
     }
 
     // リュックの中身：スロットごと → レア度の高い順に並べる
     if (backpack.length === 0) {
-      shopSection("リュックは空です");
+      shopSection("Your backpack is empty");
     } else {
       let shown = 0;
       SLOTS.forEach((slot) => {
@@ -2459,25 +2460,25 @@
           .sort((a, b) => rarityRank(b.item.rarity) - rarityRank(a.item.rarity));
         if (!inSlot.length) return;
         shown += inSlot.length;
-        shopSection(`${slot.icon} ${slot.name}（${inSlot.length}）`);
+        shopSection(`${slot.icon} ${slot.name} (${inSlot.length})`);
         inSlot.forEach(({ item, idx }) => {
           shopButton(
             SLOT_META[item.slot].icon,
             item.name,
-            `【${item.rarityName}】${item.desc}`,
+            `[${item.rarityName}] ${item.desc}`,
             false,
             () => equipFromBackpack(idx),
             item.color,
           );
         });
       });
-      if (shown === 0) shopSection("この種類の装備はありません");
+      if (shown === 0) shopSection("No gear of this type");
     }
 
     if (shopReturnsToBattle) {
-      shopButton("⚔️", "バトルに戻る", "リュックを閉じる", false, () => resumeFromShop());
+      shopButton("⚔️", "Back to battle", "Close the backpack", false, () => resumeFromShop());
     } else {
-      shopButton("➡️", "マップへ戻る", "リュックを閉じる", false, () => advanceFloor("リュックを閉じた！"));
+      shopButton("➡️", "Back to map", "Close the backpack", false, () => advanceFloor("Closed the backpack!"));
     }
     updateBars();
   }
@@ -2527,13 +2528,13 @@
   function showGacha(beatenName) {
     battleCard.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    battleMessage.textContent = beatenName ? `🎉 ${beatenName}を倒した！装備ガチャを引こう` : "🎲 装備ガチャを引こう！";
+    battleMessage.textContent = beatenName ? `🎉 Defeated ${beatenName}! Try the gear gacha` : "🎲 Try the gear gacha!";
     renderGacha(null);
   }
 
   const GACHA_MAX_PULLS = 100; // 「最大」で一度に引ける上限
   function renderGacha(results) {
-    rewardTitle.textContent = `🎰 装備ガチャ　🪙 ${formatNum(coins)}`;
+    rewardTitle.textContent = `🎰 Gear Gacha　🪙 ${formatNum(coins)}`;
     rewardGrid.innerHTML = "";
 
     if (results && results.length) {
@@ -2547,7 +2548,7 @@
           .join("　");
         const s = document.createElement("div");
         s.className = "gacha-summary";
-        s.innerHTML = `${results.length}連の結果：${summary}`;
+        s.innerHTML = `${results.length}-pull result: ${summary}`;
         rewardGrid.appendChild(s);
       }
       // レア度の高い順にカード表示
@@ -2561,20 +2562,20 @@
           card.innerHTML =
             `<span class="reward-icon">${SLOT_META[result.slot].icon}</span>` +
             `<span class="reward-name" style="color:${result.color}">${result.name}</span>` +
-            `<span class="reward-desc">【${result.rarityName}】${result.desc}</span>`;
+            `<span class="reward-desc">[${result.rarityName}] ${result.desc}</span>`;
           rewardGrid.appendChild(card);
         });
     }
 
     // コインに応じて引く回数を選べる
-    shopSection(`🎰 何回引く？（1回 🪙${GACHA_COST}）`);
-    shopButton("🎰", "1回を引く", `🪙${GACHA_COST}`, coins < GACHA_COST, () => pullGachaMany(1));
-    shopButton("🔟", "10回を引く", `🪙${formatNum(GACHA_COST * 10)}`, coins < GACHA_COST * 10, () => pullGachaMany(10));
+    shopSection(`🎰 How many pulls? (1 pull 🪙${GACHA_COST})`);
+    shopButton("🎰", "Pull once", `🪙${GACHA_COST}`, coins < GACHA_COST, () => pullGachaMany(1));
+    shopButton("🔟", "Pull 10 times", `🪙${formatNum(GACHA_COST * 10)}`, coins < GACHA_COST * 10, () => pullGachaMany(10));
     const maxN = Math.min(GACHA_MAX_PULLS, Math.floor(coins / GACHA_COST));
     if (maxN >= 1) {
-      shopButton("💎", `最大 ${maxN}回を引く`, `🪙${formatNum(GACHA_COST * maxN)}`, false, () => pullGachaMany(maxN));
+      shopButton("💎", `Pull max ${maxN} times`, `🪙${formatNum(GACHA_COST * maxN)}`, false, () => pullGachaMany(maxN));
     }
-    shopButton("➡️", "マップへ戻る", "ガチャを終える", false, () => advanceFloor("ガチャ終了！"));
+    shopButton("➡️", "Back to map", "Leave the gacha", false, () => advanceFloor("Gacha finished!"));
     updateBars();
   }
 
@@ -2605,13 +2606,13 @@
     results.forEach((it) => backpack.push(it)); // 自動装備せずリュックへ
     updateCoinDisplay();
     rewardGrid.innerHTML = "";
-    battleMessage.textContent = "🎰 ガチャ抽選中…";
+    battleMessage.textContent = "🎰 Rolling the gacha…";
     playGachaReveal(results, () => {
       const best = results.reduce((a, b) => (rarityRank(b.rarity) > rarityRank(a.rarity) ? b : a), results[0]);
       const r = rarityRank(best.rarity);
-      const flair = r >= 5 ? "🌟ミシック🌟" : r === 4 ? "✨レジェンダリー✨" : r === 3 ? "💜エピック" : "🎉";
+      const flair = r >= 5 ? "🌟Mythic🌟" : r === 4 ? "✨Legendary✨" : r === 3 ? "💜Epic" : "🎉";
       battleMessage.textContent =
-        count > 1 ? `${flair} ${count}連ガチャ！🎒リュックに入れたよ` : `${flair}「${best.name}」をゲット！🎒リュックへ`;
+        count > 1 ? `${flair} ${count}-pull gacha! 🎒 Added to your backpack` : `${flair} Got "${best.name}"! 🎒 To your backpack`;
       renderGacha(results);
     });
   }
@@ -2654,7 +2655,7 @@
       banner.className = "gacha-banner" + (rank >= 5 ? " mythic" : "");
       if (rank < 5) banner.style.color = col;
       banner.textContent =
-        rank >= 5 ? "🌟 ミシック 降臨 🌟" : rank === 4 ? "✨ レジェンダリー ✨" : `${rarityInfo(best.rarity).name} GET!`;
+        rank >= 5 ? "🌟 MYTHIC DESCENDS 🌟" : rank === 4 ? "✨ LEGENDARY ✨" : `${rarityInfo(best.rarity).name} GET!`;
       wrap.appendChild(banner);
       setTimeout(() => {
         wrap.remove();
@@ -2705,7 +2706,7 @@
     battleReward.classList.add("is-hidden");
     battleCard.classList.remove("is-hidden");
     battleInput.disabled = false;
-    battleMessage.textContent = "クイズに正解して攻撃しよう！";
+    battleMessage.textContent = "Answer correctly to attack!";
     updateBars();
     battleInput.focus();
   }
@@ -2719,7 +2720,7 @@
   const openItemsBtn = document.getElementById("open-items");
   if (openItemsBtn) openItemsBtn.addEventListener("click", () => showItems("battle"));
   function updateItemsButton() {
-    if (openItemsBtn) openItemsBtn.textContent = `🧪 道具${inventory.length ? "（" + inventory.length + "）" : ""}`;
+    if (openItemsBtn) openItemsBtn.textContent = `🧪 Items${inventory.length ? " (" + inventory.length + ")" : ""}`;
   }
 
   /* --- 道具メニュー（回復ポーション・巻物を使う／お守りを確認する） --- */
@@ -2728,38 +2729,38 @@
     battleCard.classList.add("is-hidden");
     if (routeMapEl) routeMapEl.classList.add("is-hidden");
     battleReward.classList.remove("is-hidden");
-    battleMessage.textContent = ctx === "battle" ? "戦闘中：道具を使おう（1戦闘3回まで）" : "マップ：回復系の道具が使えるよ";
+    battleMessage.textContent = ctx === "battle" ? "In battle: use an item (up to 3 per fight)" : "On the map: you can use healing items";
     renderItems();
   }
 
   function renderItems() {
-    const uses = itemsCtx === "battle" ? `　使用 ${itemUsesThisBattle}/${MAX_ITEM_USES}` : "";
-    rewardTitle.textContent = `🎒 道具メニュー（${inventory.length}/${MAX_INVENTORY}）${uses}`;
+    const uses = itemsCtx === "battle" ? `　Used ${itemUsesThisBattle}/${MAX_ITEM_USES}` : "";
+    rewardTitle.textContent = `🎒 Items (${inventory.length}/${MAX_INVENTORY})${uses}`;
     rewardGrid.innerHTML = "";
 
     if (inventory.length === 0) {
-      shopSection("道具を持っていません（ショップで買えるよ）");
+      shopSection("You have no items (buy them at the shop)");
     } else {
-      shopSection("🧪 使える道具");
+      shopSection("🧪 Usable items");
       inventory.forEach((it, i) => {
         const battleOnly = !!it.battleOnly;
         const disabled =
           (itemsCtx === "battle" && itemUsesThisBattle >= MAX_ITEM_USES) ||
           (battleOnly && itemsCtx !== "battle");
-        const note = battleOnly && itemsCtx !== "battle" ? "（戦闘中のみ）" : "";
-        shopButton(it.icon, `${it.name} を使う`, `${it.desc}${note}`, disabled, () => useItem(i));
+        const note = battleOnly && itemsCtx !== "battle" ? " (Battle only)" : "";
+        shopButton(it.icon, `Use ${it.name}`, `${it.desc}${note}`, disabled, () => useItem(i));
       });
     }
     // お守り（パッシブ・確認だけ）
     if (relics.length) {
-      shopSection("🧿 お守り（持っているだけで効果）");
+      shopSection("🧿 Charms (passive effects while held)");
       relics.forEach((r) => shopButton(r.icon, r.name, r.desc, true, null));
     }
     // 戻る
     if (itemsCtx === "battle") {
-      shopButton("⚔️", "バトルに戻る", "道具メニューを閉じる", false, () => resumeFromShop());
+      shopButton("⚔️", "Back to battle", "Close the item menu", false, () => resumeFromShop());
     } else {
-      shopButton("🗺️", "マップに戻る", "道具メニューを閉じる", false, () => showMap());
+      shopButton("🗺️", "Back to map", "Close the item menu", false, () => showMap());
     }
     updateBars();
   }
@@ -2775,11 +2776,11 @@
     if (it.kind === "heal") {
       const amt = Math.round(playerMaxHp * it.hpPct * (1 + relicFx("healBoost")));
       playerHp = Math.min(playerMaxHp, playerHp + amt);
-      msg = `🧪 ${it.name}：HPを${formatNum(amt)}回復！`;
+      msg = `🧪 ${it.name}: restored ${formatNum(amt)} HP!`;
     } else if (it.kind === "mp") {
       const amt = Math.round(playerMaxMp * it.mpPct);
       playerMp = Math.min(playerMaxMp, playerMp + amt);
-      msg = `🔷 ${it.name}：MPを${amt}回復！`;
+      msg = `🔷 ${it.name}: restored ${amt} MP!`;
     } else if (it.kind === "scroll") {
       msg = applyScroll(it);
     }
@@ -2805,7 +2806,7 @@
       const b = enemyBarrier;
       enemyBarrier = 0;
       renderIntent();
-      return b > 0 ? `📜 破魔の巻物！バリア${b}枚を全て破壊した！` : "📜 破魔の巻物（バリアは無かった）";
+      return b > 0 ? `📜 Break Scroll! Destroyed all ${b} barriers!` : "📜 Break Scroll (there was no barrier)";
     }
     if (it.sc === "bomb") {
       enemyBarrier = 0; // バリア貫通
@@ -2816,15 +2817,15 @@
       screenShake(6);
       spawnBurst(30, { colors: ["#fb923c", "#f87171", "#fde68a"] });
       shakeEnemy();
-      return `📜 爆炎の巻物！${formatNum(dmg)} の特大ダメージ！`;
+      return `📜 Blast Scroll! ${formatNum(dmg)} huge damage!`;
     }
     if (it.sc === "purify") {
       for (const k in playerStatus) delete playerStatus[k];
       const amt = Math.round(playerMaxHp * 0.3 * (1 + relicFx("healBoost")));
       playerHp = Math.min(playerMaxHp, playerHp + amt);
-      return `📜 浄化の巻物！状態異常を全回復＋HP${formatNum(amt)}回復！`;
+      return `📜 Purify Scroll! Cured all status effects + restored ${formatNum(amt)} HP!`;
     }
-    return "📜 巻物を使った";
+    return "📜 Used a scroll";
   }
 
   // 「💣 爆弾を放出」ボタン（チンギスの騎馬靴を装備中のみ表示）
@@ -2834,7 +2835,7 @@
     if (!detonateBtn) return;
     if (hasFx("bombStorePct")) {
       detonateBtn.classList.remove("is-hidden");
-      detonateBtn.textContent = `💣 爆弾を放出（${formatNum(bombStore)}）`;
+      detonateBtn.textContent = `💣 Detonate (${formatNum(bombStore)})`;
       detonateBtn.disabled = bombStore <= 0;
     } else {
       detonateBtn.classList.add("is-hidden");
@@ -2844,7 +2845,7 @@
     if (bombStore <= 0 || enemyHp <= 0 || battleInput.disabled) return;
     if (enemyBarrier > 0) {
       enemyBarrier--;
-      battleMessage.textContent = `💣 爆弾がバリアを1枚破壊！（残り${enemyBarrier}枚）`;
+      battleMessage.textContent = `💣 The bomb destroyed 1 barrier! (${enemyBarrier} left)`;
       renderIntent();
       updateBars();
       return;
@@ -2855,7 +2856,7 @@
     recordDamage(dmg); // 爆弾ダメージも記録
     showDamage(dmg, true);
     shakeEnemy();
-    battleMessage.textContent = `💥 爆弾炸裂！ ${formatNum(dmg)} のダメージ！`;
+    battleMessage.textContent = `💥 The bomb explodes! ${formatNum(dmg)} damage!`;
     updateBars();
     if (enemyHp <= 0) onEnemyDefeated();
   }
@@ -2923,35 +2924,35 @@
   }
 
   function renderShop() {
-    rewardTitle.textContent = `🏪 ショップ　🪙 ${coins}`;
+    rewardTitle.textContent = `🏪 Shop　🪙 ${coins}`;
     rewardGrid.innerHTML = "";
 
     // 装備を買う＋リロール
-    shopSection("🛒 装備を買う");
+    shopSection("🛒 Buy gear");
     shopStock.forEach((stock, i) => {
       const { item, price, bought } = stock;
       shopButton(
         SLOT_META[item.slot].icon,
         item.name,
-        bought ? "✅購入済み" : `🪙${price}・${item.desc}`,
+        bought ? "✅Purchased" : `🪙${price} · ${item.desc}`,
         bought || coins < price,
         () => buyEquip(i),
         item.color,
       );
     });
-    shopButton("🔄", "在庫を引き直す", `🪙${REROLL_COST}`, coins < REROLL_COST, () => reroll());
+    shopButton("🔄", "Reroll the stock", `🪙${REROLL_COST}`, coins < REROLL_COST, () => reroll());
 
     // 道具（消費アイテム＆お守り）を買う
-    shopSection("🧪 道具・お守りを買う（道具は手持ちに入る）");
+    shopSection("🧪 Buy items & charms (items go to your bag)");
     shopItems.forEach((st, i) => {
       const { data, price, bought, isRelic } = st;
       const owned = isRelic && hasRelic(data.id);
       const full = !isRelic && inventory.length >= MAX_INVENTORY;
-      const tag = isRelic ? "🧿お守り" : "🎒道具";
+      const tag = isRelic ? "🧿Charm" : "🎒Item";
       shopButton(
         data.icon,
-        `${data.name}（${tag}）`,
-        bought || owned ? "✅入手済み" : full ? "🎒道具がいっぱい" : `🪙${price}・${data.desc}`,
+        `${data.name} (${tag})`,
+        bought || owned ? "✅Obtained" : full ? "🎒Bag is full" : `🪙${price} · ${data.desc}`,
         bought || owned || full || coins < price,
         () => buyItem(i),
       );
@@ -2960,14 +2961,14 @@
     // 装備を売る（装備中＋リュックの中身）
     const equipped = SLOTS.filter((s) => equipment[s.id]);
     if (equipped.length || backpack.length) {
-      shopSection("💰 装備を売る");
+      shopSection("💰 Sell gear");
       // リュックのレア以下（コモン/アンコモン/レア）をまとめて売る
       const lowItems = backpack.filter((it) => rarityRank(it.rarity) <= rarityRank("rare"));
       if (lowItems.length) {
         const lowTotal = lowItems.reduce((sum, it) => sum + sellValue(it), 0);
         shopButton(
           "🧹",
-          `レア以下を一括売却（${lowItems.length}個）`,
+          `Sell all rare-and-below (${lowItems.length})`,
           `🪙+${formatNum(lowTotal)}`,
           false,
           () => sellBulkBelowRare(),
@@ -2975,7 +2976,7 @@
       }
       equipped.forEach((s) => {
         const it = equipment[s.id];
-        shopButton(s.icon, it.name, `装備中・売る 🪙+${sellValue(it)}`, false, () => sellEquip(s.id), it.color);
+        shopButton(s.icon, it.name, `Equipped · sell 🪙+${sellValue(it)}`, false, () => sellEquip(s.id), it.color);
       });
       // リュックの中身はレア度順で並べて売れるように
       backpack
@@ -2985,7 +2986,7 @@
           shopButton(
             SLOT_META[item.slot].icon,
             item.name,
-            `🎒リュック・売る 🪙+${sellValue(item)}`,
+            `🎒Backpack · sell 🪙+${sellValue(item)}`,
             false,
             () => sellFromBackpack(idx),
             item.color,
@@ -2995,16 +2996,16 @@
 
     // 手持ち道具（その場で使える）
     if (inventory.length || relics.length) {
-      shopSection(`🎒 手持ち道具（${inventory.length}/${MAX_INVENTORY}）・お守り`);
-      shopButton("🎒", "道具メニューを開く", `使う・確認する`, false, () => showItems(shopReturnsToBattle ? "battle" : "map"));
+      shopSection(`🎒 Your items (${inventory.length}/${MAX_INVENTORY}) & charms`);
+      shopButton("🎒", "Open item menu", `Use / check`, false, () => showItems(shopReturnsToBattle ? "battle" : "map"));
     }
 
     // 退店
-    shopSection("🛟 その他");
+    shopSection("🛟 Other");
     if (shopReturnsToBattle) {
-      shopButton("⚔️", "バトルに戻る", "ショップを閉じる", false, () => resumeFromShop());
+      shopButton("⚔️", "Back to battle", "Close the shop", false, () => resumeFromShop());
     } else {
-      shopButton("➡️", "マップへ戻る", "ショップを出る", false, () => advanceFloor("ショップを出た！"));
+      shopButton("➡️", "Back to map", "Leave the shop", false, () => advanceFloor("Left the shop!"));
     }
     updateBars();
   }
@@ -3015,7 +3016,7 @@
     coins -= stock.price;
     stock.bought = true;
     backpack.push(stock.item); // 自動装備せずリュックへ（リュックから付け替え）
-    battleMessage.textContent = `🛒 「${stock.item.name}」を購入！🎒リュックに入れたよ`;
+    battleMessage.textContent = `🛒 Bought "${stock.item.name}"! 🎒 Added to your backpack`;
     updateCoinDisplay();
     renderShop();
   }
@@ -3030,10 +3031,10 @@
     st.bought = true;
     if (st.isRelic) {
       relics.push({ ...st.data });
-      battleMessage.textContent = `🧿 お守り「${st.data.name}」を手に入れた！（${st.data.desc}）`;
+      battleMessage.textContent = `🧿 Got the charm "${st.data.name}"! (${st.data.desc})`;
     } else {
       inventory.push({ ...st.data });
-      battleMessage.textContent = `🎒 「${st.data.name}」を手に入れた！（道具 ${inventory.length}/${MAX_INVENTORY}）`;
+      battleMessage.textContent = `🎒 Got "${st.data.name}"! (Items ${inventory.length}/${MAX_INVENTORY})`;
     }
     updateCoinDisplay();
     updateItemsButton();
@@ -3084,7 +3085,7 @@
     }
     if (n > 0) {
       coins += gained;
-      battleMessage.textContent = `🧹 レア以下を${n}個まとめて売却！🪙+${formatNum(gained)}`;
+      battleMessage.textContent = `🧹 Sold ${n} rare-and-below items! 🪙+${formatNum(gained)}`;
       updateCoinDisplay();
       renderShop();
     }
@@ -3107,12 +3108,12 @@
       cell.className = "equip-slot";
       if (item) {
         cell.style.borderColor = item.color;
-        cell.dataset.tip = `${item.name}（${item.rarityName}）\n${item.desc}`;
+        cell.dataset.tip = `${item.name} (${item.rarityName})\n${item.desc}`;
         cell.innerHTML =
           `<span class="equip-icon">${slot.icon}</span>` +
           `<span class="equip-val" style="color:${item.color}">${shortTag(item)}</span>`;
       } else {
-        cell.dataset.tip = `${slot.name}：未装備`;
+        cell.dataset.tip = `${slot.name}: empty`;
         cell.innerHTML =
           `<span class="equip-icon dim">${slot.icon}</span>` +
           `<span class="equip-val dim">—</span>`;
@@ -3124,7 +3125,7 @@
   /* --- 階を進める（パーク／宝箱のあと共通） --- */
   // マスの用事（ごほうび・ショップ・ガチャなど）が終わったらマップに戻る
   function advanceFloor(prefix) {
-    showMap(`${prefix}　🗺️ 次のマスを選ぼう`);
+    showMap(`${prefix}　🗺️ Choose your next node`);
   }
 
   function onGameOver() {
@@ -3134,9 +3135,9 @@
     if (routeMapEl) routeMapEl.classList.add("is-hidden");
     battleOver.classList.remove("is-hidden");
     battleOver.innerHTML =
-      `💀 ゲームオーバー<br>${playerChar.emoji} ${playerChar.name}　到達: <strong>ステージ${stageNum}・${Math.max(1, layerIdx + 1)}マス目</strong>` +
-      `<br>撃破: <strong>${defeated}体</strong>　間違えた回数: <strong>${wrongCount}回</strong>` +
-      `<br><br><button id="battle-restart">もう一度挑戦</button>`;
+      `💀 Game Over<br>${playerChar.emoji} ${playerChar.name}　Reached: <strong>Stage ${stageNum} · Node ${Math.max(1, layerIdx + 1)}</strong>` +
+      `<br>Defeated: <strong>${defeated}</strong>　Wrong answers: <strong>${wrongCount}</strong>` +
+      `<br><br><button id="battle-restart">Try again</button>`;
     document.getElementById("battle-restart").addEventListener("click", startBattle);
     updateBars();
   }
@@ -3148,9 +3149,9 @@
     if (routeMapEl) routeMapEl.classList.add("is-hidden");
     battleOver.classList.remove("is-hidden");
     battleOver.innerHTML =
-      `👑 ステージ${stageNum}を制覇！おめでとう！<br>${playerChar.emoji} ${playerChar.name}の勝利！　撃破: <strong>${defeated}体</strong>` +
-      `<br>間違えた回数: <strong>${wrongCount}回</strong>　🏆最大ダメージ: <strong>${formatNum(maxAttackDamage)}</strong>` +
-      `<br><br><button id="battle-restart">もう一度挑戦</button>`;
+      `👑 Stage ${stageNum} conquered! Congrats!<br>${playerChar.emoji} ${playerChar.name} wins!　Defeated: <strong>${defeated}</strong>` +
+      `<br>Wrong answers: <strong>${wrongCount}</strong>　🏆Best damage: <strong>${formatNum(maxAttackDamage)}</strong>` +
+      `<br><br><button id="battle-restart">Try again</button>`;
     document.getElementById("battle-restart").addEventListener("click", startBattle);
     updateBars();
   }

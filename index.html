@@ -108,7 +108,7 @@
 
       <!-- 英熟語バトル（ローグライク） -->
       <section id="battle" class="view is-hidden">
-        <button class="back-btn" data-back="home">← モード選択にもどる</button>
+        <button class="back-btn" data-back="home">← Back to menu</button>
         <div class="battle-stage">
           <div class="coin-badge" id="coin-badge">🪙 0</div>
           <div class="combo-badge is-hidden" id="combo-badge"></div>
@@ -122,12 +122,12 @@
           </div>
         </div>
 
-        <div class="battle-message" id="battle-message">クイズに正解して攻撃しよう！</div>
+        <div class="battle-message" id="battle-message">Answer correctly to attack!</div>
 
         <div class="route-map is-hidden" id="route-map"><!-- JSで生成 --></div>
 
         <div class="player-status">
-          <span class="player-label">あなた ❤️</span>
+          <span class="player-label">You ❤️</span>
           <div class="hp-row">
             <div class="hp-bar"><div class="hp-fill player" id="player-hp-fill"></div></div>
             <span class="hp-text" id="player-hp-text"></span>
@@ -146,21 +146,21 @@
             <input
               type="text"
               id="battle-input"
-              placeholder="空欄の英熟語を入力して攻撃！"
-              aria-label="解答"
+              placeholder="Type the missing word to attack!"
+              aria-label="answer"
             />
-            <button type="submit" id="battle-attack">⚔️ 攻撃</button>
+            <button type="submit" id="battle-attack">⚔️ Attack</button>
           </form>
           <div class="battle-tools">
-            <button type="button" id="open-backpack" class="open-shop-btn">🎒 リュック</button>
-            <button type="button" id="open-items" class="open-shop-btn">🧪 道具</button>
-            <button type="button" id="detonate-bomb" class="open-shop-btn is-hidden">💣 爆弾を放出</button>
-            <button type="button" id="use-skill" class="open-shop-btn skill-btn is-hidden">✨ スキル</button>
+            <button type="button" id="open-backpack" class="open-shop-btn">🎒 Backpack</button>
+            <button type="button" id="open-items" class="open-shop-btn">🧪 Items</button>
+            <button type="button" id="detonate-bomb" class="open-shop-btn is-hidden">💣 Detonate</button>
+            <button type="button" id="use-skill" class="open-shop-btn skill-btn is-hidden">✨ Skill</button>
           </div>
         </div>
 
         <div class="battle-reward is-hidden" id="battle-reward">
-          <p class="reward-title" id="reward-title">🎁 ごほうびを1つ選ぼう</p>
+          <p class="reward-title" id="reward-title">🎁 Choose a reward</p>
           <div class="reward-grid" id="reward-grid"></div>
         </div>
 
