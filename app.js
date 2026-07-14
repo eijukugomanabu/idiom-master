@@ -238,6 +238,37 @@
   const cardNextSet = document.getElementById("card-next-set");
   let index = 0;
 
+  // 例文（英語）の中の phrase を強調表示するHTMLを作る（該当箇所を <span class="hl-word"> で包む）
+  function highlightInText(text, term) {
+    if (!text) return "";
+    if (!term) return escapeHtml(text);
+    const idx = text.toLowerCase().indexOf(term.toLowerCase());
+    if (idx < 0) return escapeHtml(text);
+    return (
+      escapeHtml(text.slice(0, idx)) +
+      `<span class="hl-word">${escapeHtml(text.slice(idx, idx + term.length))}</span>` +
+      escapeHtml(text.slice(idx + term.length))
+    );
+  }
+  // 意味（例:「【動】参照する、言及する」）から、日本語訳の中に実際に現れる語を探す
+  // 活用で末尾が変わることがあるので、末尾を削りながら（最短2文字まで）一致を探すベストエフォート
+  function jaTermInExample(meaning, exampleJa) {
+    if (!meaning || !exampleJa) return "";
+    const cleaned = meaning.replace(/【[^】]*】/g, " "); // 品詞タグ【…】を除去
+    const cands = cleaned
+      .split(/[／\/、,・]/)
+      .map((s) => s.replace(/[〜～\s]/g, "").trim())
+      .filter(Boolean)
+      .sort((a, b) => b.length - a.length); // 長い候補を優先
+    for (const c of cands) {
+      for (let len = c.length; len >= 2; len--) {
+        const stem = c.slice(0, len);
+        if (exampleJa.indexOf(stem) >= 0) return stem;
+      }
+    }
+    return "";
+  }
+
   function renderCard() {
     const card = cards[index];
     if (!card) return;
@@ -245,8 +276,9 @@
     setImage(imageEl, card);
     phraseEl.textContent = card.phrase;
     meaningEl.textContent = card.meaning;
-    exampleEl.textContent = card.example;
-    exampleJaEl.textContent = card.exampleJa;
+    // 例文の中の学習中の単語と、日本語訳の対応部分を同じ色でハイライト
+    exampleEl.innerHTML = highlightInText(card.example, card.phrase);
+    exampleJaEl.innerHTML = highlightInText(card.exampleJa, jaTermInExample(card.meaning, card.exampleJa));
     const doneInSet = cards.filter((c) => mastered[c.phrase]).length;
     setProgressLabel(progressEl, `${index + 1} / ${cards.length}　✅ ${doneInSet}/${cards.length}`);
     cardNextSet.classList.remove("is-hidden"); // 「セット選択へ」は常に表示
