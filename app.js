@@ -604,7 +604,7 @@
   let causalAtk = 0; // 因果律の剣：与ダメから永続加算する攻撃（武器を外すと無効）
   let bombStore = 0; // チンギスの騎馬靴：貯めた爆弾ダメージ
   let lastAttackDamage = 0; // 直近の攻撃で与えたダメージ
-  let maxAttackDamage = Number(localStorage.getItem("idiomMaxDamage")) || 0; // 過去最高ダメージ（保存）
+  let maxAttackDamage = 0; // このバトルでの最高ダメージ（開始ごとにリセット）
   let peakTier = 0; // この戦闘で到達したダメージ演出の最大ランク
   /* --- 戦略システム --- */
   let stance = "normal"; // 構え（attack / normal / guard）
@@ -873,6 +873,7 @@
     causalAtk = 0;
     bombStore = 0;
     lastAttackDamage = 0;
+    maxAttackDamage = 0; // Best ダメージは1回の挑戦ごとにリセット
     peakTier = 0;
     stance = "normal";
     curseNext = false;
@@ -1794,10 +1795,7 @@
   function recordDamage(d) {
     if (!(d > 0)) return;
     lastAttackDamage = d;
-    if (d > maxAttackDamage) {
-      maxAttackDamage = d;
-      try { localStorage.setItem("idiomMaxDamage", String(maxAttackDamage)); } catch (e) {}
-    }
+    if (d > maxAttackDamage) maxAttackDamage = d;
   }
 
   /* ===== 脳が溶ける演出（ジュース）レイヤー ===== */
