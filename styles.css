@@ -379,6 +379,23 @@ button:hover {
   font-size: 0.9rem;
   width: 100%;
 }
+.result-done {
+  margin-left: auto;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.result-done.on {
+  border-color: var(--ok);
+  color: var(--ok);
+  background: rgba(74, 222, 128, 0.12);
+}
 
 /* ---------- 英熟語バトル ---------- */
 .battle-stage {

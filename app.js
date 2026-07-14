@@ -445,6 +445,8 @@
       `<div class="result-row">` +
       `<span class="result-phrase">${escapeHtml(q.phrase)}</span>` +
       `<span class="result-meaning">${escapeHtml(q.meaning)}</span>` +
+      // リザルトからその場で「できた」チェックを付け外しできるトグル
+      `<button type="button" class="result-done${mastered[q.phrase] ? " on" : ""}" data-phrase="${escapeHtml(q.phrase)}">${mastered[q.phrase] ? "✅ できた" : "⬜ できた"}</button>` +
       (showAnswer
         ? `<span class="result-your">あなた: ${q.answer ? escapeHtml(q.answer) : "（未入力）"}</span>`
         : "") +
@@ -470,6 +472,18 @@
     // 次の10問へ：ホーム/セット選択を経由せずダイレクトに次セットの未習得問題を開始
     const nb = document.getElementById("quiz-next-set");
     if (nb) nb.addEventListener("click", () => startSet(setIndex + 1));
+    // 各行の「できた」トグル（その場でチェックを付け外し・保存される）
+    quizResult.querySelectorAll(".result-done").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const p = btn.dataset.phrase;
+        if (mastered[p]) delete mastered[p];
+        else mastered[p] = true;
+        saveMastered();
+        const on = !!mastered[p];
+        btn.classList.toggle("on", on);
+        btn.textContent = on ? "✅ できた" : "⬜ できた";
+      });
+    });
   }
 
   /* ---------- 英熟語バトル（ローグライク） ---------- */
