@@ -337,6 +337,49 @@ button:hover {
   font-size: 1.3rem;
 }
 
+/* リザルトの正誤一覧 */
+.result-list {
+  margin: 1.2rem 0 0.4rem;
+  text-align: left;
+  font-size: 1rem;
+}
+.result-section {
+  border-radius: 14px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.8rem;
+  background: rgba(148, 163, 184, 0.08);
+}
+.result-section.ng { border: 1px solid var(--ng); }
+.result-section.ok { border: 1px solid var(--ok); }
+.result-head {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.result-section.ng .result-head { color: var(--ng); }
+.result-section.ok .result-head { color: var(--ok); }
+.result-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.7rem;
+  padding: 0.35rem 0.2rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+.result-row:first-of-type { border-top: none; }
+.result-phrase {
+  font-weight: 700;
+  color: var(--text);
+}
+.result-meaning {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.result-your {
+  color: var(--ng);
+  font-size: 0.9rem;
+  width: 100%;
+}
+
 /* ---------- 英熟語バトル ---------- */
 .battle-stage {
   text-align: center;

@@ -364,12 +364,23 @@
   let qIndex = 0;
   let score = 0;
   let answered = false;
+  let quizLog = []; // このセットの1問ずつの正誤記録（リザルト用）
+
+  // HTMLに差し込む文字列を安全にエスケープ（ユーザー入力を表示するため）
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
   // クイズを（現在のセットで）最初から始める
   function startQuiz() {
     cards = shuffled(cards); // 出題順をランダムに（元データは変えずコピーを並べ替え）
     qIndex = 0;
     score = 0;
+    quizLog = [];
     quizCard.classList.remove("is-hidden");
     quizProgress.classList.remove("is-hidden");
     quizResult.classList.add("is-hidden");
@@ -397,7 +408,9 @@
     const card = cards[qIndex];
     answered = true;
     quizInput.disabled = true;
-    if (matchesIdiom(quizInput.value, card)) {
+    const correct = matchesIdiom(quizInput.value, card);
+    quizLog.push({ phrase: card.phrase, meaning: card.meaning, answer: quizInput.value.trim(), correct });
+    if (correct) {
       score++;
       quizFeedback.textContent = "⭕️ 正解！";
       quizFeedback.className = "quiz-feedback ok";
@@ -426,9 +439,30 @@
     quizResult.classList.remove("is-hidden");
     const hasNext = setIndex < sets.length - 1; // 次のセットがあるか
     const nextBtn = hasNext ? `<button id="quiz-next-set" class="primary-next">➡️ 次の10問へ</button>` : "";
+    const wrongItems = quizLog.filter((q) => !q.correct);
+    const okItems = quizLog.filter((q) => q.correct);
+    const row = (q, showAnswer) =>
+      `<div class="result-row">` +
+      `<span class="result-phrase">${escapeHtml(q.phrase)}</span>` +
+      `<span class="result-meaning">${escapeHtml(q.meaning)}</span>` +
+      (showAnswer
+        ? `<span class="result-your">あなた: ${q.answer ? escapeHtml(q.answer) : "（未入力）"}</span>`
+        : "") +
+      `</div>`;
+    const wrongHtml = wrongItems.length
+      ? `<div class="result-section ng"><div class="result-head">❌ 間違えた問題（${wrongItems.length}）</div>` +
+        wrongItems.map((q) => row(q, true)).join("") +
+        `</div>`
+      : "";
+    const okHtml = okItems.length
+      ? `<div class="result-section ok"><div class="result-head">⭕️ 正解した問題（${okItems.length}）</div>` +
+        okItems.map((q) => row(q, false)).join("") +
+        `</div>`
+      : "";
     quizResult.innerHTML =
       `🎉 第${setIndex + 1}セット終了！<br>スコア: <strong>${score} / ${cards.length}</strong>` +
-      `<br><br>${nextBtn}` +
+      `<div class="result-list">${wrongHtml}${okHtml}</div>` +
+      `${nextBtn}` +
       `<br><br><button id="quiz-restart">🔁 もう一度</button> ` +
       `<button id="quiz-to-sets">📚 セット選択へ</button>`;
     document.getElementById("quiz-restart").addEventListener("click", startQuiz);
@@ -616,6 +650,7 @@
   let floor = 1;
   let defeated = 0;
   let wrongCount = 0; // 間違えた回数（バトル中）
+  let stageQuizLog = []; // 今のステージで答えた問題の記録（ステージクリア時のリザルト用）
   let combo = 0; // 連続正解数（コンボ。1問でも間違えると0に戻る）
   let coins = 0; // 所持コイン（敵撃破でランダム入手、ショップで使う）
   let enemiesRemaining = 1; // この階に残っている敵の数
@@ -1467,6 +1502,7 @@
   }
 
   function genMap() {
+    stageQuizLog = []; // 新しいステージに入ったらリザルトの記録をリセット
     // まず各列の「役割」を決める（seg本体／cp合流点／boss）
     const layout = [];
     MAP_SEGMENTS.forEach((seg, si) => {
@@ -1675,6 +1711,7 @@
     rewardTitle.textContent = `👑 Stage ${stageNum} clear!`;
     battleMessage.textContent = "🎉 You beat the boss! Go deeper, or finish in victory?";
     rewardGrid.innerHTML = "";
+    renderStageResult(); // このステージで答えた問題の正誤リストを表示
     shopButton("⬇️", `Take on Stage ${stageNum + 1}`, "Enemies get stronger (gear & coins carry over)", false, () => {
       stageNum++;
       overkillStreak = 0;
@@ -1683,6 +1720,36 @@
     });
     shopButton("🏆", "Finish in victory", "See your results", false, () => onGameClear());
     updateBars();
+  }
+
+  // ステージ中に答えた問題を単語ごとにまとめて、正解/ミスのリザルトを表示する
+  // （同じ単語は1行にまとめ、1回でもミスがあれば「Missed」に入れる）
+  function renderStageResult() {
+    if (!stageQuizLog.length) return;
+    const seen = new Map();
+    stageQuizLog.forEach((q) => {
+      const e = seen.get(q.phrase) || { phrase: q.phrase, meaning: q.meaning, missed: false };
+      if (!q.correct) e.missed = true;
+      seen.set(q.phrase, e);
+    });
+    const items = [...seen.values()];
+    const missed = items.filter((x) => x.missed);
+    const ok = items.filter((x) => !x.missed);
+    const row = (q) =>
+      `<div class="result-row">` +
+      `<span class="result-phrase">${escapeHtml(q.phrase)}</span>` +
+      `<span class="result-meaning">${escapeHtml(q.meaning)}</span>` +
+      `</div>`;
+    const section = (cls, head, list) =>
+      list.length
+        ? `<div class="result-section ${cls}"><div class="result-head">${head}</div>${list.map(row).join("")}</div>`
+        : "";
+    const wrap = document.createElement("div");
+    wrap.className = "result-list stage-result";
+    wrap.innerHTML =
+      section("ng", `❌ Missed (${missed.length})`, missed) +
+      section("ok", `⭕ Correct (${ok.length})`, ok);
+    rewardGrid.appendChild(wrap);
   }
 
   /* --- ❓ イベントマス（ランダムな選択イベント） --- */
@@ -1986,7 +2053,9 @@
     if (battleInput.disabled) return;
     const phrase = battleIdiom.phrase;
     if (!tickPlayerStatuses()) return; // 状態異常の進行（毒・炎上・死の呪いなど）
-    if (matchesIdiom(battleInput.value, battleIdiom)) {
+    const correct = matchesIdiom(battleInput.value, battleIdiom);
+    stageQuizLog.push({ phrase, meaning: battleIdiom.meaning, correct }); // ステージのリザルト用に記録
+    if (correct) {
       attackEnemy(phrase);
     } else {
       enemyAttack(phrase);
