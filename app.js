@@ -289,10 +289,18 @@
     markDoneBtn.addEventListener("click", () => {
       const card = cards[index];
       if (!card) return;
-      if (mastered[card.phrase]) delete mastered[card.phrase];
-      else mastered[card.phrase] = true;
-      saveMastered();
-      renderCard();
+      if (mastered[card.phrase]) {
+        // すでに「できた」の単語をタップ→チェックを外す（カードはそのまま）
+        delete mastered[card.phrase];
+        saveMastered();
+        renderCard();
+      } else {
+        // 「できた」にしたら次のカードへ自動で進む（最後のカードならその場に留まる）
+        mastered[card.phrase] = true;
+        saveMastered();
+        if (index < cards.length - 1) index++;
+        renderCard();
+      }
     });
   }
   // 「このセットを全部できたに／全部外す」一括チェック（1語ずつ押す手間をなくす）
