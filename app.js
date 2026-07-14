@@ -260,6 +260,13 @@
       doneBtn.textContent = done ? "✅ できた！（タップで外す）" : "⬜ できた！チェック";
       doneBtn.classList.toggle("done", done);
     }
+    // 「このセットを全部できたに／全部外す」一括ボタンの見た目
+    const allBtn = document.getElementById("mark-all-done");
+    if (allBtn) {
+      const allDone = cards.length > 0 && cards.every((c) => mastered[c.phrase]);
+      allBtn.textContent = allDone ? "⬜ このセットのチェックを全部外す" : "✅ このセットを全部「できた」に";
+      allBtn.classList.toggle("done", allDone);
+    }
   }
 
   cardEl.addEventListener("click", () => cardEl.classList.toggle("is-flipped"));
@@ -284,6 +291,20 @@
       if (!card) return;
       if (mastered[card.phrase]) delete mastered[card.phrase];
       else mastered[card.phrase] = true;
+      saveMastered();
+      renderCard();
+    });
+  }
+  // 「このセットを全部できたに／全部外す」一括チェック（1語ずつ押す手間をなくす）
+  const markAllBtn = document.getElementById("mark-all-done");
+  if (markAllBtn) {
+    markAllBtn.addEventListener("click", () => {
+      const allDone = cards.length > 0 && cards.every((c) => mastered[c.phrase]);
+      if (allDone) {
+        cards.forEach((c) => delete mastered[c.phrase]); // 全部チェック済みなら一括で外す
+      } else {
+        cards.forEach((c) => (mastered[c.phrase] = true)); // まだなら一括でできたに
+      }
       saveMastered();
       renderCard();
     });
