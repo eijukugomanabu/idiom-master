@@ -221,6 +221,13 @@ main {
   font-size: 0.9rem;
 }
 
+/* 例文の中の学習中の単語＆日本語訳の対応部分のハイライト（英語・日本語とも同じ色） */
+.hl-word {
+  color: #fbbf24;
+  font-weight: 700;
+  font-style: normal;
+}
+
 .controls {
   display: flex;
   justify-content: space-between;
