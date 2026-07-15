@@ -306,14 +306,21 @@
   function flipCard() {
     cardEl.classList.toggle("is-flipped");
   }
-  // 今のカードの「できた」を付け外し（同じカードでもう一度押すと解除）。カードは進めない
-  function toggleDone() {
+  // 「できた」を付けたら次のカードへ自動で進む（最後のカードは留まる）。
+  // すでに「できた」の単語で押した時は、チェックを外してその場に留まる（＝戻れば解除もできる）
+  function markDoneOrUndo() {
     const card = cards[index];
     if (!card) return;
-    if (mastered[card.phrase]) delete mastered[card.phrase];
-    else mastered[card.phrase] = true;
-    saveMastered();
-    renderCard();
+    if (mastered[card.phrase]) {
+      delete mastered[card.phrase]; // 済みならチェックを外す（カードはそのまま）
+      saveMastered();
+      renderCard();
+    } else {
+      mastered[card.phrase] = true; // 「できた」にして次のカードへ進む
+      saveMastered();
+      if (index < cards.length - 1) index++;
+      renderCard();
+    }
   }
   function goPrevCard() {
     if (!cards.length) return;
@@ -345,7 +352,7 @@
     const k = e.key.toLowerCase();
     if (e.key === "ArrowRight") { e.preventDefault(); goNextCard(); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); goPrevCard(); }
-    else if (e.key === "Enter") { e.preventDefault(); toggleDone(); } // Enterで「できた」を付け外し
+    else if (e.key === "Enter") { e.preventDefault(); markDoneOrUndo(); } // Enterで「できた」→次へ（済みなら解除）
     else if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); flipCard(); }
     else if (k === "n") { e.preventDefault(); goNextSet(); } // 次のセット（次の10問）へ
     else if (k === "p") { e.preventDefault(); goPrevSet(); } // 前のセットへ
@@ -357,24 +364,7 @@
 
   // 「できた！」チェックの切り替え（保存される）
   const markDoneBtn = document.getElementById("mark-done");
-  if (markDoneBtn) {
-    markDoneBtn.addEventListener("click", () => {
-      const card = cards[index];
-      if (!card) return;
-      if (mastered[card.phrase]) {
-        // すでに「できた」の単語をタップ→チェックを外す（カードはそのまま）
-        delete mastered[card.phrase];
-        saveMastered();
-        renderCard();
-      } else {
-        // 「できた」にしたら次のカードへ自動で進む（最後のカードならその場に留まる）
-        mastered[card.phrase] = true;
-        saveMastered();
-        if (index < cards.length - 1) index++;
-        renderCard();
-      }
-    });
-  }
+  if (markDoneBtn) markDoneBtn.addEventListener("click", markDoneOrUndo); // ボタンもEnterと同じ動き
   // 「このセットを全部できたに／全部外す」一括チェック（1語ずつ押す手間をなくす）
   const markAllBtn = document.getElementById("mark-all-done");
   if (markAllBtn) {
