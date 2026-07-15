@@ -289,7 +289,9 @@
     const doneBtn = document.getElementById("mark-done");
     if (doneBtn) {
       const done = !!mastered[card.phrase];
-      doneBtn.textContent = done ? "✅ できた！（タップで外す）" : "⬜ できた！チェック";
+      doneBtn.innerHTML =
+        (done ? "✅ できた！（タップで外す）" : "⬜ できた！チェック") +
+        ` <kbd class="kbd">Enter</kbd>`;
       doneBtn.classList.toggle("done", done);
     }
     // 「このセットを全部できたに／全部外す」一括ボタンの見た目
@@ -303,6 +305,15 @@
 
   function flipCard() {
     cardEl.classList.toggle("is-flipped");
+  }
+  // 今のカードの「できた」を付け外し（同じカードでもう一度押すと解除）。カードは進めない
+  function toggleDone() {
+    const card = cards[index];
+    if (!card) return;
+    if (mastered[card.phrase]) delete mastered[card.phrase];
+    else mastered[card.phrase] = true;
+    saveMastered();
+    renderCard();
   }
   function goPrevCard() {
     if (!cards.length) return;
@@ -324,7 +335,7 @@
   function goPrevSet() {
     if (setIndex > 0) startSet(setIndex - 1); // 前のセットがある時だけ
   }
-  // キーボード操作（単語帳を開いている時だけ）：←→でカード前後、スペース/Enter/↑↓でめくる、N/Pでセット移動
+  // キーボード操作（単語帳を開いている時だけ）：←→でカード前後、スペース/↑↓でめくる、Enterで「できた」切替、N/Pでセット移動
   document.addEventListener("keydown", (e) => {
     const view = document.getElementById("flashcards");
     if (!view || view.classList.contains("is-hidden")) return; // 単語帳を開いていない時は無視
@@ -334,7 +345,8 @@
     const k = e.key.toLowerCase();
     if (e.key === "ArrowRight") { e.preventDefault(); goNextCard(); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); goPrevCard(); }
-    else if (e.key === " " || e.key === "Enter" || e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); flipCard(); }
+    else if (e.key === "Enter") { e.preventDefault(); toggleDone(); } // Enterで「できた」を付け外し
+    else if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); flipCard(); }
     else if (k === "n") { e.preventDefault(); goNextSet(); } // 次のセット（次の10問）へ
     else if (k === "p") { e.preventDefault(); goPrevSet(); } // 前のセットへ
   });
