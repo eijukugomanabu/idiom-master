@@ -228,6 +228,23 @@ main {
   font-style: normal;
 }
 
+/* キーボードのキー表示バッジ（どのキーで操作できるかの目印） */
+.kbd {
+  display: inline-block;
+  min-width: 1.2em;
+  padding: 0.05em 0.45em;
+  margin-left: 0.35em;
+  border-radius: 6px;
+  border: 1px solid rgba(226, 232, 240, 0.55);
+  background: rgba(15, 23, 42, 0.55);
+  color: var(--text);
+  font-size: 0.78em;
+  font-weight: 700;
+  line-height: 1.5;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .controls {
   display: flex;
   justify-content: space-between;
