@@ -318,16 +318,25 @@
   document.getElementById("prev-card").addEventListener("click", goPrevCard);
   document.getElementById("next-card").addEventListener("click", goNextCard);
 
-  // キーボード操作（単語帳を開いている時だけ）：←→で前後、スペース/Enter/↑↓でめくる
+  function goNextSet() {
+    if (setIndex < sets.length - 1) startSet(setIndex + 1); // 次のセットがある時だけ
+  }
+  function goPrevSet() {
+    if (setIndex > 0) startSet(setIndex - 1); // 前のセットがある時だけ
+  }
+  // キーボード操作（単語帳を開いている時だけ）：←→でカード前後、スペース/Enter/↑↓でめくる、N/Pでセット移動
   document.addEventListener("keydown", (e) => {
     const view = document.getElementById("flashcards");
     if (!view || view.classList.contains("is-hidden")) return; // 単語帳を開いていない時は無視
     const tag = (e.target.tagName || "").toLowerCase();
     if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return; // 入力中は邪魔しない
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
     if (e.key === "ArrowRight") { e.preventDefault(); goNextCard(); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); goPrevCard(); }
     else if (e.key === " " || e.key === "Enter" || e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); flipCard(); }
+    else if (k === "n") { e.preventDefault(); goNextSet(); } // 次のセット（次の10問）へ
+    else if (k === "p") { e.preventDefault(); goPrevSet(); } // 前のセットへ
   });
   cardNextSet.addEventListener("click", () => showSetSelect("flashcards")); // セット選択にもどる
   // 次の10問へ：ホーム/セット選択を経由せずダイレクトに次のセットのフラッシュカードへ
