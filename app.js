@@ -298,6 +298,18 @@
     return { parts, flow: segs.slice(1) };
   }
   let originDiagramOpen = false;
+  // 「🧩 語源を図解で見る」を開閉する（ボタン・↓キー共通）
+  function toggleOriginDiagram() {
+    originDiagramOpen = !originDiagramOpen;
+    const btn = document.getElementById("toggle-origin-diagram");
+    if (btn) {
+      btn.innerHTML =
+        (originDiagramOpen ? "🧩 図解を閉じる" : "🧩 語源を図解で見る") +
+        ` <kbd class="kbd">↓</kbd>`;
+      btn.classList.toggle("open", originDiagramOpen);
+    }
+    renderOriginDiagram();
+  }
   // 語源を部品カードの図解として表示する
   function renderOriginDiagram() {
     const box = document.getElementById("origin-diagram");
@@ -401,14 +413,7 @@
 
   // 「🧩 語源を図解で見る」トグル
   const originDiagramBtn = document.getElementById("toggle-origin-diagram");
-  if (originDiagramBtn) {
-    originDiagramBtn.addEventListener("click", () => {
-      originDiagramOpen = !originDiagramOpen;
-      originDiagramBtn.textContent = originDiagramOpen ? "🧩 図解を閉じる" : "🧩 語源を図解で見る";
-      originDiagramBtn.classList.toggle("open", originDiagramOpen);
-      renderOriginDiagram();
-    });
-  }
+  if (originDiagramBtn) originDiagramBtn.addEventListener("click", toggleOriginDiagram);
 
   function goNextSet() {
     if (setIndex < sets.length - 1) startSet(setIndex + 1); // 次のセットがある時だけ
@@ -427,7 +432,8 @@
     if (e.key === "ArrowRight") { e.preventDefault(); goNextCard(); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); goPrevCard(); }
     else if (e.key === "Enter") { e.preventDefault(); markDoneOrUndo(); } // Enterで「できた」→次へ（済みなら解除）
-    else if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); flipCard(); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); toggleOriginDiagram(); } // ↓で語源の図解を開閉
+    else if (e.key === " " || e.key === "ArrowUp") { e.preventDefault(); flipCard(); }
     else if (k === "n") { e.preventDefault(); goNextSet(); } // 次のセット（次の10問）へ
     else if (k === "p") { e.preventDefault(); goPrevSet(); } // 前のセットへ
   });
