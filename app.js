@@ -269,6 +269,62 @@
     return "";
   }
 
+  // カッコの外側だけで区切る（例文の (…) 内の ＋ や → で誤分割しないため）
+  function splitTopLevel(str, delim) {
+    const out = [];
+    let depth = 0;
+    let cur = "";
+    for (const ch of str) {
+      if (ch === "(" || ch === "（") depth++;
+      else if (ch === ")" || ch === "）") depth = Math.max(0, depth - 1);
+      if (ch === delim && depth === 0) {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+  // 語源テキストを「部品（接頭辞/語根/接尾辞）」と「意味の流れ」に分解する
+  function parseOrigin(origin) {
+    if (!origin) return null;
+    const segs = splitTopLevel(origin, "→").map((s) => s.trim()).filter(Boolean);
+    if (!segs.length) return null;
+    const tokens = splitTopLevel(segs[0], "＋").map((s) => s.trim()).filter(Boolean);
+    const parts = tokens.map((tok) => {
+      const m = tok.match(/^(.*?)\s*[(（](.+)[)）]\s*$/);
+      return m ? { label: m[1].trim(), meaning: m[2].trim() } : { label: tok, meaning: "" };
+    });
+    return { parts, flow: segs.slice(1) };
+  }
+  let originDiagramOpen = false;
+  // 語源を部品カードの図解として表示する
+  function renderOriginDiagram() {
+    const box = document.getElementById("origin-diagram");
+    if (!box) return;
+    const card = cards[index];
+    const data = card ? parseOrigin(card.origin) : null;
+    if (!originDiagramOpen || !data) {
+      box.classList.add("is-hidden");
+      box.innerHTML = "";
+      return;
+    }
+    box.classList.remove("is-hidden");
+    const chips = data.parts
+      .map(
+        (p) =>
+          `<div class="origin-chip"><span class="origin-chip-label">${escapeHtml(p.label)}</span>` +
+          (p.meaning ? `<span class="origin-chip-meaning">${escapeHtml(p.meaning)}</span>` : "") +
+          `</div>`,
+      )
+      .join('<span class="origin-plus">＋</span>');
+    const flow = data.flow.map((f) => escapeHtml(f)).join('<span class="origin-arrow">→</span>');
+    box.innerHTML =
+      `<div class="origin-word">${escapeHtml(card.phrase)}</div>` +
+      `<div class="origin-chips">${chips}</div>` +
+      (data.flow.length ? `<div class="origin-down">↓</div><div class="origin-flow">${flow}</div>` : "");
+  }
+
   function renderCard() {
     const card = cards[index];
     if (!card) return;
@@ -285,6 +341,7 @@
       originEl.textContent = card.origin ? `🌱 語源: ${card.origin}` : "";
       originEl.classList.toggle("is-hidden", !card.origin);
     }
+    renderOriginDiagram(); // 図解が開いていれば今の単語で更新
     const doneInSet = cards.filter((c) => mastered[c.phrase]).length;
     setProgressLabel(progressEl, `${index + 1} / ${cards.length}　✅ ${doneInSet}/${cards.length}`);
     cardNextSet.classList.remove("is-hidden"); // 「セット選択へ」は常に表示
@@ -341,6 +398,17 @@
   cardEl.addEventListener("click", flipCard);
   document.getElementById("prev-card").addEventListener("click", goPrevCard);
   document.getElementById("next-card").addEventListener("click", goNextCard);
+
+  // 「🧩 語源を図解で見る」トグル
+  const originDiagramBtn = document.getElementById("toggle-origin-diagram");
+  if (originDiagramBtn) {
+    originDiagramBtn.addEventListener("click", () => {
+      originDiagramOpen = !originDiagramOpen;
+      originDiagramBtn.textContent = originDiagramOpen ? "🧩 図解を閉じる" : "🧩 語源を図解で見る";
+      originDiagramBtn.classList.toggle("open", originDiagramOpen);
+      renderOriginDiagram();
+    });
+  }
 
   function goNextSet() {
     if (setIndex < sets.length - 1) startSet(setIndex + 1); // 次のセットがある時だけ

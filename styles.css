@@ -234,6 +234,83 @@ main {
   text-align: left;
 }
 
+/* 語源の図解トグルボタン */
+.origin-diagram-btn {
+  margin-top: 0.8rem;
+  width: 100%;
+  background: rgba(167, 139, 250, 0.14);
+  border: 1px solid var(--accent-2);
+  color: var(--accent-2);
+  font-weight: 700;
+}
+.origin-diagram-btn.open {
+  background: rgba(167, 139, 250, 0.28);
+}
+
+/* 語源の図解（部品カード） */
+.origin-diagram {
+  margin-top: 0.8rem;
+  padding: 1rem 0.8rem;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--accent-2);
+  text-align: center;
+}
+.origin-word {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0.8rem;
+}
+.origin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.origin-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.2rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 12px;
+  background: rgba(167, 139, 250, 0.16);
+  border: 1px solid var(--accent-2);
+}
+.origin-chip-label {
+  font-weight: 700;
+  color: #ede9fe;
+  font-size: 1rem;
+}
+.origin-chip-meaning {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+.origin-plus {
+  align-self: center;
+  color: var(--muted);
+  font-weight: 700;
+}
+.origin-down {
+  color: var(--accent-2);
+  font-size: 1.2rem;
+  margin: 0.5rem 0 0.2rem;
+}
+.origin-flow {
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+.origin-arrow {
+  color: var(--accent-2);
+  margin: 0 0.35rem;
+  font-weight: 700;
+}
+
 /* 例文の中の学習中の単語＆日本語訳の対応部分のハイライト（英語・日本語とも同じ色） */
 .hl-word {
   color: #fbbf24;
