@@ -221,6 +221,19 @@ main {
   font-size: 0.9rem;
 }
 
+/* 語源（覚えやすくするための単語の成り立ち） */
+.card-origin {
+  margin-top: 0.9rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
 /* 例文の中の学習中の単語＆日本語訳の対応部分のハイライト（英語・日本語とも同じ色） */
 .hl-word {
   color: #fbbf24;
