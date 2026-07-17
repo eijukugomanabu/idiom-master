@@ -279,6 +279,12 @@
     // 例文の中の学習中の単語と、日本語訳の対応部分を同じ色でハイライト
     exampleEl.innerHTML = highlightInText(card.example, card.phrase);
     exampleJaEl.innerHTML = highlightInText(card.exampleJa, jaTermInExample(card.meaning, card.exampleJa));
+    // 語源（あれば表示）
+    const originEl = document.getElementById("card-origin");
+    if (originEl) {
+      originEl.textContent = card.origin ? `🌱 語源: ${card.origin}` : "";
+      originEl.classList.toggle("is-hidden", !card.origin);
+    }
     const doneInSet = cards.filter((c) => mastered[c.phrase]).length;
     setProgressLabel(progressEl, `${index + 1} / ${cards.length}　✅ ${doneInSet}/${cards.length}`);
     cardNextSet.classList.remove("is-hidden"); // 「セット選択へ」は常に表示
