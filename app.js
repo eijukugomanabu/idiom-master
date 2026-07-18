@@ -304,37 +304,56 @@
     const btn = document.getElementById("toggle-origin-diagram");
     if (btn) {
       btn.innerHTML =
-        (originDiagramOpen ? "🧩 図解を閉じる" : "🧩 語源を図解で見る") +
+        (originDiagramOpen ? "🔎 詳細を閉じる" : "🔎 単語を詳しく知る") +
         ` <kbd class="kbd">↓</kbd>`;
       btn.classList.toggle("open", originDiagramOpen);
     }
     renderOriginDiagram();
   }
-  // 語源を部品カードの図解として表示する
+  // 「単語を詳しく知る」パネル：語源の図解＋品詞別の形＋類義語をまとめて表示する
   function renderOriginDiagram() {
     const box = document.getElementById("origin-diagram");
     if (!box) return;
     const card = cards[index];
     const data = card ? parseOrigin(card.origin) : null;
-    if (!originDiagramOpen || !data) {
+    const hasForms = card && card.forms;
+    const hasSyn = card && card.synonyms;
+    if (!originDiagramOpen || (!data && !hasForms && !hasSyn)) {
       box.classList.add("is-hidden");
       box.innerHTML = "";
       return;
     }
     box.classList.remove("is-hidden");
-    const chips = data.parts
-      .map(
-        (p) =>
-          `<div class="origin-chip"><span class="origin-chip-label">${escapeHtml(p.label)}</span>` +
-          (p.meaning ? `<span class="origin-chip-meaning">${escapeHtml(p.meaning)}</span>` : "") +
-          `</div>`,
-      )
-      .join('<span class="origin-plus">＋</span>');
-    const flow = data.flow.map((f) => escapeHtml(f)).join('<span class="origin-arrow">→</span>');
-    box.innerHTML =
-      `<div class="origin-word">${escapeHtml(card.phrase)}</div>` +
-      `<div class="origin-chips">${chips}</div>` +
-      (data.flow.length ? `<div class="origin-down">↓</div><div class="origin-flow">${flow}</div>` : "");
+    let html = `<div class="origin-word">${escapeHtml(card.phrase)}</div>`;
+    // 語源の図解（部品カード）
+    if (data) {
+      const chips = data.parts
+        .map(
+          (p) =>
+            `<div class="origin-chip"><span class="origin-chip-label">${escapeHtml(p.label)}</span>` +
+            (p.meaning ? `<span class="origin-chip-meaning">${escapeHtml(p.meaning)}</span>` : "") +
+            `</div>`,
+        )
+        .join('<span class="origin-plus">＋</span>');
+      const flow = data.flow.map((f) => escapeHtml(f)).join('<span class="origin-arrow">→</span>');
+      html +=
+        `<div class="detail-heading">🧩 語源</div>` +
+        `<div class="origin-chips">${chips}</div>` +
+        (data.flow.length ? `<div class="origin-down">↓</div><div class="origin-flow">${flow}</div>` : "");
+    }
+    // 品詞別の形（名詞・動詞・形容詞・副詞など）
+    if (hasForms) {
+      html +=
+        `<div class="detail-section"><div class="detail-heading">🔤 品詞の形</div>` +
+        `<div class="detail-body">${escapeHtml(card.forms)}</div></div>`;
+    }
+    // 類義語
+    if (hasSyn) {
+      html +=
+        `<div class="detail-section"><div class="detail-heading">🟰 類義語</div>` +
+        `<div class="detail-body">${escapeHtml(card.synonyms)}</div></div>`;
+    }
+    box.innerHTML = html;
   }
 
   function renderCard() {
