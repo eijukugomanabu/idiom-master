@@ -337,6 +337,87 @@ main {
   font-style: normal;
 }
 
+/* 🌱 語源を覚える */
+.roots-card {
+  border: 1px solid #4ade80 !important;
+  background: rgba(74, 222, 128, 0.12) !important;
+}
+.roots-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+.roots-tab {
+  flex: 1;
+  padding: 0.6rem 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid #334155;
+  background: var(--card-bg);
+  color: var(--muted);
+}
+.roots-tab.active {
+  border-color: #4ade80;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.14);
+}
+.roots-sub {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.2rem 0 0.9rem;
+}
+.roots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.root-entry {
+  background: var(--card-bg);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+}
+.root-form {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.root-also {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+.root-meaning {
+  color: var(--text);
+  font-size: 1rem;
+  margin: 0.25rem 0;
+}
+.root-ex-row {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.root-ex {
+  display: inline-block;
+  background: rgba(56, 189, 248, 0.12);
+  border-radius: 8px;
+  padding: 0.05rem 0.45rem;
+  margin: 0.1rem 0.25rem 0.1rem 0;
+  color: #cbd5e1;
+}
+/* クイズモード：意味をかくし、タップで表示 */
+.roots-list.quiz-mode .root-meaning {
+  color: transparent;
+  background: #334155;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.roots-list.quiz-mode .root-entry.revealed .root-meaning {
+  color: var(--text);
+  background: transparent;
+}
+
 /* キーボードのキー表示バッジ（どのキーで操作できるかの目印） */
 .kbd {
   display: inline-block;

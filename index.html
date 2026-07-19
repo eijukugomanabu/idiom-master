@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
     <title>英熟語マスター | Idiom Master</title>
     <!-- ?v=… のバージョンは、CSS/JSを更新したら数字を上げる（キャッシュ対策） -->
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="stylesheet" href="styles.css?v=8" />
   </head>
   <body>
     <button id="music-toggle" class="music-toggle" aria-label="バトルBGMのオン/オフ" title="バトルBGMのオン/オフ">🔊</button>
@@ -44,6 +44,19 @@
             <span class="mode-desc">クイズに正解して敵を倒すローグライク</span>
           </button>
         </div>
+      </section>
+
+      <!-- 語源を覚える（接頭辞・語根） -->
+      <section id="roots" class="view is-hidden">
+        <button class="back-btn" data-back="level-select">← レベル選択にもどる</button>
+        <p class="home-lead">🌱 語源を覚える</p>
+        <div class="roots-tabs">
+          <button class="roots-tab active" data-roots-tab="prefix">① 頭の語源（接頭辞）</button>
+          <button class="roots-tab" data-roots-tab="root">② つづきの語源（語根）</button>
+        </div>
+        <button id="roots-hide" class="origin-diagram-btn">🙈 意味をかくして覚える</button>
+        <p class="roots-sub" id="roots-sub"></p>
+        <div class="roots-list" id="roots-list"><!-- JSで生成 --></div>
       </section>
 
       <!-- セット選択（10問ずつのグループを選ぶ） -->
@@ -175,10 +188,11 @@
       </section>
     </main>
 
-    <script src="idioms.js?v=7"></script>
-    <script src="equipment.js?v=7"></script>
-    <script src="music.js?v=7"></script>
-    <script src="lib.js?v=7"></script>
-    <script src="app.js?v=7"></script>
+    <script src="idioms.js?v=8"></script>
+    <script src="roots.js?v=8"></script>
+    <script src="equipment.js?v=8"></script>
+    <script src="music.js?v=8"></script>
+    <script src="lib.js?v=8"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>
