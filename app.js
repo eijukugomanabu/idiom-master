@@ -15,6 +15,7 @@
   const views = {
     "level-select": document.getElementById("level-select"),
     home: document.getElementById("home"),
+    roots: document.getElementById("roots"),
     "set-select": document.getElementById("set-select"),
     flashcards: document.getElementById("flashcards"),
     quiz: document.getElementById("quiz"),
@@ -61,6 +62,17 @@
   /* ---------- ① レベル選択 ---------- */
   const levelGrid = document.getElementById("level-grid");
   const GENRE_LABEL = { idiom: "📘 英熟語", toeic: "💼 TOEIC単語" };
+  // レベル1の上に「語源を覚える」カードを置く
+  if (typeof ORIGIN_PREFIXES !== "undefined") {
+    const rootsCard = document.createElement("button");
+    rootsCard.className = "mode-card roots-card";
+    rootsCard.innerHTML =
+      `<span class="mode-icon">🌱</span>` +
+      `<span class="mode-title">語源を覚える</span>` +
+      `<span class="mode-desc">接頭辞・語根の意味を例単語つきで覚える</span>`;
+    rootsCard.addEventListener("click", () => zoomSelect(rootsCard, () => showRoots()));
+    levelGrid.appendChild(rootsCard);
+  }
   let lastGenre = null;
   LEVELS.forEach((level) => {
     // ジャンルが変わったら見出しを入れる
@@ -89,6 +101,68 @@
     currentLevel = level.id;
     homeLevelLabel.textContent = `${level.emoji} ${level.name} — 何をしますか？`;
     showView("home");
+  }
+
+  /* ---------- 🌱 語源を覚える（接頭辞・語根） ---------- */
+  let rootsTab = "prefix"; // "prefix" | "root"
+  let rootsHide = false; // 意味をかくすクイズモード
+  const rootsListEl = document.getElementById("roots-list");
+  const rootsSubEl = document.getElementById("roots-sub");
+
+  function showRoots() {
+    renderRoots();
+    showView("roots");
+  }
+  function renderRoots() {
+    if (!rootsListEl) return;
+    const data = rootsTab === "prefix" ? ORIGIN_PREFIXES : ORIGIN_ROOTS;
+    document.querySelectorAll(".roots-tab").forEach((t) =>
+      t.classList.toggle("active", t.dataset.rootsTab === rootsTab),
+    );
+    if (rootsSubEl) {
+      rootsSubEl.textContent =
+        rootsTab === "prefix"
+          ? `単語の頭につく語源（${data.length}個）。意味と例単語で覚えよう`
+          : `頭の次に来る語源（${data.length}個）。意味と例単語で覚えよう`;
+    }
+    rootsListEl.classList.toggle("quiz-mode", rootsHide);
+    rootsListEl.innerHTML = data
+      .map((e, i) => {
+        const also = e.also ? `<span class="root-also">(${escapeHtml(e.also)})</span>` : "";
+        const ex = e.examples.map((w) => `<span class="root-ex">${escapeHtml(w)}</span>`).join("");
+        return (
+          `<div class="root-entry" data-idx="${i}">` +
+          `<div class="root-form">${escapeHtml(e.form)} ${also}</div>` +
+          `<div class="root-meaning">${escapeHtml(e.meaning)}</div>` +
+          `<div class="root-ex-row">例: ${ex}</div>` +
+          `</div>`
+        );
+      })
+      .join("");
+  }
+  // タブ切り替え（接頭辞 / 語根）
+  document.querySelectorAll(".roots-tab").forEach((t) => {
+    t.addEventListener("click", () => {
+      rootsTab = t.dataset.rootsTab;
+      renderRoots();
+    });
+  });
+  // 意味をかくすクイズトグル。かくしているときはエントリをタップで1つずつ意味を表示
+  const rootsHideBtn = document.getElementById("roots-hide");
+  if (rootsHideBtn) {
+    rootsHideBtn.addEventListener("click", () => {
+      rootsHide = !rootsHide;
+      rootsHideBtn.textContent = rootsHide ? "👀 意味を全部表示する" : "🙈 意味をかくして覚える";
+      rootsHideBtn.classList.toggle("open", rootsHide);
+      renderRoots();
+    });
+  }
+  if (rootsListEl) {
+    rootsListEl.addEventListener("click", (e) => {
+      if (!rootsHide) return;
+      const entry = e.target.closest(".root-entry");
+      if (entry) entry.classList.toggle("revealed");
+    });
   }
 
   /* ---------- ② モード選択 ---------- */
