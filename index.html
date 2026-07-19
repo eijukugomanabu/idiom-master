@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
     <title>英熟語マスター | Idiom Master</title>
     <!-- ?v=… のバージョンは、CSS/JSを更新したら数字を上げる（キャッシュ対策） -->
-    <link rel="stylesheet" href="styles.css?v=8" />
+    <link rel="stylesheet" href="styles.css?v=9" />
   </head>
   <body>
     <button id="music-toggle" class="music-toggle" aria-label="バトルBGMのオン/オフ" title="バトルBGMのオン/オフ">🔊</button>
@@ -46,7 +46,7 @@
         </div>
       </section>
 
-      <!-- 語源を覚える（接頭辞・語根） -->
+      <!-- 語源を覚える（接頭辞・語根）：TOEICと同じフラッシュカード式 -->
       <section id="roots" class="view is-hidden">
         <button class="back-btn" data-back="level-select">← レベル選択にもどる</button>
         <p class="home-lead">🌱 語源を覚える</p>
@@ -54,9 +54,24 @@
           <button class="roots-tab active" data-roots-tab="prefix">① 頭の語源（接頭辞）</button>
           <button class="roots-tab" data-roots-tab="root">② つづきの語源（語根）</button>
         </div>
-        <button id="roots-hide" class="origin-diagram-btn">🙈 意味をかくして覚える</button>
-        <p class="roots-sub" id="roots-sub"></p>
-        <div class="roots-list" id="roots-list"><!-- JSで生成 --></div>
+        <div class="progress" id="roots-progress"></div>
+        <div class="card" id="roots-card">
+          <div class="card-inner">
+            <div class="card-face card-front">
+              <div class="root-card-form" id="roots-card-form"></div>
+              <p class="card-hint">カードをクリック／<kbd class="kbd">スペース</kbd>で意味を表示</p>
+            </div>
+            <div class="card-face card-back">
+              <div class="root-card-meaning" id="roots-card-meaning"></div>
+              <div class="root-card-ex" id="roots-card-ex"></div>
+            </div>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="roots-prev">← 前へ <kbd class="kbd">←</kbd></button>
+          <button id="roots-next">次へ → <kbd class="kbd">→</kbd></button>
+        </div>
+        <button id="roots-done" class="done-btn">⬜ 覚えた！チェック <kbd class="kbd">Enter</kbd></button>
       </section>
 
       <!-- セット選択（10問ずつのグループを選ぶ） -->
@@ -188,11 +203,11 @@
       </section>
     </main>
 
-    <script src="idioms.js?v=8"></script>
-    <script src="roots.js?v=8"></script>
-    <script src="equipment.js?v=8"></script>
-    <script src="music.js?v=8"></script>
-    <script src="lib.js?v=8"></script>
-    <script src="app.js?v=8"></script>
+    <script src="idioms.js?v=9"></script>
+    <script src="roots.js?v=9"></script>
+    <script src="equipment.js?v=9"></script>
+    <script src="music.js?v=9"></script>
+    <script src="lib.js?v=9"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>

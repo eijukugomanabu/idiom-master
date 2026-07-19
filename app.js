@@ -103,67 +103,109 @@
     showView("home");
   }
 
-  /* ---------- 🌱 語源を覚える（接頭辞・語根） ---------- */
+  /* ---------- 🌱 語源を覚える（TOEICと同じフラッシュカード式） ---------- */
   let rootsTab = "prefix"; // "prefix" | "root"
-  let rootsHide = false; // 意味をかくすクイズモード
-  const rootsListEl = document.getElementById("roots-list");
-  const rootsSubEl = document.getElementById("roots-sub");
+  let rootsIndex = 0; // 今のカード番号
+  const rootsCardEl = document.getElementById("roots-card");
+  const rootsFormEl = document.getElementById("roots-card-form");
+  const rootsMeaningEl = document.getElementById("roots-card-meaning");
+  const rootsExEl = document.getElementById("roots-card-ex");
+  const rootsProgressEl = document.getElementById("roots-progress");
+  // 覚えたチェック（保存される）
+  let rootsDone = {};
+  try {
+    rootsDone = JSON.parse(localStorage.getItem("originDone") || "{}") || {};
+  } catch (e) {
+    rootsDone = {};
+  }
+  function saveRootsDone() {
+    try { localStorage.setItem("originDone", JSON.stringify(rootsDone)); } catch (e) {}
+  }
+  const rootsDeck = () => (rootsTab === "prefix" ? ORIGIN_PREFIXES : ORIGIN_ROOTS);
+  const rootsKey = (e) => `${rootsTab}:${e.form}`;
 
   function showRoots() {
-    renderRoots();
+    rootsTab = "prefix";
+    rootsIndex = 0;
+    renderRootsCard();
     showView("roots");
   }
-  function renderRoots() {
-    if (!rootsListEl) return;
-    const data = rootsTab === "prefix" ? ORIGIN_PREFIXES : ORIGIN_ROOTS;
+  function renderRootsCard() {
+    const deck = rootsDeck();
+    const e = deck[rootsIndex];
+    if (!e || !rootsCardEl) return;
+    rootsCardEl.classList.remove("is-flipped");
     document.querySelectorAll(".roots-tab").forEach((t) =>
       t.classList.toggle("active", t.dataset.rootsTab === rootsTab),
     );
-    if (rootsSubEl) {
-      rootsSubEl.textContent =
-        rootsTab === "prefix"
-          ? `単語の頭につく語源（${data.length}個）。意味と例単語で覚えよう`
-          : `頭の次に来る語源（${data.length}個）。意味と例単語で覚えよう`;
+    const also = e.also ? `<span class="root-also">(${escapeHtml(e.also)})</span>` : "";
+    rootsFormEl.innerHTML = `${escapeHtml(e.form)} ${also}`;
+    rootsMeaningEl.textContent = e.meaning;
+    rootsExEl.innerHTML =
+      "例: " + e.examples.map((w) => `<span class="root-ex">${escapeHtml(w)}</span>`).join("");
+    const doneCount = deck.filter((x) => rootsDone[`${rootsTab}:${x.form}`]).length;
+    rootsProgressEl.textContent = `${rootsIndex + 1} / ${deck.length}　✅ ${doneCount}/${deck.length}`;
+    const doneBtn = document.getElementById("roots-done");
+    if (doneBtn) {
+      const done = !!rootsDone[rootsKey(e)];
+      doneBtn.innerHTML =
+        (done ? "✅ 覚えた！（タップで外す）" : "⬜ 覚えた！チェック") + ` <kbd class="kbd">Enter</kbd>`;
+      doneBtn.classList.toggle("done", done);
     }
-    rootsListEl.classList.toggle("quiz-mode", rootsHide);
-    rootsListEl.innerHTML = data
-      .map((e, i) => {
-        const also = e.also ? `<span class="root-also">(${escapeHtml(e.also)})</span>` : "";
-        const ex = e.examples.map((w) => `<span class="root-ex">${escapeHtml(w)}</span>`).join("");
-        return (
-          `<div class="root-entry" data-idx="${i}">` +
-          `<div class="root-form">${escapeHtml(e.form)} ${also}</div>` +
-          `<div class="root-meaning">${escapeHtml(e.meaning)}</div>` +
-          `<div class="root-ex-row">例: ${ex}</div>` +
-          `</div>`
-        );
-      })
-      .join("");
   }
-  // タブ切り替え（接頭辞 / 語根）
+  function rootsFlip() {
+    if (rootsCardEl) rootsCardEl.classList.toggle("is-flipped");
+  }
+  function rootsPrev() {
+    const deck = rootsDeck();
+    rootsIndex = (rootsIndex - 1 + deck.length) % deck.length;
+    renderRootsCard();
+  }
+  function rootsNext() {
+    const deck = rootsDeck();
+    rootsIndex = (rootsIndex + 1) % deck.length;
+    renderRootsCard();
+  }
+  // 覚えたら次へ（済みのカードで押すと解除してその場に留まる）
+  function rootsMarkDone() {
+    const e = rootsDeck()[rootsIndex];
+    if (!e) return;
+    const k = rootsKey(e);
+    if (rootsDone[k]) {
+      delete rootsDone[k];
+      saveRootsDone();
+      renderRootsCard();
+    } else {
+      rootsDone[k] = true;
+      saveRootsDone();
+      if (rootsIndex < rootsDeck().length - 1) rootsIndex++;
+      renderRootsCard();
+    }
+  }
+  if (rootsCardEl) rootsCardEl.addEventListener("click", rootsFlip);
+  document.getElementById("roots-prev")?.addEventListener("click", rootsPrev);
+  document.getElementById("roots-next")?.addEventListener("click", rootsNext);
+  document.getElementById("roots-done")?.addEventListener("click", rootsMarkDone);
+  // タブ切り替え（接頭辞 / 語根）→ そのデッキの最初のカードへ
   document.querySelectorAll(".roots-tab").forEach((t) => {
     t.addEventListener("click", () => {
       rootsTab = t.dataset.rootsTab;
-      renderRoots();
+      rootsIndex = 0;
+      renderRootsCard();
     });
   });
-  // 意味をかくすクイズトグル。かくしているときはエントリをタップで1つずつ意味を表示
-  const rootsHideBtn = document.getElementById("roots-hide");
-  if (rootsHideBtn) {
-    rootsHideBtn.addEventListener("click", () => {
-      rootsHide = !rootsHide;
-      rootsHideBtn.textContent = rootsHide ? "👀 意味を全部表示する" : "🙈 意味をかくして覚える";
-      rootsHideBtn.classList.toggle("open", rootsHide);
-      renderRoots();
-    });
-  }
-  if (rootsListEl) {
-    rootsListEl.addEventListener("click", (e) => {
-      if (!rootsHide) return;
-      const entry = e.target.closest(".root-entry");
-      if (entry) entry.classList.toggle("revealed");
-    });
-  }
+  // キーボード操作（語源を覚えるを開いている時だけ）
+  document.addEventListener("keydown", (e) => {
+    const view = document.getElementById("roots");
+    if (!view || view.classList.contains("is-hidden")) return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); rootsNext(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); rootsPrev(); }
+    else if (e.key === "Enter") { e.preventDefault(); rootsMarkDone(); }
+    else if (e.key === " " || e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); rootsFlip(); }
+  });
 
   /* ---------- ② モード選択 ---------- */
   document.querySelectorAll(".mode-card[data-go]").forEach((btn) => {
